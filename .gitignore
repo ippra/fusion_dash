@@ -1,0 +1,18 @@
+# Build outputs. Everything here is reproducible from the two scripts plus
+# data/ and 01_variable_reference/, and outputs/03_site/ alone is 2.5 MB a
+# build.
+outputs/
+
+# R session state
+.Rhistory
+.RData
+.Rproj.user/
+.Rproj.user
+
+.DS_Store
+
+# The survey files and instruments in data/ and 01_variable_reference/ are
+# NOT ignored, unlike wxdash's. Together they are about 3 MB of plain CSV and
+# small Word documents with no embedded images, and versioning them is what
+# makes a clone reproduce the published site exactly rather than approximately.
+# Revisit if a wave arrives carrying graphics or the raw vendor exports.
