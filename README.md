@@ -88,9 +88,15 @@ fusion energy?" is a single chart whose categories are the ten sources and
 whose bars are the share who ticked each — not ten charts reading "6% yes, 94%
 no" that a reader has to hold in memory to compare. Those bars are each their
 own proportion of the same people, so they do not sum to 100, and the caption
-says so. Membership is declared in the reference's `battery` column rather than
-inferred from the shared stem, and `02` halts if a battery's items disagree
-about which waves asked them or who was shown them.
+says so. Items are ranked by share with the most-picked at the top, taken from
+the overall distribution and held fixed across splits so changing the split
+re-colours the chart rather than reshuffling it — and "Other (please specify)"
+is pinned to the bottom whatever its share, because it is where the rest went
+rather than a finding that beat the options above it.
+
+Membership is declared in the reference's `battery` column rather than inferred
+from the shared stem, and `02` halts if a battery's items disagree about which
+waves asked them or who was shown them.
 
 Two kinds of row are in the reference but not in the dashboard. Verbatims, the
 numeric-entry investment splits, the consent item, the attention screener and

@@ -478,6 +478,36 @@ for (b in batteries) {
     stop("Codes above are in battery ", bid, ", which must be 0/1 indicators.")
   }
 
+  # Items are ranked by how often they were picked, most-picked at the top,
+  # because that is the question a select-all battery answers and the
+  # instrument's own order is arbitrary (it was randomized on screen anyway).
+  #
+  # Two things keep the ranking honest. It is taken from the Everyone
+  # distribution and then used for every split, so changing the split
+  # re-colours the chart rather than reshuffling it and the reader can compare
+  # one picture with the next. And a residual option sinks to the bottom
+  # whatever its share: "Other (please specify)" is not a finding that beat the
+  # options below it, it is where the rest went.
+  #
+  # Which option is residual is read from the wording and cross-checked against
+  # the naming convention. A wave that breaks either stops the build rather
+  # than quietly ranking Other among the real answers.
+  by_text <- str_starts(b$question_text, "Other")
+  by_name <- str_ends(b$variable, "_oth")
+  if (!identical(by_text, by_name)) {
+    print(tibble(variable = b$variable, question_text = b$question_text,
+                 by_text, by_name))
+    stop("Battery ", bid, ": the residual option cannot be identified - its ",
+         "wording and its name disagree.")
+  }
+
+  ranking <- multi_distribution(d, "All", b$variable) |> select(resp, p)
+  item_order <- tibble(resp = b$variable, residual = by_text) |>
+    left_join(ranking, by = "resp") |>
+    arrange(residual, desc(p)) |>
+    pull(resp)
+
+  b <- b |> arrange(match(variable, item_order))
   options <- tibble(value = b$variable, label = b$question_text)
   splits_out <- list()
   summaries_out <- list()

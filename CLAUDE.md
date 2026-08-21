@@ -164,6 +164,16 @@ bars do not sum to 100, the question file says `multi_response: true`, and the
 caption repeats it. Verified 2026-08-21 against a plain weighted share computed
 straight from the CSVs: agreement to rounding.
 
+Items are ranked by share, most-picked at the top — the instrument's own order
+is arbitrary, and was randomized on screen anyway. Two things keep that honest.
+The ranking is taken from the Everyone distribution and then used for every
+split, so changing the split re-colours the chart rather than reshuffling it.
+And the residual option sinks to the bottom whatever its share: "Other (please
+specify)" is not a finding that beat the options below it, it is where the rest
+went. Which option is residual is read from the wording and cross-checked
+against the `_oth` naming convention, so a wave that breaks either stops the
+build.
+
 `02` halts if a battery spans more than one stem or topic, if its items
 disagree about which waves asked them, or if they disagree about who was shown
 them — one denominator cannot serve items resting on different samples. That
