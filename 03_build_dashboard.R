@@ -88,7 +88,7 @@ groupings_cfg <- splits |>
   })
 
 wave_line <- meta$waves |>
-  mutate(text = paste0(wave, " (", format(n, big.mark = ","), " respondents)")) |>
+  mutate(text = paste0(year, " (", format(n, big.mark = ","), " respondents)")) |>
   pull(text) |>
   paste(collapse = " and ")
 

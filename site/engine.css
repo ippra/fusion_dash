@@ -968,3 +968,11 @@ html #nav-pages .nav-menu a.active { background: var(--row-selected); color: var
   font-size: 12px; line-height: 1.35; color: var(--text-muted);
   margin-bottom: 3px;
 }
+
+/* Column filter menu — same footprint as the text filter it replaces, so a
+   header row mixing the two stays level. */
+table.data th select {
+  width: 100%; margin-top: 6px; padding: 4px 6px; font: inherit; font-size: 12.5px;
+  border: 1px solid var(--control-border); border-radius: 4px;
+  background: var(--control-bg); color: var(--text);
+}

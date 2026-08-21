@@ -408,10 +408,11 @@ for (i in seq_len(nrow(questions))) {
     experimental = q$experimental,
     asked_if = q$asked_if,
     multi_response = FALSE,
-    # as.list keeps this an array in the JSON. auto_unbox turns a length-one
-    # vector into a bare string, and the front end joins this - a question
-    # asked in one wave would arrive as "FU26" where a string has no join().
-    waves = as.list(asked$wave),
+    # Years, not FU25/FU26: the wave code is the instrument's name for the
+    # fielding and means nothing to a reader. as.list keeps this an array in
+    # the JSON - auto_unbox turns a length-one vector into a bare string, and
+    # the front end joins it.
+    waves = as.list(as.character(asked$year)),
     options = options,
     splits = splits_out,
     summaries = summaries_out
@@ -426,7 +427,7 @@ for (i in seq_len(nrow(questions))) {
     response_scale = q$response_scale,
     keywords = q$keywords,
     kind = response_kind(options, q$response_scale),
-    waves = paste(asked$wave, collapse = ", "),
+    waves = paste(asked$year, collapse = ", "),
     experimental = q$experimental
   )
 
@@ -555,7 +556,7 @@ for (b in batteries) {
     experimental = any(b$experimental),
     asked_if = b$asked_if[1],
     multi_response = TRUE,
-    waves = as.list(asked$wave),
+    waves = as.list(as.character(asked$year)),
     options = options,
     splits = splits_out,
     summaries = summaries_out
@@ -573,7 +574,7 @@ for (b in batteries) {
     keywords = paste(c(unique(unlist(str_split(b$keywords, fixed(" | ")))),
                        b$question_text), collapse = " | "),
     kind = paste0("Select all that apply (", nrow(b), " options)"),
-    waves = paste(asked$wave, collapse = ", "),
+    waves = paste(asked$year, collapse = ", "),
     experimental = any(b$experimental)
   )
 }
@@ -583,8 +584,8 @@ wjson(catalog, "questions.json", pretty = TRUE)
 wjson(splits, "splits.json", pretty = TRUE)
 
 wjson(list(
-  waves = map2(waves_data$wave, waves_data$raw,
-               ~list(wave = .x, n = nrow(.y))),
+  waves = map2(waves_data$year, waves_data$raw,
+               ~list(year = .x, n = nrow(.y))),
   respondents = sum(map_int(waves_data$raw, nrow)),
   questions = nrow(catalog),
   compiled = format(Sys.time(), "%Y-%m-%d %H:%M")

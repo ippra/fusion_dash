@@ -454,6 +454,10 @@ function groupingSelect(onChange, initial, labelText = "Select a grouping") {
 function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, columnFilters = true, clickable = false, onRowClick = null, searchFields = [] }) {
   let sortCol = null, sortDir = 1, page = 0, globalQ = "";
   const colQ = {};
+  // Columns filtered by menu match exactly; text columns match on substring.
+  // A menu that matched substrings would let "Regulation" also select a topic
+  // merely containing the word.
+  const selectCols = new Set();
   let filtered = rows.slice();
   let selectedRow = null;
 
@@ -485,9 +489,25 @@ function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, colum
     } }, c.label, " ", el("span", { class: "arrow" }, ""));
     th.append(name);
     if (columnFilters) {
-      const inp = el("input", { type: "text", placeholder: "Filter…",
-        oninput: () => { colQ[c.id] = inp.value.toLowerCase(); page = 0; refresh(); } });
-      th.append(inp);
+      // A column with a small closed set of values filters better as a menu
+      // than as a text box: the reader sees what is on offer instead of
+      // guessing at spelling, and picks in one motion. Options are read off
+      // the rows, so a value added upstream appears without an edit here.
+      if (c.filter === "select") {
+        const sel = el("select", { onchange: () => {
+          colQ[c.id] = sel.value; page = 0; refresh();
+        } });
+        sel.append(el("option", { value: "" }, c.filterAll || "All"));
+        const values = [...new Set(rows.map(r => String(r[c.id] ?? "")))]
+          .filter(Boolean).sort((a, b) => a.localeCompare(b));
+        for (const v of values) sel.append(el("option", { value: v }, v));
+        th.append(sel);
+        selectCols.add(c.id);
+      } else {
+        const inp = el("input", { type: "text", placeholder: "Filter…",
+          oninput: () => { colQ[c.id] = inp.value.toLowerCase(); page = 0; refresh(); } });
+        th.append(inp);
+      }
     }
     headRow.append(th);
   }
@@ -511,7 +531,9 @@ function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, colum
           !searchFields.some(f => String(r[f] ?? "").toLowerCase().includes(globalQ))) return false;
       for (const c of columns) {
         const q = colQ[c.id];
-        if (q && !String(r[c.id] ?? "").toLowerCase().includes(q)) return false;
+        if (!q) continue;
+        const v = String(r[c.id] ?? "");
+        if (selectCols.has(c.id) ? v !== q : !v.toLowerCase().includes(q)) return false;
       }
       return true;
     });
@@ -826,7 +848,8 @@ components.explore = async function (page, container) {
   tableCard.append(el("h3", {}, "Questions (click on a question)"));
   const qTable = dataTable({
     columns: [
-      { id: "topic", label: "Topic", width: "18%" },
+      { id: "topic", label: "Topic", width: "18%",
+        filter: "select", filterAll: "All topics" },
       // The stem above the item, where there is one. Without it a row of the
       // select-all batteries reads "Don't know", which is not a question.
       { id: "question", label: "Question Text", width: "52%",

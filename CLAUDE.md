@@ -189,10 +189,18 @@ PDF export. Class prefix is `fu-` where the original uses `wx-`, and the
 globals are `FU_BUILD` / `FU_BUNDLE` / `FU_ENGINE_LOADED`.
 
 The table, chart, error-bar and PDF code is otherwise close enough to wxdash's
-that a fix in either is worth carrying to the other. One addition here that is
-not upstream: `dataTable` columns accept a `render(row)` hook, used to show the
-shared stem above the item — without it a row of the select-all batteries reads
-"Don't know", which is not a question.
+that a fix in either is worth carrying to the other. Two additions here that are not upstream, both on `dataTable`: columns accept a
+`render(row)` hook, used to show the shared stem above the item — without it a
+row of the select-all batteries reads "Don't know", which is not a question —
+and `filter: "select"` turns a column's filter box into a menu built from the
+values present, which is what the Topic column uses. Menu filters match
+exactly; text filters match on substring, or picking "Regulation" would also
+select any topic merely containing the word.
+
+Wave codes are internal. `FU25` is the instrument's name for the fielding and
+appears in the variable reference's `instruments` column and in `00_paths.R`;
+everything a reader sees says 2025. `02` emits `asked$year` rather than
+`asked$wave` for the question files, the Asked column and `meta.json`.
 
 The engine renders only precomputed values. Keep it that way; it is what makes
 the "cannot disagree with 02" property inspectable rather than asserted.

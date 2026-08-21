@@ -108,6 +108,11 @@ splits, which is where they appear. That filter is one line in `02`, keyed on
 the reference's `question_focus` column, so putting an item back is a matter of
 changing its classification in the sheet rather than special-casing it in code.
 
+The question table filters by topic from a menu built out of the topics
+present, searches question wording, shared stems, variable names and topic tags
+at once, and labels waves by year — `FU25` is the instrument's name for the
+fielding and stays in the variable reference, not on screen.
+
 **Thirteen splits**, declared once in `02_create_question_data.R`: Everyone,
 seven demographics, party identification, 2024 vote, ideology, climate-change
 belief, and survey year. The demographics come from the vendor's derived
