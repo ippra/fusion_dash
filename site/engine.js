@@ -876,13 +876,19 @@ components.explore = async function (page, container) {
     // whichever is taller: the room its wrapped label needs, or the room its
     // bars need. No cap — a capped height is a truncated label by another
     // route, since Chart.js would drop ticks to fit.
-    const LINE = 15, LABEL_PAD = 16, BAR_PAD = 12;
+    // LINE is Chart.js's line box at the 12px tick font, not the glyph height:
+    // measured at 15px it comes out exactly equal to the space needed, and the
+    // axis's own padding then pushes the longest label into the one above it.
+    const LINE = 17, LABEL_PAD = 16, BAR_PAD = 12;
     const catHeight = categoryOrder.reduce((total, label) =>
       total + Math.max(tickLines(label).length * LINE + LABEL_PAD,
                        nGroups * 18 + BAR_PAD), 0);
     // Chrome outside the plot: the value axis and its title, plus the legend
-    // only when there is more than one series to label.
-    const chrome = 60 + (nGroups > 1 ? 40 : 0);
+    // only when there is more than one series to label. Deliberately generous
+    // - with autoSkip off a short axis overlaps its labels rather than
+    // dropping them, which reads as a rendering fault rather than as missing
+    // text.
+    const chrome = 100 + (nGroups > 1 ? 40 : 0);
     wrap.style.height = Math.max(340, chrome + catHeight) + "px";
     groupedBarChart(canvas, rows, {
       title: "",
