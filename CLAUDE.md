@@ -147,6 +147,22 @@ banding (1–3 liberal, 4 moderate, 5–7 conservative) follows the instrument's
 own labels; collapsing seven categories to three is a judgment, made there once
 rather than in the front end.
 
+## Table order is survey order
+
+The question table opens in `variable_reference.csv`'s own row order, carried
+through `02` as `ref_row` and used to sort the catalog. That order is FU26's
+sequence — the order respondents met the questions — with each FU25-only block
+placed where FU25 asked it rather than appended at the end: `fusion_know_dev`
+after `und_fusion_tech`, `rskben_fusion` in the slot FU26 gives
+`fusion_risk_ben`, the investment and argument run between the support block
+and the trust block, and the two nine-item impression batteries straight after
+the trust battery they extend.
+
+A select-all battery takes the position of its **first item**, so
+"Where have you heard about fusion energy?" sits tenth, beside `fusion_know`,
+rather than at the end of the table with the other batteries. Reordering the
+sheet's rows is how the table is reordered; nothing else depends on row order.
+
 ## What reaches the dashboard
 
 `02` builds a question file for a reference row only when it is a `question` or

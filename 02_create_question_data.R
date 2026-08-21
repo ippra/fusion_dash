@@ -24,8 +24,12 @@ out <- file.path(outputs, "02_question_data")
 unlink(out, recursive = TRUE)
 dir.create(file.path(out, "q"), recursive = TRUE)
 
+# ref_row is the sheet's own row order, which is survey order: FU26's sequence
+# with each FU25-only block placed where FU25 asked it. The question table is
+# sorted by it, so a reader meets the questions in the order respondents did.
 reference <- read_csv(variable_reference, guess_max = Inf,
-                      show_col_types = FALSE)
+                      show_col_types = FALSE) |>
+  mutate(ref_row = row_number())
 
 # Experiment Arms --------------------------------------------------------------
 # Which version of a split-sample question each respondent read, declared
@@ -527,7 +531,8 @@ for (i in seq_len(nrow(questions))) {
     keywords = q$keywords,
     kind = response_kind(options, q$response_scale),
     waves = paste(asked$year, collapse = ", "),
-    experimental = q$experimental
+    experimental = q$experimental,
+    ref_row = q$ref_row
   )
 
   if (i %% 25 == 0) cat("  ", i, "/", nrow(questions), "\n", sep = "")
@@ -678,11 +683,15 @@ for (b in batteries) {
                        b$question_text), collapse = " | "),
     kind = paste0("Select all that apply (", nrow(b), " options)"),
     waves = paste(asked$year, collapse = ", "),
-    experimental = any(b$experimental)
+    experimental = any(b$experimental),
+    # A battery takes the position of its first item, so "Where have you heard
+    # about fusion energy?" sits where it was asked rather than at the end of
+    # the table with the other batteries.
+    ref_row = min(b$ref_row)
   )
 }
 
-catalog <- bind_rows(catalog)
+catalog <- bind_rows(catalog) |> arrange(ref_row) |> select(-ref_row)
 wjson(catalog, "questions.json", pretty = TRUE)
 wjson(splits, "splits.json", pretty = TRUE)
 

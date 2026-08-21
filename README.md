@@ -108,7 +108,10 @@ splits, which is where they appear. That filter is one line in `02`, keyed on
 the reference's `question_focus` column, so putting an item back is a matter of
 changing its classification in the sheet rather than special-casing it in code.
 
-The question table filters by topic from a menu built out of the topics
+The table opens in **survey order** — FU26's sequence, with each FU25-only
+block placed where FU25 asked it, and each select-all battery at the position
+of its first item. Clicking a column header sorts by it instead. It filters by
+topic from a menu built out of the topics
 present, searches question wording, shared stems, variable names and topic tags
 at once, and labels waves by year — `FU25` is the instrument's name for the
 fielding and stays in the variable reference, not on screen.
