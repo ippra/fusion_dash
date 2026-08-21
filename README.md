@@ -125,12 +125,18 @@ them; the survey-year split takes them apart. Where a wave did not ask a
 question the split is simply absent, and the front end falls back to Everyone
 rather than drawing an empty panel.
 
-**Split-sample items** are marked above the chart. Thirteen questions varied
-what the respondent read — a facility 10 or 50 miles away, a laboratory named
-generically or specifically, a spending question asked with and without
-background information, three different regulatory proposals. A single
-percentage over those averages across the thing the experiment was built to
-measure, and the chart says so rather than leaving the reader to find out.
+**Split-sample items** are marked above the chart and drawn one arm at a time.
+Seven questions varied what the respondent read — a facility 10 or 50 miles
+away, a laboratory named generically or specifically, three different
+regulatory proposals — and each carries a menu inside the chart card to switch
+between the versions, defaulting to the first. There is no pooled option on
+purpose: a single percentage over the arms averages across the thing the
+experiment was built to measure. Which arm is showing is stated in the caption
+as well as the menu, so a downloaded PDF cannot omit it.
+
+Arm membership is declared in `01_variable_reference/arms.csv` rather than
+matched on the raw assignment value, because `rand_lab` writes the same arm as
+"US national laboratories…" in 2025 and "U.S. national laboratories…" in 2026.
 
 **Respondents dropped by a split** are stated in the caption, not absorbed. A
 caption that says 2,444 answered while the bars rest on 2,439 is the quiet

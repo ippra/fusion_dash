@@ -1,0 +1,12 @@
+arm_variable,prompt,wave,value,arm_id,label,arm_order
+rand_dist,Distance asked about,FU25,10,d10,10 miles,1
+rand_dist,Distance asked about,FU25,50,d50,50 miles,2
+rand_dist,Distance asked about,FU26,10,d10,10 miles,1
+rand_dist,Distance asked about,FU26,50,d50,50 miles,2
+rand_lab,Organization named,FU25,US national laboratories for energy and security,labs_generic,U.S. national laboratories for energy and security,1
+rand_lab,Organization named,FU25,Lawrence Livermore National Laboratory,labs_llnl,Lawrence Livermore National Laboratory,2
+rand_lab,Organization named,FU26,U.S. national laboratories for energy and security,labs_generic,U.S. national laboratories for energy and security,1
+rand_lab,Organization named,FU26,Lawrence Livermore National Laboratory,labs_llnl,Lawrence Livermore National Laboratory,2
+rand_reg_path,Proposal shown,FU26,A,path_a,A - Prove safety before each stage,1
+rand_reg_path,Proposal shown,FU26,B,path_b,B - Gather evidence under oversight,2
+rand_reg_path,Proposal shown,FU26,C,path_c,"C - Reduce barriers, oversee as it develops",3

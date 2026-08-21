@@ -27,6 +27,33 @@ dir.create(file.path(out, "q"), recursive = TRUE)
 reference <- read_csv(variable_reference, guess_max = Inf,
                       show_col_types = FALSE)
 
+# Experiment Arms --------------------------------------------------------------
+# Which version of a split-sample question each respondent read, declared
+# rather than matched on the raw value: rand_lab records the same arm as "US
+# national laboratories..." in 2025 and "U.S. national laboratories..." in
+# 2026, so string equality would split one arm into two and neither half would
+# say so.
+arms_table <- read_csv(arms_reference, col_types = cols(
+  arm_variable = col_character(), prompt = col_character(),
+  wave = col_character(), value = col_character(), arm_id = col_character(),
+  label = col_character(), arm_order = col_integer()
+))
+
+if (n_distinct(arms_table$prompt[arms_table$arm_variable ==
+                                 arms_table$arm_variable[1]]) > 1) {
+  stop("An arm variable has more than one prompt.")
+}
+
+# An arm id must mean the same thing in every wave, or the toggle would pool
+# two different questions under one label.
+inconsistent <- arms_table |>
+  summarise(labels = n_distinct(label), .by = c(arm_variable, arm_id)) |>
+  filter(labels > 1)
+if (nrow(inconsistent) > 0) {
+  print(inconsistent)
+  stop("Arm ids above carry different labels in different waves.")
+}
+
 # Splits -----------------------------------------------------------------------
 # The roster the dashboard offers, declared once. Everything here must exist,
 # or be derivable, in BOTH waves: a split that only one wave carries would
@@ -327,21 +354,33 @@ catalog <- list()
 for (i in seq_len(nrow(questions))) {
   q <- questions[i, ]
 
-  # Which waves asked it, and under which column name in each.
+  # Which waves asked it, and under which column name in each. column_field is
+  # the reference column that holds those names, kept so the assignment column
+  # can be looked up the same way.
   asked <- waves |>
-    mutate(column = map_chr(column, ~q[[.x]])) |>
+    mutate(column_field = column, column = map_chr(column, ~q[[.x]])) |>
     filter(!is.na(column))
 
   options <- parse_options(q$response_options) |> display_labels()
 
   # One frame for this question: the answer column renamed, whichever wave it
-  # came from.
-  d <- map2(asked$wave, asked$column, function(w, col) {
-    responses |>
-      filter(wave == w) |>
+  # came from, plus the raw assignment where the question was split-sampled.
+  # The assignment column is named differently in each wave (FU25 calls
+  # rand_dist "distance"), so it is looked up in the reference like any other.
+  arm_row <- if (is.na(q$arm_variable)) NULL else
+    reference |> filter(variable == q$arm_variable)
+
+  d <- pmap(list(asked$wave, asked$column, asked$column_field),
+            function(w, col, field) {
+    src <- responses |> filter(wave == w)
+    arm_col <- if (is.null(arm_row)) NULL else arm_row[[field]]
+    src |>
       transmute(across(all_of(c("survey_year", "weight", "All",
                                 split_columns, "IDEOL_GROUP", "GCC_GROUP"))),
-                resp = .data[[col]])
+                wave = w,
+                resp = .data[[col]],
+                arm_raw = if (is.null(arm_col) || is.na(arm_col)) NA_character_
+                          else .data[[arm_col]])
   }) |>
     bind_rows() |>
     filter(!is.na(resp))
@@ -355,6 +394,50 @@ for (i in seq_len(nrow(questions))) {
     stop("Codes above appear in the data for ", q$variable,
          " but not in its response_options.")
   }
+
+  # A split-sample question is really one question per arm. Pooling them
+  # averages across the treatment, so each arm is estimated on its own and the
+  # reader picks which to look at.
+  arms_cfg <- NULL
+  if (!is.na(q$arm_variable)) {
+    if (nrow(arm_row) != 1) {
+      stop("Question ", q$variable, " names arm variable ", q$arm_variable,
+           ", which is not one row of the reference.")
+    }
+    arm_map <- arms_table |> filter(arm_variable == q$arm_variable)
+
+    d <- d |> mutate(arm = arm_raw)
+    unmapped <- d |>
+      distinct(wave, arm) |>
+      anti_join(arm_map, by = c("wave", "arm" = "value"))
+    if (nrow(unmapped) > 0) {
+      print(unmapped)
+      stop("Assignment values above are in the data for ", q$variable,
+           " but not in arms.csv.")
+    }
+    d <- d |>
+      left_join(arm_map |> select(wave, value, arm_id),
+                by = c("wave", "arm" = "value")) |>
+      mutate(arm = arm_id) |>
+      select(-arm_id)
+
+    if (anyNA(d$arm)) {
+      stop(sum(is.na(d$arm)), " respondents answered ", q$variable,
+           " with no arm recorded - they would vanish from every arm.")
+    }
+    arms_cfg <- arm_map |>
+      distinct(arm_id, label, arm_order) |>
+      arrange(arm_order)
+  }
+
+  # One pass per arm, or a single unnamed pass when the question has none.
+  arm_ids <- if (is.null(arms_cfg)) NA_character_ else arms_cfg$arm_id
+  arm_splits <- list()
+  arm_summaries <- list()
+
+  for (a in arm_ids) {
+  d_all <- d
+  if (!is.na(a)) d <- d_all |> filter(arm == a)
 
   splits_out <- list()
   summaries_out <- list()
@@ -398,6 +481,12 @@ for (i in seq_len(nrow(questions))) {
     }
   }
 
+  key <- if (is.na(a)) "all" else a
+  arm_splits[[key]] <- splits_out
+  arm_summaries[[key]] <- summaries_out
+  d <- d_all
+  }
+
   wjson(list(
     id = q$variable,
     variable = q$variable,
@@ -414,8 +503,18 @@ for (i in seq_len(nrow(questions))) {
     # the front end joins it.
     waves = as.list(as.character(asked$year)),
     options = options,
-    splits = splits_out,
-    summaries = summaries_out
+    # Split-sample questions carry one set of splits per arm and the roster to
+    # pick between; everything else carries the single set under "all". The
+    # front end reads whichever arm is selected either way, so there is one
+    # code path rather than two.
+    # NA rather than NULL: jsonlite writes NULL as {}, which is truthy in
+    # JavaScript, so every question would look split-sampled.
+    arms = if (is.null(arms_cfg)) NA else
+      pmap(arms_cfg, function(arm_id, label, arm_order)
+        list(id = arm_id, label = label)),
+    arm_prompt = if (is.null(arms_cfg)) NA_character_ else arm_map$prompt[1],
+    splits = arm_splits,
+    summaries = arm_summaries
   ), file.path("q", paste0(q$variable, ".json")))
 
   catalog[[length(catalog) + 1]] <- tibble(
@@ -558,8 +657,12 @@ for (b in batteries) {
     multi_response = TRUE,
     waves = as.list(as.character(asked$year)),
     options = options,
-    splits = splits_out,
-    summaries = summaries_out
+    # No battery is split-sampled, so the single set sits under "all" - the
+    # same shape the front end reads for every question.
+    arms = NA,
+    arm_prompt = NA_character_,
+    splits = list(all = splits_out),
+    summaries = list(all = summaries_out)
   ), file.path("q", paste0(bid, ".json")))
 
   catalog[[length(catalog) + 1]] <- tibble(

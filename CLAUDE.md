@@ -154,6 +154,34 @@ re-classified from `background` to `fusion` on 2026-08-21 for exactly this
 reason: issue concern is a substantive attitude, not a personal characteristic,
 and the first pass had them wrong.
 
+## Split-sample items are one plot per arm
+
+Seven questions were asked in more than one form and pooled until 2026-08-21:
+`fusion_host` (10 or 50 miles), `labs_trust` / `labs_trust_risk` /
+`labs_trust_bene` (a generic laboratory or Lawrence Livermore), and
+`reg_path_balance` / `reg_path_support` / `fusion_reg_choice` (three regulatory
+proposals). Each arm is now estimated on its own and the reader picks between
+them from a menu inside the chart card. There is deliberately no pooled option:
+pooling averages across the treatment, which is the thing the flag warns about.
+
+`arm_variable` in the reference names the randomization behind a question;
+`01_variable_reference/arms.csv` maps each wave's raw assignment values to an
+arm id, a label and an order. Both are declared rather than matched, because
+`rand_lab` records the same arm as "US national laboratories…" in 2025 and
+"U.S. national laboratories…" in 2026 — string equality would split one arm in
+two and neither half would say so. `02` halts on an assignment value that
+arms.csv does not map, on a respondent with no arm, and on an arm id whose
+label differs between waves.
+
+`govspend_fusion_exp_a` and `_b` are *not* handled this way: FU25 released them
+as one column per arm, so they are already separate questions.
+
+Every question file carries `splits` and `summaries` keyed by arm, with a
+single `"all"` key where there is no experiment, so the front end has one code
+path rather than two. Note that `jsonlite` writes `NULL` as `{}`, which is
+truthy in JavaScript — `arms` is emitted as `NA` when absent, and the engine
+tests `Array.isArray` besides.
+
 ## Batteries are one plot each
 
 The 38 `checkbox_item` rows become 5 charts, grouped by their `battery` column.

@@ -714,6 +714,7 @@ components.explore = async function (page, container) {
   const questions = await fetchJSON(page.questions.replace(/^data\//, "data/"));
   let grouping = urlGrouping() || page.default_grouping || "All";
   let showCI = getParam("ci") === "1";   // ?ci=1 deep-links the CI view
+  let currentArm = getParam("arm");      // ?arm= deep-links a split-sample arm
   let scheme = urlScheme();              // ?scheme= deep-links a color scheme
   let currentQuestionText = "";          // for the PDF title
   let currentSurveyLabel = "";           // and its subtitle line
@@ -736,21 +737,42 @@ components.explore = async function (page, container) {
   const qIntro = el("p", { class: "fu-question-intro" }, "");
   const qHead = el("h3", { class: "fu-question-head" }, "");
   const qFlags = el("div", { class: "fu-question-flags" });
+  const armBox = el("div", { class: "fu-arm-pick" });
   const caption = el("div", { class: "fu-caption fu-explore-caption" });
   const ciBox = el("input", { type: "checkbox", id: "ci-toggle" });
   ciBox.checked = showCI;
   ciBox.onchange = () => { showCI = ciBox.checked; setParams({ ci: showCI ? "1" : null }); draw(); };
-  chartCard.append(qIntro, qHead, qFlags, wrap, caption);
+  chartCard.append(qIntro, qHead, qFlags, armBox, wrap, caption);
 
   let groupingSel = null;   // set below; draw() updates it on split fallback
+  let currentArmLabel = null;   // for the PDF subtitle
+
+  // The arm menu, inside the chart card rather than the toolbar above it: it
+  // belongs to this question, not to the page, and it disappears with the
+  // question. Only split-sample items have one.
+  function renderArmPicker(v, armList, armKey) {
+    armBox.textContent = "";
+    armBox.style.display = armList ? "" : "none";
+    if (!armList) return;
+    const sel = el("select", { class: "fu-arm-select", onchange: () => {
+      currentArm = sel.value;
+      setParams({ arm: currentArm });   // keep the URL shareable
+      draw();
+    } });
+    for (const a of armList) sel.append(el("option", { value: a.id }, a.label));
+    sel.value = armKey;
+    armBox.append(
+      el("span", { class: "fu-arm-label" }, (v.arm_prompt || "Version") + ":"),
+      sel);
+  }
 
   // The split-aware caption: how many answered, which waves, that the
   // percentages are weighted, the smallest group, and the provenance carrying
   // the variable code. Templates are authored in 03_build_dashboard.R so the
   // engine stays generic; every number in them comes from the question file.
-  function renderCaption(v, g) {
+  function renderCaption(v, g, summaries, armLabel) {
     const tpl = CONFIG.explore_caption;
-    const s = v.summaries && v.summaries[g];
+    const s = summaries && summaries[g];
     caption.textContent = "";
     if (!s) return;
     const waves = /[-,]/.test(s.years)
@@ -774,6 +796,11 @@ components.explore = async function (page, container) {
     // out from bars that look too small.
     if (v.multi_response) text += " " + tpl.multi_response;
     caption.append(el("p", {}, text));
+    // Which version this is, in the caption as well as the menu: the PDF's
+    // notes are read off the caption, so a download that omitted it would not
+    // say which half of the sample it describes.
+    if (armLabel) caption.append(el("p", {}, fillTpl(tpl.arm, {
+      n: v.arms.length, prompt: v.arm_prompt, label: armLabel })));
     if (v.asked_if) caption.append(el("p", {},
       fillTpl(tpl.asked_if, { condition: v.asked_if })));
     caption.append(el("p", { class: "fu-caption-provenance",
@@ -783,10 +810,26 @@ components.explore = async function (page, container) {
   async function draw() {
     if (!currentKey) return;
     const v = await fetchJSON(`data/q/${currentKey}.json`);
+    // Split-sample questions carry one set of splits per arm; everything else
+    // carries a single set under "all". Reading through the arm either way
+    // keeps one code path. An arm from the URL that this question does not
+    // have falls back to the first rather than drawing nothing.
+    const armList = Array.isArray(v.arms) && v.arms.length ? v.arms : null;
+    const armKey = armList
+      ? (armList.some(a => a.id === currentArm) ? currentArm : armList[0].id)
+      : "all";
+    if (armList) currentArm = armKey;
+    const armLabel = armList
+      ? (armList.find(a => a.id === armKey) || {}).label : null;
+    const SPLITS = v.splits[armKey] || {};
+    const SUMMARIES = v.summaries[armKey] || {};
+
+    renderArmPicker(v, armList, armKey);
+
     // A question is not asked under every split — fall back to Everyone
     // rather than drawing an empty panel, and show the select doing it.
     let g = grouping;
-    if (!(v.splits[g] && v.splits[g].length)) g = "All";
+    if (!(SPLITS[g] && SPLITS[g].length)) g = "All";
     if (groupingSel) groupingSel.value = g;
     const labelFor = (resp) => {
       const hit = (v.options || []).find(o => String(o.value) === String(resp));
@@ -813,8 +856,9 @@ components.explore = async function (page, container) {
       qFlags.append(el("span", { class: "fu-flag" }, "Split-sample item"));
       if (note) qFlags.append(" ", infoTip(note));
     }
-    renderCaption(v, g);
-    const rows = (v.splits[g] || []).map(r => ({
+    renderCaption(v, g, SUMMARIES, armLabel);
+    currentArmLabel = armLabel;
+    const rows = (SPLITS[g] || []).map(r => ({
       group: r.group, category: wrapTickLabel(labelFor(r.resp)),
       value: r.p, label: Math.round(r.p) + "%", low: r.p_low, upp: r.p_upp
     }));
@@ -903,6 +947,7 @@ components.explore = async function (page, container) {
     title: currentQuestionText,
     subtitle: [
       currentSurveyLabel,
+      currentArmLabel,
       grouping === "All" ? "All respondents"
         : "Split by " + ((CONFIG.groupings.find(x => x.id === grouping) || {}).label || grouping),
       showCI ? "95% confidence intervals shown" : null

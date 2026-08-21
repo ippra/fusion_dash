@@ -85,6 +85,7 @@ in its order.
 | `column_fu26` | the column in `data/FU26_data_wtd.csv`, empty when the wave did not ask it |
 | `question_type` | `question`, `checkbox_item`, `checkbox_parent`, `verbatim_followup`, `randomization`, `screener` |
 | `battery` | for a `checkbox_item`, the id of the select-all set it belongs to; empty otherwise. The dashboard draws one plot per battery, so this is what decides which items are read together |
+| `arm_variable` | for a question pooled across the arms of an experiment, the randomization variable behind it. The dashboard draws one plot per arm and offers a menu to switch. Leave empty where the data already carries one column per arm, as FU25 does for `govspend_fusion_exp` |
 | `experimental` | `TRUE` when what the respondent read varied — see below |
 | `question_focus` | `fusion` or `background` |
 | `topic` | the section facet the dashboard shows as its first column — see below |
@@ -264,6 +265,21 @@ that matter in `NOTES.md`.
 **`reverse_worded` is about wording, not about any scale's coding.** No fusion
 item is reverse worded so far; the eight `argue_` items are not, because each
 sits on its own persuasiveness scale rather than a shared direction.
+
+## The arms file
+
+`arms.csv` beside the sheet maps each wave's raw assignment values to an arm id,
+a display label, an order and a prompt for the menu. One row per wave per value.
+
+Declared rather than matched, for the same reason the wave columns exist:
+`rand_lab` records the same arm as "US national laboratories for energy and
+security" in FU25 and "U.S. national laboratories for energy and security" in
+FU26. Matching on the string would split one arm into two, and both halves
+would look like clean estimates. A new wave needs its own rows here even when
+the values look identical to the last one's.
+
+`02` halts on an assignment value the file does not map, on a respondent with
+no arm recorded, and on an arm id whose label differs between waves.
 
 ## Response scale families
 

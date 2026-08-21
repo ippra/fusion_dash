@@ -148,6 +148,9 @@ config <- list(
                             "the bars do not add up to 100%."),
     asked_if = paste0("Not everyone was asked: the question was shown only ",
                       "when {condition}."),
+    arm = paste0("This is one of {n} versions of the question that were asked ",
+                 "of different halves of the sample. Shown here: {prompt} - ",
+                 "{label}. The menu above the chart switches between them."),
     provenance = paste0("From the IPPRA Fusion Energy Survey, run by ",
                         INSTITUTE_LINK, ". Each wave is weighted to national ",
                         "benchmarks, so the percentages describe US adults ",
@@ -199,7 +202,7 @@ config <- list(
 # empty gap in a sentence, which reads as a missing number rather than a bug.
 known_tokens <- c("n", "waves", "split_clause", "years", "group_phrase",
                   "smallest", "smallest_n", "dropped", "condition", "variable",
-                  "multi_response")
+                  "multi_response", "prompt", "label")
 used <- unlist(config$explore_caption) |>
   str_extract_all("\\{(\\w+)\\}") |>
   unlist() |>
