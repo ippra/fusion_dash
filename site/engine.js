@@ -590,7 +590,7 @@ function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, colum
    data (which preserves R's factor-level ordering from the compiler), unless
    an explicit categoryOrder is supplied by config. */
 let activeChart = null;
-function groupedBarChart(canvas, rows, { title = "", xLabel = "", yLabel = "", categoryOrder = null, showCI = false, horizontal = false, colors = null, legend = true }) {
+function groupedBarChart(canvas, rows, { title = "", xLabel = "", yLabel = "", categoryOrder = null, showCI = false, horizontal = false, colors = null, legend = true, categoryWidth = null }) {
   const groupsSeen = [], catsSeen = [];
   for (const r of rows) {
     const g = naLabel(r.group), c = naLabel(r.category);
@@ -667,8 +667,14 @@ function groupedBarChart(canvas, rows, { title = "", xLabel = "", yLabel = "", c
       // nearest label that did survive. The canvas is grown to fit the bars
       // instead, in the caller.
       scales: horizontal ? {   // xLabel/yLabel keep their meaning: category / value
+        // The category axis is pinned rather than left to fit itself, so the
+        // label column is as wide as the caller wrapped its text for. Chart.js
+        // sizes it to the widest label otherwise, which on a chart of long
+        // options leaves the plot a sliver and on a chart of short ones wastes
+        // the width the wrap already gave up.
         y: { title: { display: !!xLabel, text: xLabel }, grid: { display: false },
-             ticks: { autoSkip: false } },
+             ticks: { autoSkip: false },
+             afterFit: (scale) => { if (categoryWidth) scale.width = categoryWidth; } },
         x: { title: { display: !!yLabel, text: yLabel }, beginAtZero: true, grace: "15%" }
       } : {
         x: { title: { display: !!xLabel, text: xLabel }, grid: { display: false },
@@ -701,6 +707,11 @@ const components = {};
 // trimmed to a common prefix they would read as the same answer three times.
 // The chart grows to fit instead; see draw(), which sizes the canvas from the
 // line counts this returns.
+// Approximate width of a character in the chart's 12px sans tick font. Used
+// to turn an available pixel width into a wrap column; being a few percent out
+// only shifts a word between lines.
+const CHAR_PX = 6.6;
+
 function wrapTickLabel(text, width = 48) {
   const words = String(text).split(/\s+/);
   const lines = [];
@@ -861,28 +872,36 @@ components.explore = async function (page, container) {
     }
     renderCaption(v, g, SUMMARIES, armLabel);
     currentArmLabel = armLabel;
+    // How much room the labels get, measured rather than assumed. A third of
+    // a full-width page is about 95 characters a line, which takes the three
+    // 539-character regulatory proposals from ten wrapped lines to five; on a
+    // narrow window it falls back to something the plot can still live beside.
+    const availPx = wrap.clientWidth || 1200;
+    const axisPx = Math.round(Math.min(Math.max(availPx * 0.34, 240), 820));
+    const wrapChars = Math.max(24, Math.floor((axisPx - 16) / CHAR_PX));
+
     const rows = (SPLITS[g] || []).map(r => ({
-      group: r.group, category: wrapTickLabel(labelFor(r.resp)),
+      group: r.group, category: wrapTickLabel(labelFor(r.resp), wrapChars),
       value: r.p, label: Math.round(r.p) + "%", low: r.p_low, upp: r.p_upp
     }));
     // Declared, not inferred. The chart otherwise orders categories by first
     // appearance, and a response nobody in the first group gave then lands at
     // the end of the axis — which on a 0-10 scale reads as a scale with its
     // rungs shuffled.
-    const categoryOrder = (v.options || []).map(o => wrapTickLabel(o.label));
+    const categoryOrder = (v.options || []).map(o => wrapTickLabel(o.label, wrapChars));
     const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
     // Sized from the labels themselves rather than a flat per-category
     // allowance, because they run from one line to a dozen. Each category gets
     // whichever is taller: the room its wrapped label needs, or the room its
     // bars need. No cap — a capped height is a truncated label by another
     // route, since Chart.js would drop ticks to fit.
-    const LINE = 15, LABEL_PAD = 16, BAR_PAD = 12;
+    const LINE = 14, LABEL_PAD = 13, BAR_PAD = 12;
     const catHeight = categoryOrder.reduce((total, label) =>
       total + Math.max(tickLines(label).length * LINE + LABEL_PAD,
                        nGroups * 18 + BAR_PAD), 0);
     // Chrome outside the plot: the value axis and its title, plus the legend
     // only when there is more than one series to label.
-    const chrome = 60 + (nGroups > 1 ? 40 : 0);
+    const chrome = 52 + (nGroups > 1 ? 40 : 0);
     wrap.style.height = Math.max(340, chrome + catHeight) + "px";
     groupedBarChart(canvas, rows, {
       title: "",
@@ -893,6 +912,7 @@ components.explore = async function (page, container) {
       // A one-entry legend reading "All" labels nothing; the split dropdown
       // above already says whose responses these are.
       legend: nGroups > 1,
+      categoryWidth: axisPx,
       colors: schemeSeriesColors(scheme, nGroups)
     });
   }
