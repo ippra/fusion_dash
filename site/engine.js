@@ -692,21 +692,24 @@ const components = {};
  * the question table. Everything it draws was computed by
  * 02_create_question_data.R; this file picks a slice and renders it. */
 
-// SVG/Chart.js tick labels don't wrap on their own; response labels here are
-// whole sentences (the four regulatory-philosophy options run to 150
-// characters), so they are broken into tick lines at word boundaries rather
-// than trimmed.
-function wrapTickLabel(text, width = 26, maxLines = 3) {
+// SVG/Chart.js tick labels don't wrap on their own, and response labels here
+// are whole sentences — the three regulatory proposals run to 539 characters —
+// so they are broken into tick lines at word boundaries.
+//
+// Nothing is truncated. An option cut off at an ellipsis is a bar the reader
+// cannot identify, and the three proposals differ only in their later clauses:
+// trimmed to a common prefix they would read as the same answer three times.
+// The chart grows to fit instead; see draw(), which sizes the canvas from the
+// line counts this returns.
+function wrapTickLabel(text, width = 48) {
   const words = String(text).split(/\s+/);
   const lines = [];
   let line = "";
   for (const w of words) {
     if (line && (line + " " + w).length > width) { lines.push(line); line = w; }
     else line = line ? line + " " + w : w;
-    if (lines.length === maxLines) break;
   }
-  if (lines.length < maxLines && line) lines.push(line);
-  else if (line) lines[maxLines - 1] += "…";
+  if (line) lines.push(line);
   return lines.join("\n");
 }
 
@@ -867,14 +870,20 @@ components.explore = async function (page, container) {
     // the end of the axis — which on a 0-10 scale reads as a scale with its
     // rungs shuffled.
     const categoryOrder = (v.options || []).map(o => wrapTickLabel(o.label));
-    // Horizontal bars need vertical room proportional to bar count —
-    // grow the canvas instead of cramming (long scales × many groups).
-    const nCats = new Set(rows.map(r => naLabel(r.category))).size;
     const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
-    // Room for every tick now that none is skipped: a wrapped label runs to
-    // three lines, so a category needs about 44px before its bars are counted.
-    wrap.style.height =
-      Math.max(340, Math.min(1400, 130 + nCats * Math.max(44, nGroups * 18))) + "px";
+    // Sized from the labels themselves rather than a flat per-category
+    // allowance, because they run from one line to a dozen. Each category gets
+    // whichever is taller: the room its wrapped label needs, or the room its
+    // bars need. No cap — a capped height is a truncated label by another
+    // route, since Chart.js would drop ticks to fit.
+    const LINE = 15, LABEL_PAD = 16, BAR_PAD = 12;
+    const catHeight = categoryOrder.reduce((total, label) =>
+      total + Math.max(tickLines(label).length * LINE + LABEL_PAD,
+                       nGroups * 18 + BAR_PAD), 0);
+    // Chrome outside the plot: the value axis and its title, plus the legend
+    // only when there is more than one series to label.
+    const chrome = 60 + (nGroups > 1 ? 40 : 0);
+    wrap.style.height = Math.max(340, chrome + catHeight) + "px";
     groupedBarChart(canvas, rows, {
       title: "",
       xLabel: page.chart.x_label, yLabel: page.chart.y_label,

@@ -125,6 +125,14 @@ Three things in that block are easy to undo:
   itself — `ideol` by Ideology, `gcc` by Climate change belief. Both drew a
   single bar at 100% in every group before it existed.
 
+Response option labels are **never truncated**. `wrapTickLabel` wraps at word
+boundaries with no line cap, and `draw()` sizes the canvas from the resulting
+line counts — each category gets whichever is taller, the room its label needs
+or the room its bars need, with no maximum. A capped height would be truncation
+by another route, since Chart.js drops ticks to fit. The three `fusion_reg_choice`
+proposals run to 539 characters and differ only in their later clauses: trimmed
+to a common prefix they read as the same answer three times.
+
 Response order is declared in two places and inferred in none. `02` sorts each
 group's rows by the instrument's own option order, because response codes are
 character and grouping alone sorts them as strings — that puts 10 between 1 and

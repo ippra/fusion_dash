@@ -138,6 +138,11 @@ Arm membership is declared in `01_variable_reference/arms.csv` rather than
 matched on the raw assignment value, because `rand_lab` writes the same arm as
 "US national laboratories…" in 2025 and "U.S. national laboratories…" in 2026.
 
+**Response labels are never truncated.** Twenty-five options run past 78
+characters and three run past 400; the chart wraps them in full and grows to
+fit. The three regulatory proposals differ only in their later clauses, so an
+ellipsis would leave three bars a reader cannot tell apart.
+
 **Respondents dropped by a split** are stated in the caption, not absorbed. A
 caption that says 2,444 answered while the bars rest on 2,439 is the quiet
 difference this pipeline exists to avoid.
