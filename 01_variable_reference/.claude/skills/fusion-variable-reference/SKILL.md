@@ -84,6 +84,7 @@ in its order.
 | `column_fu25` | the column in `data/FU25_data_wtd.csv`, empty when the wave did not ask it |
 | `column_fu26` | the column in `data/FU26_data_wtd.csv`, empty when the wave did not ask it |
 | `question_type` | `question`, `checkbox_item`, `checkbox_parent`, `verbatim_followup`, `randomization`, `screener` |
+| `battery` | for a `checkbox_item`, the id of the select-all set it belongs to; empty otherwise. The dashboard draws one plot per battery, so this is what decides which items are read together |
 | `experimental` | `TRUE` when what the respondent read varied — see below |
 | `question_focus` | `fusion` or `background` |
 | `topic` | the section facet the dashboard shows as its first column — see below |
@@ -240,6 +241,18 @@ fusion instrument gives the parent stem a variable name, so there are no
 `checkbox_parent` rows yet — the stem lives in each item's `question_intro`,
 which is where the item gets its meaning. A wave that names a parent gets a
 `checkbox_parent` row with `n_options = 0`.
+
+**Every checkbox item needs a `battery`.** The dashboard draws one plot per
+battery — the items as categories, each bar the share who ticked that box —
+because ten charts reading "6% yes, 94% no" are not a picture of what the
+battery asks. Membership is declared here rather than inferred from the shared
+stem at build time, so editing one item's wording cannot silently split a
+battery in two. `02` halts if a battery spans more than one stem or topic, if
+its items disagree about which waves asked them, or if they disagree about who
+was shown them — one denominator cannot serve items resting on different
+samples. The five so far: `fusion_source` (10), `fusion_risk_topics`,
+`fusion_cost_topics`, `fusion_ben_topics` (6 each) and `fusion_info_topics`
+(10).
 
 **Unlabelled scale points are the bare number.** `0 = No trust | 1 | 2 | … |
 10 = Complete trust`, with `Only the endpoints are labelled` in `notes`. The

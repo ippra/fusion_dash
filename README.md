@@ -19,7 +19,7 @@ configure.
 
 | step | what it is |
 |---|---|
-| `01_variable_reference/` | the codebook: `variable_reference.csv`, one row per variable, **read off the instruments by hand**, plus `NOTES.md` and the procedure that produced it |
+| `01_variable_reference/` | the codebook: `variable_reference.csv`, 152 rows, one per variable, **read off the instruments by hand**, plus `NOTES.md` and the procedure that produced it |
 | `02_create_question_data.R` | the statistics: srvyr weighted distributions and 95% intervals for every question and split → `outputs/02_question_data/` |
 | `03_build_dashboard.R` | the site: `config.json` plus the hand-edited front end in `site/` → `outputs/03_site/` |
 
@@ -33,13 +33,13 @@ data/FU26_data_wtd.csv          1,244 respondents, 344 columns
 02_create_question_data.R       srvyr; seconds
         │
         ▼
-outputs/02_question_data/       112 question files + catalog
+outputs/02_question_data/       79 question files + catalog
         │
         ▼                       ┌── site/ (front end source)
 03_build_dashboard.R  ◄─────────┘   no statistics
         │
         ▼
-outputs/03_site/                the deployable site, 2.5 MB
+outputs/03_site/                the deployable site, 2.2 MB
 ```
 
 ## Building and previewing
@@ -80,7 +80,17 @@ the documents could not settle. Read it before pooling the waves.
 
 ## What is in the dashboard
 
-112 closed-ended questions across eleven topics.
+79 charts across eleven topics: 74 single-response questions and 5
+select-all-that-apply batteries covering 38 items between them.
+
+**Select-all batteries are one plot, not ten.** "Where have you heard about
+fusion energy?" is a single chart whose categories are the ten sources and
+whose bars are the share who ticked each — not ten charts reading "6% yes, 94%
+no" that a reader has to hold in memory to compare. Those bars are each their
+own proportion of the same people, so they do not sum to 100, and the caption
+says so. Membership is declared in the reference's `battery` column rather than
+inferred from the shared stem, and `02` halts if a battery's items disagree
+about which waves asked them or who was shown them.
 
 Two kinds of row are in the reference but not in the dashboard. Verbatims, the
 numeric-entry investment splits, the consent item, the attention screener and

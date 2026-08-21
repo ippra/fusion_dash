@@ -159,7 +159,7 @@ if (anyNA(responses$weight)) {
 # place as splits, which is where they appear, not as findings. Nothing is
 # deleted: the rows stay in the variable reference so the record of the
 # instrument is complete.
-questions <- reference |>
+eligible <- reference |>
   filter(question_type %in% c("question", "checkbox_item"), n_options >= 2,
          question_focus != "background")
 
@@ -167,8 +167,40 @@ background <- reference |>
   filter(question_type %in% c("question", "checkbox_item"), n_options >= 2,
          question_focus == "background")
 
-message("Questions to build: ", nrow(questions),
-        " (", nrow(background), " background items held back)")
+# Single-response questions, one plot each.
+questions <- eligible |> filter(is.na(battery))
+
+# Select-all-that-apply items are a battery, not ten questions. Drawn one plot
+# each they are ten charts of "6% yes, 94% no" that a reader has to hold in
+# memory to compare; drawn together they are the one thing the battery asks -
+# which of these did people pick. Membership is declared in the reference
+# rather than inferred from the shared stem, so editing one item's wording
+# cannot silently split a battery in two.
+batteries <- eligible |>
+  filter(!is.na(battery)) |>
+  group_split(battery)
+names(batteries) <- map_chr(batteries, ~.x$battery[1])
+
+# Every item in a battery must sit under the same stem and have been asked in
+# the same waves. Either failing means the battery is really two.
+for (b in batteries) {
+  if (n_distinct(b$question_intro) > 1) {
+    print(unique(b$question_intro))
+    stop("Battery ", b$battery[1], " spans more than one stem.")
+  }
+  # Each wave either asked every item in the battery or none of them.
+  consistent <- map_lgl(waves$column, ~n_distinct(is.na(b[[.x]])) == 1)
+  if (!all(consistent)) {
+    print(b |> select(variable, all_of(waves$column)))
+    stop("Battery ", b$battery[1], " was not asked in the same waves ",
+         "throughout - its items would rest on different samples.")
+  }
+}
+
+message("Questions to build: ", nrow(questions), " single-response + ",
+        length(batteries), " select-all batteries (",
+        sum(map_int(batteries, nrow)), " items), ",
+        nrow(background), " background items held back")
 
 # response_options is a fixed format this project writes and reads:
 # "1 = Label | 2 | 3 = Label", where a bare number is a scale point the
@@ -233,25 +265,52 @@ distribution <- function(d, split_id, option_values) {
               p_low = round(100 * p_low, 2),
               p_upp = round(100 * p_upp, 2))
 
-  # The front end draws categories and series in the order this file lists
-  # them, so both orders are settled here.
-  #
   # Response codes are character, and grouping alone sorts them as strings:
   # that puts 10 between 1 and 2 on every eleven-point scale and rotates the
   # income follow-ups, whose codes run 6-10 and 11-15. Ordered by the
   # instrument's own option order instead, which is also right where the codes
   # are not a sequence at all.
+  order_rows(out, split_id, option_values)
+}
+
+# A select-all battery is not a distribution. Each item is its own proportion -
+# the share of the people shown the battery who ticked that box - so they are
+# estimated one at a time with survey_mean rather than normalised against each
+# other, and they do not sum to 100. The question file says so, and the caption
+# repeats it, because a reader who assumes otherwise reads every bar as smaller
+# than it is.
+multi_distribution <- function(d, split_id, items) {
+  design <- d |>
+    filter(!is.na(.data[[split_id]])) |>
+    rename(group = all_of(split_id)) |>
+    as_survey_design(weights = weight)
+
+  map(items, function(item) {
+    design |>
+      group_by(group) |>
+      summarise(p = survey_mean(.data[[item]] == "1", proportion = TRUE,
+                                vartype = "ci"),
+                .groups = "drop") |>
+      transmute(group, resp = item,
+                p = round(100 * p, 2),
+                p_low = round(100 * p_low, 2),
+                p_upp = round(100 * p_upp, 2))
+  }) |>
+    bind_rows()
+}
+
+# Category and series order, settled here for the same reason as the
+# single-response charts: the front end draws them in the order this file
+# lists them.
+order_rows <- function(out, split_id, resp_order) {
   order <- group_order[[split_id]]
   groups <- if (is.null(order)) sort(unique(out$group)) else order
-
   out <- out |>
     mutate(group = factor(group, levels = groups)) |>
-    arrange(group, match(resp, option_values))
-
+    arrange(group, match(resp, resp_order))
   if (anyNA(out$group)) {
     print(setdiff(unique(as.character(out$group)), groups))
-    stop("Groups above are in the data but not in group_order for ",
-         split_id, " - the front end would sort them alphabetically.")
+    stop("Groups above are in the data but not in group_order for ", split_id)
   }
   out |> mutate(group = as.character(group))
 }
@@ -348,6 +407,7 @@ for (i in seq_len(nrow(questions))) {
     response_scale = q$response_scale,
     experimental = q$experimental,
     asked_if = q$asked_if,
+    multi_response = FALSE,
     # as.list keeps this an array in the JSON. auto_unbox turns a length-one
     # vector into a bare string, and the front end joins this - a question
     # asked in one wave would arrive as "FU26" where a string has no join().
@@ -371,6 +431,121 @@ for (i in seq_len(nrow(questions))) {
   )
 
   if (i %% 25 == 0) cat("  ", i, "/", nrow(questions), "\n", sep = "")
+}
+
+# Batteries --------------------------------------------------------------------
+# One plot per set. The chart's categories are the items and each bar is the
+# share of the people shown the battery who ticked that box.
+for (b in batteries) {
+  bid <- b$battery[1]
+
+  if (n_distinct(b$topic) > 1) {
+    print(b |> select(variable, topic))
+    stop("Battery ", bid, " spans more than one topic.")
+  }
+
+  # Which waves asked it, and under which column names. A battery carries one
+  # column per item per wave rather than the single column a question has.
+  asked <- waves |>
+    mutate(cols = map(column, ~b[[.x]])) |>
+    filter(map_lgl(cols, ~!all(is.na(.x))))
+
+  # Items renamed to their canonical names so the two waves stack, which is
+  # what carries FU25's fusion_source_1..10 onto FU26's names.
+  d <- map2(asked$wave, asked$cols, function(w, cols) {
+    src <- responses |> filter(wave == w)
+    bind_cols(
+      src |> select(all_of(c("survey_year", "weight", "All", split_columns,
+                             "IDEOL_GROUP", "GCC_GROUP"))),
+      src[cols] |> set_names(b$variable)
+    )
+  }) |>
+    bind_rows()
+
+  # The base is everyone shown the battery. Checked rather than assumed: if the
+  # items disagree about who is missing, one denominator cannot serve them all
+  # and the bars would rest on different samples while looking comparable.
+  missing_counts <- map_int(b$variable, ~sum(is.na(d[[.x]])))
+  if (n_distinct(missing_counts) > 1) {
+    print(tibble(item = b$variable, missing = missing_counts))
+    stop("Items above disagree about who was shown battery ", bid, ".")
+  }
+  d <- d |> filter(!is.na(.data[[b$variable[1]]]))
+
+  codes <- unique(unlist(map(b$variable, ~unique(d[[.x]]))))
+  if (!all(codes %in% c("0", "1"))) {
+    print(setdiff(codes, c("0", "1")))
+    stop("Codes above are in battery ", bid, ", which must be 0/1 indicators.")
+  }
+
+  options <- tibble(value = b$variable, label = b$question_text)
+  splits_out <- list()
+  summaries_out <- list()
+
+  for (j in seq_len(nrow(splits))) {
+    s <- splits$id[j]
+    if (s == "survey_year" && nrow(asked) < 2) next
+    have <- d |> filter(!is.na(.data[[s]]))
+    if (nrow(have) == 0) next
+
+    rows <- multi_distribution(have, s, b$variable) |>
+      order_rows(s, b$variable)
+    splits_out[[s]] <- rows
+
+    stuck <- rows |> filter(p == 0 | p == 100)
+    if (nrow(stuck) > 0) {
+      boundary_report[[length(boundary_report) + 1]] <-
+        stuck |> transmute(variable = bid, split = s, group, resp, p)
+    }
+
+    sizes <- have |> count(.data[[s]], name = "n")
+    smallest <- sizes |> slice_min(n, n = 1, with_ties = FALSE)
+    summaries_out[[s]] <- list(
+      n = nrow(have),
+      years = paste(sort(unique(have$survey_year)), collapse = "-"),
+      smallest = smallest[[1]],
+      smallest_n = smallest$n,
+      dropped = nrow(d) - nrow(have)
+    )
+    if (nrow(d) - nrow(have) > 0) {
+      dropped_report[[length(dropped_report) + 1]] <- tibble(
+        variable = bid, split = s, dropped = nrow(d) - nrow(have)
+      )
+    }
+  }
+
+  wjson(list(
+    id = bid,
+    variable = bid,
+    topic = b$topic[1],
+    # The stem is the question here: the items are the answer options.
+    question = b$question_intro[1],
+    intro = NA_character_,
+    response_scale = "checkbox",
+    experimental = any(b$experimental),
+    asked_if = b$asked_if[1],
+    multi_response = TRUE,
+    waves = as.list(asked$wave),
+    options = options,
+    splits = splits_out,
+    summaries = summaries_out
+  ), file.path("q", paste0(bid, ".json")))
+
+  catalog[[length(catalog) + 1]] <- tibble(
+    id = bid,
+    topic = b$topic[1],
+    question = b$question_intro[1],
+    intro = "",
+    variable = bid,
+    response_scale = "checkbox",
+    # Search covers every item's own wording, so "podcast" still finds the
+    # battery whose stem never uses the word.
+    keywords = paste(c(unique(unlist(str_split(b$keywords, fixed(" | ")))),
+                       b$question_text), collapse = " | "),
+    kind = paste0("Select all that apply (", nrow(b), " options)"),
+    waves = paste(asked$wave, collapse = ", "),
+    experimental = any(b$experimental)
+  )
 }
 
 catalog <- bind_rows(catalog)

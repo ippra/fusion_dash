@@ -51,8 +51,8 @@ are the traps that actually occur in these two documents.
 
 ## The variable reference
 
-`01_variable_reference/variable_reference.csv` — 152 rows, one per variable,
-carrying each question as it was actually asked. Two companions matter as much
+`01_variable_reference/variable_reference.csv` — 152 rows, 20 columns, one per
+variable, carrying each question as it was actually asked. Two companions matter as much
 as the sheet:
 
 - `NOTES.md` — what still needs a second pair of eyes, grouped by what to do
@@ -69,6 +69,9 @@ Its judgment columns are easy to confuse:
   than the section it sits in.
 - `topic` — the dashboard's first column, and the only judgment column the
   reader ever sees.
+- `battery` — which select-all set a `checkbox_item` belongs to. Declared, not
+  inferred from the shared stem, so editing one item's wording cannot split a
+  battery in two.
 
 **Two wave columns, not two rows.** `variable` is the canonical name;
 `column_fu25` and `column_fu26` are the data columns. That is what absorbs the
@@ -95,9 +98,10 @@ changes when they tick the box.
 
 Expect `glm.fit: algorithm did not converge` warnings. They are the logit
 interval hitting a group where every respondent gave the same answer — four
-such cells, all real (nobody in that group picked "Other"). `02` counts and
-prints them at the end so the warnings have a number beside them. Verified
-2026-08-21: every group sums to 100%, no interval is missing or inverted.
+such cells, all real (no Black or Midwest respondent picked "Other" in the
+risk, cost and information batteries). `02` counts and prints them at the end
+so the warnings have a number beside them. Verified 2026-08-21: every
+single-response group sums to 100%, and no interval is missing or inverted.
 
 ## Splits are declared once
 
@@ -150,6 +154,22 @@ re-classified from `background` to `fusion` on 2026-08-21 for exactly this
 reason: issue concern is a substantive attitude, not a personal characteristic,
 and the first pass had them wrong.
 
+## Batteries are one plot each
+
+The 38 `checkbox_item` rows become 5 charts, grouped by their `battery` column.
+A battery's chart is not a distribution: each item is its own proportion — the
+share of the people shown the battery who ticked that box — estimated with
+`survey_mean` one item at a time rather than normalised against the others. The
+bars do not sum to 100, the question file says `multi_response: true`, and the
+caption repeats it. Verified 2026-08-21 against a plain weighted share computed
+straight from the CSVs: agreement to rounding.
+
+`02` halts if a battery spans more than one stem or topic, if its items
+disagree about which waves asked them, or if they disagree about who was shown
+them — one denominator cannot serve items resting on different samples. That
+last check is why the missingness pattern within each battery was verified
+before any of this was built.
+
 ## The front end
 
 `site/` is hand-edited source, forked 2026-08-21 from wxdash's
@@ -192,4 +212,4 @@ new that the front end iterates needs the same treatment.
 
 The demographic split columns must exist in the new wave under the same names;
 `02` checks all of them before computing anything rather than discovering a
-gap halfway through 112 questions.
+gap halfway through 79 charts.

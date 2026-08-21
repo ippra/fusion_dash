@@ -143,6 +143,9 @@ config <- list(
     smallest = " The smallest group, {smallest}, has {smallest_n} respondents.",
     dropped = paste0(" A further {dropped} answered the question but reported ",
                      "no {group_phrase}, and are not in the bars above."),
+    multi_response = paste0("Respondents could pick more than one answer, so ",
+                            "each bar is the share who chose that option and ",
+                            "the bars do not add up to 100%."),
     asked_if = paste0("Not everyone was asked: the question was shown only ",
                       "when {condition}."),
     provenance = paste0("From the IPPRA Fusion Energy Survey, run by ",
@@ -195,7 +198,8 @@ config <- list(
 # A caption template naming a token the front end does not fill renders as an
 # empty gap in a sentence, which reads as a missing number rather than a bug.
 known_tokens <- c("n", "waves", "split_clause", "years", "group_phrase",
-                  "smallest", "smallest_n", "dropped", "condition", "variable")
+                  "smallest", "smallest_n", "dropped", "condition", "variable",
+                  "multi_response")
 used <- unlist(config$explore_caption) |>
   str_extract_all("\\{(\\w+)\\}") |>
   unlist() |>

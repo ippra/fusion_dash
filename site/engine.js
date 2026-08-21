@@ -639,11 +639,18 @@ function groupedBarChart(canvas, rows, { title = "", xLabel = "", yLabel = "", c
           }
         }
       },
+      // autoSkip off on the category axis. Chart.js drops every other tick
+      // when the labels are tall, which on a select-all battery leaves half
+      // the bars unlabelled and silently mis-attributes the rest to the
+      // nearest label that did survive. The canvas is grown to fit the bars
+      // instead, in the caller.
       scales: horizontal ? {   // xLabel/yLabel keep their meaning: category / value
-        y: { title: { display: !!xLabel, text: xLabel }, grid: { display: false } },
+        y: { title: { display: !!xLabel, text: xLabel }, grid: { display: false },
+             ticks: { autoSkip: false } },
         x: { title: { display: !!yLabel, text: yLabel }, beginAtZero: true, grace: "15%" }
       } : {
-        x: { title: { display: !!xLabel, text: xLabel }, grid: { display: false } },
+        x: { title: { display: !!xLabel, text: xLabel }, grid: { display: false },
+             ticks: { autoSkip: false } },
         y: { title: { display: !!yLabel, text: yLabel }, beginAtZero: true, grace: "15%" }
       }
     },
@@ -740,6 +747,10 @@ components.explore = async function (page, container) {
     if (s.dropped > 0) text += fillTpl(tpl.dropped, {
       dropped: Number(s.dropped).toLocaleString(),
       group_phrase: (gcfg && gcfg.phrase) || "group" });
+    // A select-all battery is one bar per option, each its own share of the
+    // same people — so they do not sum to 100. Said before the reader works it
+    // out from bars that look too small.
+    if (v.multi_response) text += " " + tpl.multi_response;
     caption.append(el("p", {}, text));
     if (v.asked_if) caption.append(el("p", {},
       fillTpl(tpl.asked_if, { condition: v.asked_if })));
@@ -794,8 +805,10 @@ components.explore = async function (page, container) {
     // grow the canvas instead of cramming (long scales × many groups).
     const nCats = new Set(rows.map(r => naLabel(r.category))).size;
     const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
+    // Room for every tick now that none is skipped: a wrapped label runs to
+    // three lines, so a category needs about 44px before its bars are counted.
     wrap.style.height =
-      Math.max(340, Math.min(1000, 130 + nCats * Math.max(34, nGroups * 18))) + "px";
+      Math.max(340, Math.min(1400, 130 + nCats * Math.max(44, nGroups * 18))) + "px";
     groupedBarChart(canvas, rows, {
       title: "",
       xLabel: page.chart.x_label, yLabel: page.chart.y_label,
