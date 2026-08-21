@@ -94,7 +94,7 @@ front end is showing intervals, so the point estimate a reader sees never
 changes when they tick the box.
 
 Expect `glm.fit: algorithm did not converge` warnings. They are the logit
-interval hitting a group where every respondent gave the same answer — five
+interval hitting a group where every respondent gave the same answer — four
 such cells, all real (nobody in that group picked "Other"). `02` counts and
 prints them at the end so the warnings have a number beside them. Verified
 2026-08-21: every group sums to 100%, no interval is missing or inverted.
@@ -121,10 +121,34 @@ Three things in that block are easy to undo:
   itself — `ideol` by Ideology, `gcc` by Climate change belief. Both drew a
   single bar at 100% in every group before it existed.
 
+Response order is declared in two places and inferred in none. `02` sorts each
+group's rows by the instrument's own option order, because response codes are
+character and grouping alone sorts them as strings — that puts 10 between 1 and
+2 on every eleven-point scale and rotates the income follow-ups, whose codes run
+6-10. The front end then passes `categoryOrder` from `v.options` to
+`groupedBarChart`, because the chart otherwise orders categories by first
+appearance, and a response nobody in the first group gave lands at the end of
+the axis. Both were live bugs, fixed 2026-08-21; leave both in place.
+
 `IDEOL_GROUP` and `GCC_GROUP` are derived in `derive_groups()`. The ideology
 banding (1–3 liberal, 4 moderate, 5–7 conservative) follows the instrument's
 own labels; collapsing seven categories to three is a judgment, made there once
 rather than in the front end.
+
+## What reaches the dashboard
+
+`02` builds a question file for a reference row only when it is a `question` or
+`checkbox_item` with two or more options **and** `question_focus != "background"`.
+That last clause holds back 14 items — gender, race, income and its four
+follow-ups, education, party, ideology, partisan strength, lean, and trust in
+government. They are splits, not findings.
+
+The filter is keyed on the reference, not on a list in the script, so putting an
+item back means re-classifying it in `variable_reference.csv` — which is also
+where anyone would look to find out why it is missing. The `worry_*` items were
+re-classified from `background` to `fusion` on 2026-08-21 for exactly this
+reason: issue concern is a substantive attitude, not a personal characteristic,
+and the first pass had them wrong.
 
 ## The front end
 
@@ -168,4 +192,4 @@ new that the front end iterates needs the same treatment.
 
 The demographic split columns must exist in the new wave under the same names;
 `02` checks all of them before computing anything rather than discovering a
-gap halfway through 126 questions.
+gap halfway through 112 questions.

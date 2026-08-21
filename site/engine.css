@@ -77,7 +77,11 @@ body {
 #nav-pages a.active, #nav-pages .nav-group-btn.active { background: var(--accent); color: var(--accent-contrast); }
 
 /* ---------- layout ---------- */
-#app { padding: 18px; max-width: 1500px; margin: 0 auto; width: 100%; flex: 1 0 auto; }
+/* Full viewport width. The fork centred the page in 1500px, which suited a
+   map beside a sidebar; here the widest thing is a bar chart whose response
+   labels are whole sentences, and every pixel of chart width is a pixel the
+   labels do not have to wrap into. */
+#app { padding: 18px; margin: 0 auto; width: 100%; flex: 1 0 auto; }
 .page { display: flex; gap: 18px; align-items: flex-start; }
 .content { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
 
@@ -362,7 +366,7 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
    the item is what changes. */
 .fu-question-intro {
   font-size: 13px; line-height: 1.45; color: var(--text-muted);
-  margin: 0 0 6px; max-width: 78ch;
+  margin: 0 0 6px;
 }
 /* Split-sample marker. Deliberately not red: the item is usable, it just is
    not a single population measure, and the popover beside it says why. */

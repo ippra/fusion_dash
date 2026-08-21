@@ -33,7 +33,7 @@ data/FU26_data_wtd.csv          1,244 respondents, 344 columns
 02_create_question_data.R       srvyr; seconds
         │
         ▼
-outputs/02_question_data/       126 question files + catalog
+outputs/02_question_data/       112 question files + catalog
         │
         ▼                       ┌── site/ (front end source)
 03_build_dashboard.R  ◄─────────┘   no statistics
@@ -80,10 +80,17 @@ the documents could not settle. Read it before pooling the waves.
 
 ## What is in the dashboard
 
-126 closed-ended questions across thirteen topics. Verbatims, the numeric-entry
-investment splits, the consent item, the attention screener and the
-randomization assignments are in the reference but not in the dashboard: they
-carry no response distribution to draw.
+112 closed-ended questions across eleven topics.
+
+Two kinds of row are in the reference but not in the dashboard. Verbatims, the
+numeric-entry investment splits, the consent item, the attention screener and
+the randomization assignments carry no response distribution to draw. And
+**background items are held back** — the personal characteristics the survey
+collects to describe respondents rather than to report: gender, race, income,
+education, party, ideology and trust in government. They earn their place as
+splits, which is where they appear. That filter is one line in `02`, keyed on
+the reference's `question_focus` column, so putting an item back is a matter of
+changing its classification in the sheet rather than special-casing it in code.
 
 **Thirteen splits**, declared once in `02_create_question_data.R`: Everyone,
 seven demographics, party identification, 2024 vote, ideology, climate-change

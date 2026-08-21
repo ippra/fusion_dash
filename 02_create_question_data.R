@@ -152,10 +152,23 @@ if (anyNA(responses$weight)) {
 # consent item, the attention screener and the randomization assignments all
 # carry either no options or no question, and none of them is something a
 # reader would explore.
+#
+# Background items are excluded too - the personal characteristics the survey
+# collects to describe respondents rather than to report: gender, race,
+# income, education, party, ideology and trust in government. They earn their
+# place as splits, which is where they appear, not as findings. Nothing is
+# deleted: the rows stay in the variable reference so the record of the
+# instrument is complete.
 questions <- reference |>
-  filter(question_type %in% c("question", "checkbox_item"), n_options >= 2)
+  filter(question_type %in% c("question", "checkbox_item"), n_options >= 2,
+         question_focus != "background")
 
-message("Questions to build: ", nrow(questions))
+background <- reference |>
+  filter(question_type %in% c("question", "checkbox_item"), n_options >= 2,
+         question_focus == "background")
+
+message("Questions to build: ", nrow(questions),
+        " (", nrow(background), " background items held back)")
 
 # response_options is a fixed format this project writes and reads:
 # "1 = Label | 2 | 3 = Label", where a bare number is a scale point the
@@ -205,7 +218,7 @@ response_kind <- function(options, scale) {
 # survey_prop(proportion = TRUE) is the logit-scale interval. It is used
 # whether or not the front end is showing intervals, so the point estimate a
 # reader sees never changes when they tick the box.
-distribution <- function(d, split_id) {
+distribution <- function(d, split_id, option_values) {
   design <- d |>
     filter(!is.na(.data[[split_id]])) |>
     rename(group = all_of(split_id)) |>
@@ -220,17 +233,27 @@ distribution <- function(d, split_id) {
               p_low = round(100 * p_low, 2),
               p_upp = round(100 * p_upp, 2))
 
+  # The front end draws categories and series in the order this file lists
+  # them, so both orders are settled here.
+  #
+  # Response codes are character, and grouping alone sorts them as strings:
+  # that puts 10 between 1 and 2 on every eleven-point scale and rotates the
+  # income follow-ups, whose codes run 6-10 and 11-15. Ordered by the
+  # instrument's own option order instead, which is also right where the codes
+  # are not a sequence at all.
   order <- group_order[[split_id]]
-  if (!is.null(order)) {
-    out <- out |> mutate(group = factor(group, levels = order)) |> arrange(group)
-    if (anyNA(out$group)) {
-      print(setdiff(unique(as.character(out$group)), order))
-      stop("Groups above are in the data but not in group_order for ",
-           split_id, " - the front end would sort them alphabetically.")
-    }
-    out <- out |> mutate(group = as.character(group))
+  groups <- if (is.null(order)) sort(unique(out$group)) else order
+
+  out <- out |>
+    mutate(group = factor(group, levels = groups)) |>
+    arrange(group, match(resp, option_values))
+
+  if (anyNA(out$group)) {
+    print(setdiff(unique(as.character(out$group)), groups))
+    stop("Groups above are in the data but not in group_order for ",
+         split_id, " - the front end would sort them alphabetically.")
   }
-  out
+  out |> mutate(group = as.character(group))
 }
 
 wjson <- function(x, path, pretty = FALSE) {
@@ -284,7 +307,7 @@ for (i in seq_len(nrow(questions))) {
     have <- d |> filter(!is.na(.data[[s]]))
     if (nrow(have) == 0) next
 
-    rows <- distribution(have, s)
+    rows <- distribution(have, s, options$value)
     splits_out[[s]] <- rows
 
     # A group where every respondent gave the same answer. The logit interval

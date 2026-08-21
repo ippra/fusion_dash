@@ -785,6 +785,11 @@ components.explore = async function (page, container) {
       group: r.group, category: wrapTickLabel(labelFor(r.resp)),
       value: r.p, label: Math.round(r.p) + "%", low: r.p_low, upp: r.p_upp
     }));
+    // Declared, not inferred. The chart otherwise orders categories by first
+    // appearance, and a response nobody in the first group gave then lands at
+    // the end of the axis — which on a 0-10 scale reads as a scale with its
+    // rungs shuffled.
+    const categoryOrder = (v.options || []).map(o => wrapTickLabel(o.label));
     // Horizontal bars need vertical room proportional to bar count —
     // grow the canvas instead of cramming (long scales × many groups).
     const nCats = new Set(rows.map(r => naLabel(r.category))).size;
@@ -796,6 +801,7 @@ components.explore = async function (page, container) {
       xLabel: page.chart.x_label, yLabel: page.chart.y_label,
       showCI,
       horizontal: true,
+      categoryOrder,
       // A one-entry legend reading "All" labels nothing; the split dropdown
       // above already says whose responses these are.
       legend: nGroups > 1,
