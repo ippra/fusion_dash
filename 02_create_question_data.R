@@ -190,6 +190,16 @@ if (anyNA(responses$weight)) {
 # place as splits, which is where they appear, not as findings. Nothing is
 # deleted: the rows stay in the variable reference so the record of the
 # instrument is complete.
+# A show condition the reader can act on. The sheet keeps the instrument's own
+# `fusion_know = 1`; the dashboard shows `asked_if_plain`, which says the same
+# thing in words. A condition with no plain text would print nothing where a
+# caveat belongs, so it stops the build instead.
+unplained <- reference |> filter(!is.na(asked_if), is.na(asked_if_plain))
+if (nrow(unplained) > 0) {
+  print(unplained |> select(variable, asked_if))
+  stop("Rows above have a show condition with no asked_if_plain.")
+}
+
 eligible <- reference |>
   filter(question_type %in% c("question", "checkbox_item"), n_options >= 2,
          question_focus != "background")
@@ -499,7 +509,7 @@ for (i in seq_len(nrow(questions))) {
     intro = q$question_intro,
     response_scale = q$response_scale,
     experimental = q$experimental,
-    asked_if = q$asked_if,
+    asked_if = q$asked_if_plain,
     multi_response = FALSE,
     # Years, not FU25/FU26: the wave code is the instrument's name for the
     # fielding and means nothing to a reader. as.list keeps this an array in
@@ -658,7 +668,7 @@ for (b in batteries) {
     intro = NA_character_,
     response_scale = "checkbox",
     experimental = any(b$experimental),
-    asked_if = b$asked_if[1],
+    asked_if = b$asked_if_plain[1],
     multi_response = TRUE,
     waves = as.list(as.character(asked$year)),
     options = options,

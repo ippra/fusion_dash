@@ -96,7 +96,8 @@ in its order.
 | `n_options` | count, `0` when none |
 | `response_scale` | family name, see below |
 | `reverse_worded` | `TRUE` when a negatively worded item sits on a directional scale |
-| `asked_if` | the show condition, e.g. `fusion_know = 1` |
+| `asked_if` | the show condition as the document writes it, e.g. `fusion_know = 1` |
+| `asked_if_plain` | the same condition in a sentence a reader can act on without the instrument in front of them, written as a clause: "it was shown only to people who said they had already heard about fusion energy." Required wherever `asked_if` is filled — `02` stops the build otherwise |
 | `notes` | programming directives (`RANDOM ORDER`, `VERBATIM`) and anything wrong with the instrument |
 | `instruments` | `FU25;FU26` |
 | `wording_varies` | `TRUE` when intro, item text or options differ between waves |

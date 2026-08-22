@@ -228,7 +228,7 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   wjson(list(
     id = id, label = label, variable = variable,
     question = ref$question_text,
-    asked_if = ref$asked_if,
+    asked_if = ref$asked_if_plain,
     # A list, empty for an ungated item. auto_unbox leaves an empty list as [],
     # which the front end reads as no context columns.
     contexts = pmap(contexts, function(variable, label)

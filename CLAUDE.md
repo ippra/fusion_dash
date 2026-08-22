@@ -70,6 +70,11 @@ Its judgment columns are easy to confuse:
   than the section it sits in.
 - `topic` — the dashboard's first column, and the only judgment column the
   reader ever sees.
+- `asked_if` / `asked_if_plain` — the show condition twice over. The sheet
+  keeps the document's `fusion_know = 1`; the dashboard prints the plain
+  clause, because a caveat a reader cannot decode is not a caveat. `02` halts
+  on a condition with no plain text, since the caption would otherwise print
+  "Not everyone was asked:" and stop.
 - `battery` — which select-all set a `checkbox_item` belongs to. Declared, not
   inferred from the shared stem, so editing one item's wording cannot split a
   battery in two.

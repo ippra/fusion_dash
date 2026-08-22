@@ -1260,8 +1260,7 @@ components.open_responses = async function (page, container) {
     card.append(el("h3", {}, v.label));
     let note = `${v.n.toLocaleString()} people answered, in their own words. ` +
       `Responses are shown whole and unedited.`;
-    if (v.asked_if) note += ` Not everyone was asked: the question was shown ` +
-      `only when ${v.asked_if}.`;
+    if (v.asked_if) note += ` Not everyone was asked: ${v.asked_if}`;
     card.append(el("p", { class: "fu-caption" }, v.question || ""),
                 el("p", { class: "fu-caption" }, note));
     if (typeof v.caution === "string" && v.caution)
