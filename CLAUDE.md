@@ -299,7 +299,8 @@ shown.
 
 `01_variable_reference/themes.csv` holds one primary theme per response, keyed
 on `case_id`; `theme_labels.csv` holds the roster and the order the filter menu
-reads in. Coded so far: `oppose` (403 responses, 15 themes) and `support` (377, 15). An item
+reads in. Coded so far: `oppose` (403 responses, 15 themes), `support` (377, 15) and
+`uncertain` (1,630, 17). An item
 with no coding gets no theme column; nothing is guessed.
 
 The procedure is

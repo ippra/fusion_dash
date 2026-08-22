@@ -29,3 +29,20 @@ support,reliable,Reliable supply,12
 support,national,National independence and competitiveness,13
 support,doubt,Doubts it will be allowed to happen,14
 support,none,No reason given,15
+uncertain,noinfo,Not enough information to judge,1
+uncertain,siting,Not near where people live,2
+uncertain,risks,Unsure what the risks are,3
+uncertain,unproven,Wants it proven first,4
+uncertain,safety,Safety and accident risk,5
+uncertain,env,Environmental harm and water,6
+uncertain,balance,Weighing benefits against risks,7
+uncertain,local,Local impact on my area,8
+uncertain,cost,Cost and energy bills,9
+uncertain,nuclear,Association with nuclear power,10
+uncertain,distrust,"Distrust of government, industry or oversight",11
+uncertain,health,Health effects,12
+uncertain,never,Had never heard of fusion,13
+uncertain,jobs,Jobs and the local economy,14
+uncertain,clean,Clean energy potential,15
+uncertain,faroff,Too far off to matter,16
+uncertain,none,No reason given,17

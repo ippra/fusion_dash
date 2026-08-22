@@ -164,8 +164,8 @@ matched on the raw assignment value, because `rand_lab` writes the same arm as
 "US national laboratories…" in 2025 and "U.S. national laboratories…" in 2026.
 
 **Open responses carry a theme where they have been read.** The 403 "why
-people oppose" answers and the 377 "why people support" answers are each coded
-into 15 themes — opposition led by safety and accident risk (81) and not near
+people oppose", 377 "why people support" and 1,630 "why people are unsure"
+answers are each coded into 15 to 17 themes — opposition led by safety and accident risk (81) and not near
 where people live (64); support led by clean energy and lower emissions (79)
 and cheaper energy and lower bills (63) — assigned by reading every response,
 not by keyword. The theme is a

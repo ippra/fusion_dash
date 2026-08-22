@@ -10,8 +10,8 @@ response**, keyed on `case_id`, plus a labelled roster in `theme_labels.csv`.
 The dashboard shows the theme as a filterable column beside the raw text, which
 is never altered.
 
-Coded so far: `oppose` (403 responses, 15 themes) and `support` (377, 15).
-Not coded: `uncertain` (1,630), `ask` (1,170). An uncoded item shows no theme column —
+Coded so far: `oppose` (403 responses, 15 themes), `support` (377, 15) and
+`uncertain` (1,630, 17). Not coded: `ask` (1,170). An uncoded item shows no theme column —
 `03_create_open_response_data.R` does not guess.
 
 ## Read the responses. Do not write a matcher.
@@ -92,11 +92,22 @@ Two rules that settle most of the hard cases:
 Write the assignments out as an explicit index → theme mapping, then script the
 paste-in. That is safer than retyping and cannot alter the text.
 
+**Key every row to its index.** A positional list of codes — one per response,
+no indices — silently shifts every assignment after a miscount, and the totals
+still look plausible. That happened on `uncertain`: 1,660 codes emitted for
+1,630 responses. Ten codes per row with the starting index stated, and an
+assert on the row length, makes the error impossible to miss.
+
 ### 5. Verify — read each theme's members together
 
 **Not optional, and not a formality.** This pass exists because assignments
 made one at a time drift. Print every response under a theme, together, and
 read down the list asking whether they are making the same claim.
+
+It also catches themes missed in pass 3 entirely. On `uncertain` it turned up
+six responses citing fusion's clean-energy promise with no concern attached,
+sitting in *No reason given* — they had given one, and there was no theme for
+it. *Clean energy potential* exists because the verification pass found it.
 
 On the `oppose` pass it caught three:
 
