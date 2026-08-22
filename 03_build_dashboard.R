@@ -171,9 +171,26 @@ config <- list(
                           "the question, so they are not a single population ",
                           "measure. The instrument records which.</p>")
   ),
+  # Two audiences, each unfolding into a survey view and a qualitative view.
+  # Only the public survey has data behind it so far; the other three are
+  # placeholders that say so rather than empty shells that look broken.
   pages = list(
+    list(id = "home", component = "fu_landing", label = "Home",
+         hero = list(
+           eyebrow = "IPPRA Fusion Energy Survey - University of Oklahoma",
+           headline = paste0("What do Americans know, expect and want from ",
+                             "fusion energy?"),
+           sub = paste0("Nationally representative survey data on awareness, ",
+                        "risk and benefit perceptions, siting, trust and ",
+                        "regulation - with a companion study of subject ",
+                        "matter experts to come."),
+           cta_label = "Explore the survey questions",
+           # The flagship chart: support for building fusion plants, asked in
+           # both waves, on a scale a reader takes in at a glance.
+           question = "new_fusion")),
     list(id = "explore", component = "explore",
-         label = "Explore the Data",
+         nav_group = "Public",
+         label = "Explore Survey Data",
          questions = "data/questions.json", default_grouping = "All",
          intro = paste0("Click a question in the table below to see the ",
                         "weighted distribution of responses, split by the ",
@@ -182,7 +199,34 @@ config <- list(
                         "variable name and the topic tags."),
          # x_label titles the category axis and y_label the value axis, which
          # the horizontal layout swaps on screen but not in meaning.
-         chart = list(x_label = "Response", y_label = "Respondents (%)")),
+         chart = list(x_label = "Response", y_label = "Respondents (%)"),
+         blurb = paste0("Weighted response distributions for every closed-",
+                        "ended question, split thirteen ways.")),
+    list(id = "public-qual", component = "placeholder",
+         nav_group = "Public",
+         label = "Explore Qualitative Data",
+         intro = paste0("What people wrote in their own words: why they ",
+                        "oppose or support fusion energy, what they would ask ",
+                        "a fusion expert, and anything else they wanted to ",
+                        "tell us."),
+         note = paste0("The survey collected these open responses and they ",
+                       "are in the data, but nothing is coded or summarised ",
+                       "yet, so there is nothing to show."),
+         blurb = "Open-ended responses from the public survey."),
+    list(id = "sme-survey", component = "placeholder",
+         nav_group = "SMEs",
+         label = "Explore Survey Data",
+         intro = paste0("Survey responses from subject matter experts - ",
+                        "people working on fusion energy and its regulation."),
+         note = "This survey has not been fielded yet.",
+         blurb = "Survey responses from subject matter experts."),
+    list(id = "sme-qual", component = "placeholder",
+         nav_group = "SMEs",
+         label = "Explore Qualitative Data",
+         intro = paste0("Interviews and open responses from subject matter ",
+                        "experts."),
+         note = "These have not been collected yet.",
+         blurb = "Interviews and open responses from subject matter experts."),
     list(id = "about", component = "static_page", label = "About",
          html = about_html)
   ),

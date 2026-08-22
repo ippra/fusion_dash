@@ -78,6 +78,21 @@ improvising.
 wrong, what must not be "fixed" because it is in the released data, and what
 the documents could not settle. Read it before pooling the waves.
 
+## Pages
+
+A landing page, then two audiences in the nav, each unfolding into a survey
+view and a qualitative view, then About.
+
+- **Public → Explore Survey Data** — live; the whole dashboard so far
+- **Public → Explore Qualitative Data** — placeholder. The open responses are
+  in the data but nothing is coded yet
+- **SMEs → Explore Survey Data** — placeholder; not fielded yet
+- **SMEs → Explore Qualitative Data** — placeholder; not collected yet
+
+The placeholders say what will go there and what is missing, rather than
+rendering an empty shell that looks like a page which failed to load. Filling
+one in is a component plus one line in `03`.
+
 ## What is in the dashboard
 
 79 charts across eleven topics: 74 single-response questions and 5

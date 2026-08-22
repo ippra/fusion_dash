@@ -1029,6 +1029,128 @@ function infoTip(html, opts = {}) {
   return wrap;
 }
 
+/* Landing page: hero, a live chart drawn from real explorer data, and a
+ * directory of what the site holds. Adapted from wxdash's wx_landing — the
+ * map alternative link is gone, and the meta line reads this project's
+ * meta.json rather than wxdash's. */
+components.fu_landing = async function (page, container) {
+  const h = page.hero || {};
+  const surveyPage = CONFIG.pages.find(p => p.component === "explore");
+
+  const hero = el("section", { class: "fu-hero fu-hero-survey" });
+  const content = el("div", { class: "fu-hero-content" });
+  if (h.eyebrow) content.append(el("p", { class: "fu-eyebrow" }, h.eyebrow));
+  content.append(el("h1", {}, h.headline || CONFIG.project.title));
+  if (h.sub) content.append(el("p", { class: "fu-hero-sub" }, h.sub));
+  // Entering the explorer lands on the question shown here, with the chosen
+  // split carried along, so people continue from what they were looking at.
+  const flagship = h.question;
+  const intoExplorer = () => setParams({
+    q: flagship, grouping: sel.value !== "All" ? sel.value : null });
+  if (surveyPage && flagship) content.append(el("p", { class: "fu-hero-cta" },
+    el("a", { class: "fu-cta-button", href: "#" + surveyPage.id,
+              onclick: intoExplorer },
+      h.cta_label || "Explore the survey results")));
+  const metaLine = el("p", { class: "fu-meta-line" });
+  content.append(metaLine);
+
+  const chartCard = el("div", { class: "card fu-hero-chartcard" });
+  const chartTitle = el("h3", {}, "");
+  const wrap = el("div", { class: "chart-wrap fu-hero-chartwrap" });
+  const canvas = el("canvas");
+  wrap.append(canvas);
+  const controls = el("div", { class: "fu-hero-chartbar" });
+  const sel = el("select", { class: "grouping", id: "hero-split" });
+  for (const g of CONFIG.groupings || [{ id: "All", label: "All" }])
+    sel.append(el("option", { value: g.id }, g.label));
+  sel.value = "All";
+  const caption = el("p", { class: "fu-caption" });
+  controls.append(el("label", { class: "field-label", for: "hero-split" },
+                      "Split by"), sel);
+  chartCard.append(chartTitle, controls, wrap, caption);
+  hero.append(content, chartCard);
+
+  const directory = el("div", { class: "card fu-directory-card" });
+  const grid = el("div", { class: "fu-directory" });
+  for (const p of CONFIG.pages.filter(p => p.blurb && !p.hidden)) {
+    const a = el("a", { class: "fu-dir-row", href: "#" + p.id });
+    a.append(el("h3", {}, (p.nav_group ? p.nav_group + " — " : "") + p.label),
+             el("p", {}, p.blurb));
+    grid.append(a);
+  }
+  directory.append(grid);
+
+  container.append(el("div", { class: "page fu-landing-page" },
+    el("div", { class: "content" }, hero, directory)));
+
+  try {
+    const meta = await fetchJSON("data/meta.json");
+    const years = (meta.waves || []).map(w => w.year);
+    metaLine.innerHTML =
+      `<b>${Number(meta.respondents).toLocaleString()}</b> survey responses · ` +
+      `<b>${years.join(" and ")}</b> · ` +
+      `<b>${meta.questions}</b> questions`;
+  } catch { metaLine.remove(); }
+
+  try {
+    if (!surveyPage || !flagship) { chartCard.remove(); return; }
+    const [v, questions] = await Promise.all([
+      fetchJSON(`data/q/${flagship}.json`), fetchJSON(surveyPage.questions)]);
+    chartTitle.textContent = v.question || flagship;
+    // Splits are keyed by experiment arm; the flagship is a pooled question,
+    // so read the single "all" set.
+    const armKey = Array.isArray(v.arms) && v.arms.length ? v.arms[0].id : "all";
+    const SPLITS = v.splits[armKey] || {};
+    const labelFor = (resp) => {
+      const hit = (v.options || []).find(o => String(o.value) === String(resp));
+      return hit ? wrapTickLabel(hit.label) : String(resp);
+    };
+    const draw = () => {
+      const g = (SPLITS[sel.value] && SPLITS[sel.value].length)
+        ? sel.value : "All";
+      const rows = (SPLITS[g] || []).map(r => ({
+        group: r.group, category: labelFor(r.resp), value: r.p,
+        label: Math.round(r.p) + "%" }));
+      const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
+      groupedBarChart(canvas, rows, {
+        xLabel: "Response", yLabel: "Respondents (%)", horizontal: true,
+        legend: nGroups > 1,
+        // Same palette the explorer opens in, so the teaser and the page it
+        // advertises look like the same site.
+        colors: schemeSeriesColors(DEFAULT_SCHEME, nGroups),
+        categoryOrder: (v.options || []).map(o => wrapTickLabel(o.label)) });
+    };
+    sel.onchange = draw;
+    caption.append(`One of ${questions.length} questions in the survey — `,
+      el("a", { href: "#" + surveyPage.id, onclick: intoExplorer },
+         "explore them all"), ".");
+    draw();
+  } catch { chartCard.remove(); }
+};
+
+/* A page whose data is not collected or wired up yet. It says what will go
+ * here and what is missing, rather than rendering an empty shell that looks
+ * like something failed to load. */
+components.placeholder = async function (page, container) {
+  const card = el("div", { class: "card fu-placeholder" });
+  card.append(el("h3", {}, page.label));
+  if (page.intro) card.append(el("p", {}, page.intro));
+  card.append(el("p", { class: "fu-placeholder-note" },
+    page.note || "Nothing to show here yet."));
+  const surveyPage = CONFIG.pages.find(p => p.component === "explore");
+  if (surveyPage && surveyPage.id !== page.id) {
+    // Qualified with its group: three of the four pages share two labels, so
+    // "Explore Survey Data" alone would read as a link back to this page.
+    card.append(el("p", {}, "In the meantime, ",
+      el("a", { href: "#" + surveyPage.id },
+         (surveyPage.nav_group ? surveyPage.nav_group + " — " : "") +
+         surveyPage.label),
+      " is live."));
+  }
+  container.append(el("div", { class: "page" },
+    el("div", { class: "content" }, card)));
+};
+
 components.static_page = async function (page, container) {
   container.append(el("div", { class: "page" },
     el("div", { class: "content" },

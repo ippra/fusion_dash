@@ -232,6 +232,37 @@ them — one denominator cannot serve items resting on different samples. That
 last check is why the missingness pattern within each battery was verified
 before any of this was built.
 
+## Pages
+
+Six, declared in `03`'s `config$pages`:
+
+| id | component | nav |
+|---|---|---|
+| `home` | `fu_landing` | Home |
+| `explore` | `explore` | Public → Explore Survey Data |
+| `public-qual` | `placeholder` | Public → Explore Qualitative Data |
+| `sme-survey` | `placeholder` | SMEs → Explore Survey Data |
+| `sme-qual` | `placeholder` | SMEs → Explore Qualitative Data |
+| `about` | `static_page` | About |
+
+A page carrying `nav_group` folds into a dropdown at the position of its
+group's first member; that machinery came from the fork untouched. The survey
+page keeps the id `explore` rather than taking a name matching its new label,
+because `#explore?q=…` links are already in circulation.
+
+`placeholder` pages say what will go there and what is missing. Filling one in
+means writing its component and swapping `component` in `03` — the page, its
+nav position and its landing-page blurb are already in place. Note that the
+public qualitative data **exists**: the verbatims (`fusion_oppose_why`,
+`fusion_support_why`, `fusion_question`, `comments`) are in the reference and
+in the data, and are excluded from `02` only because they carry no response
+distribution. Nothing is coded or summarised yet, which is what that page says.
+
+`fu_landing` is adapted from wxdash's `wx_landing`: same hero, live flagship
+chart and directory, with the map alternative link gone and the meta line
+reading this project's `meta.json`. Its chart reads `v.splits[armKey]` like the
+explorer does, so a split-sample flagship would still draw.
+
 ## The front end
 
 `site/` is hand-edited source, forked 2026-08-21 from wxdash's
