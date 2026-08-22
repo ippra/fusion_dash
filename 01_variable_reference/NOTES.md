@@ -126,7 +126,29 @@ These are in the released data. Correcting them in the sheet breaks the join.
       uses 1–5, `inc_100` 6–10, `inc_150` 11–15, `inc_200` 16–21. Deliberate,
       and worth knowing before anyone recodes them.
 
-## 6. Open questions
+## 6. Before the open-response page is published
+
+- [ ] **A response has to be read for content, not only for identifiers.**
+      `03_create_open_response_data.R` screens every verbatim for emails, URLs,
+      phone numbers, long digit runs and @handles, and currently catches
+      nothing across 3,580 responses. That screen sees shapes, not meaning, and
+      it is not a substitute for someone reading them.
+      **Known example: `uncertain` response 299 (2025, case R_7v227pi7cJFbMtw)
+      objects to a facility on the grounds that it would introduce "blacks,
+      Hispanics and other undesirable elements" to the respondent's community.**
+      It is coded *Local impact on my area*, which is its stated reason, and it
+      renders verbatim on the page like every other answer. It is not the only
+      thing of its kind that a full read might surface.
+      Decide before the site is served anywhere public: publish the corpus
+      whole, withhold specific responses with the count stated, or show themes
+      and counts without the raw text for these items. Whichever is chosen, say
+      it on the page.
+- [ ] **Free text carries location detail the screen cannot catch** — "I live
+      in New York City", "I live within 50 miles of Canada and Buffalo", "I
+      live near the Hanford WA Nuclear Plant". Individually harmless; worth a
+      judgement about the set.
+
+## 7. Open questions
 
 - [ ] FU25's two-approaches block (`fusion_app_know`, `fusion_app_prom`, and the
       magnetic/inertial confinement descriptions) was dropped in FU26 with no
