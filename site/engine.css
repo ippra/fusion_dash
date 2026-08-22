@@ -997,3 +997,41 @@ table.data th select {
   color: var(--text-muted); border-left: 3px solid var(--panel-border);
   padding-left: 12px; margin: 12px 0;
 }
+
+/* ---------- open responses ---------- */
+/* Word list. Rows rather than a chart: 2,500 words is a list a reader scans
+   and searches, not a plot, and the bar is there for comparison rather than
+   for reading a value off an axis. */
+.fu-wordlist { display: flex; flex-direction: column; gap: 3px; margin-top: 10px; }
+.fu-word-row {
+  display: grid; grid-template-columns: minmax(120px, 22ch) 1fr 5ch 4ch;
+  align-items: center; gap: 10px; font-size: 13.5px;
+}
+.fu-word-name { overflow-wrap: anywhere; }
+.fu-word-track {
+  background: var(--row-hover); border-radius: 3px; height: 16px;
+  overflow: hidden;
+}
+/* Outlined, because the ramp's midpoint is near white: a word people felt
+   neutral about would otherwise read as an empty track rather than as the
+   most-mentioned word on the page. */
+.fu-word-fill {
+  display: block; height: 100%; border-radius: 3px;
+  border: 1px solid rgba(128, 128, 128, 0.45); box-sizing: border-box;
+}
+.fu-word-pct { text-align: right; font-family: var(--mono, monospace); font-size: 12px; }
+.fu-word-val {
+  text-align: right; font-family: var(--mono, monospace); font-size: 12px;
+  color: var(--text-muted); cursor: help;
+}
+.fu-valence-legend {
+  display: flex; align-items: center; gap: 8px; margin: 10px 0 4px;
+  font-size: 11.5px; color: var(--text-muted);
+}
+.fu-valence-strip {
+  flex: 0 1 220px; height: 10px; border-radius: 5px;
+  border: 1px solid var(--panel-border);
+}
+/* Verbatims are sentences, so the response column reads as prose rather than
+   as a table cell clipped to one line. */
+.fu-verbatim-text { line-height: 1.5; overflow-wrap: anywhere; }

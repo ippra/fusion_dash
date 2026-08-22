@@ -21,7 +21,8 @@ configure.
 |---|---|
 | `01_variable_reference/` | the codebook: `variable_reference.csv`, 152 rows, one per variable, **read off the instruments by hand**, plus `NOTES.md` and the procedure that produced it |
 | `02_create_question_data.R` | the statistics: srvyr weighted distributions and 95% intervals for every question and split → `outputs/02_question_data/` |
-| `03_build_dashboard.R` | the site: `config.json` plus the hand-edited front end in `site/` → `outputs/03_site/` |
+| `03_create_open_response_data.R` | the qualitative side: word associations with their valence, and the open-ended responses, screened for identifiers → `outputs/03_open_responses/` |
+| `04_build_dashboard.R` | the site: `config.json` plus the hand-edited front end in `site/` → `outputs/04_site/` |
 
 ```
 data/FU25_data_wtd.csv          1,200 respondents, 117 columns
@@ -36,18 +37,18 @@ data/FU26_data_wtd.csv          1,244 respondents, 344 columns
 outputs/02_question_data/       79 question files + catalog
         │
         ▼                       ┌── site/ (front end source)
-03_build_dashboard.R  ◄─────────┘   no statistics
+04_build_dashboard.R  ◄─────────┘   no statistics
         │
         ▼
-outputs/03_site/                the deployable site, 2.2 MB
+outputs/04_site/                the deployable site, 2.2 MB
 ```
 
 ## Building and previewing
 
 ```sh
 Rscript 02_create_question_data.R          # after any data or reference change
-Rscript 03_build_dashboard.R               # always; seconds
-python3 -m http.server --directory outputs/03_site 8901
+Rscript 04_build_dashboard.R               # always; seconds
+python3 -m http.server --directory outputs/04_site 8901
 ```
 
 R packages: `tidyverse`, `srvyr`, `survey`, `jsonlite`, `here`. `xml2` and
@@ -84,8 +85,9 @@ A landing page, then two audiences in the nav, each unfolding into a survey
 view and a qualitative view, then About.
 
 - **Public → Explore Survey Data** — live; the whole dashboard so far
-- **Public → Explore Qualitative Data** — placeholder. The open responses are
-  in the data but nothing is coded yet
+- **Public → Explore Open Responses** — live. Word associations, why people
+  support or oppose, and questions for an expert. Counted and shown, not
+  themed
 - **SMEs → Explore Survey Data** — placeholder; not fielded yet
 - **SMEs → Explore Qualitative Data** — placeholder; not collected yet
 
@@ -168,7 +170,7 @@ difference this pipeline exists to avoid.
 ## The front end
 
 `site/` is hand-edited source: `engine.js`, `engine.css`, `index.html`, and
-vendored Chart.js and jsPDF. `03_build_dashboard.R` copies it, fills the
+vendored Chart.js and jsPDF. `04_build_dashboard.R` copies it, fills the
 `__BUILD__` cache-busting stamp, drops anything hidden, and refuses to publish
 a built site containing `.R`, `.csv` or `.docx` files. A run takes seconds, so
 iterating on the front end is cheap.
@@ -185,11 +187,11 @@ a download cannot say something the screen does not.
 
 ## Deploying
 
-`outputs/03_site/` is the rsync unit — plain static files, no server code, no
+`outputs/04_site/` is the rsync unit — plain static files, no server code, no
 third-party requests, every library vendored.
 
 ```sh
-rsync -av --delete outputs/03_site/ <host>:<docroot>/fusion/
+rsync -av --delete outputs/04_site/ <host>:<docroot>/fusion/
 ```
 
 Relative URLs and hash routing mean moving hosts needs no change to the site.

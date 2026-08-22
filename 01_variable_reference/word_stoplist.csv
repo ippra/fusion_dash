@@ -1,0 +1,25 @@
+word,why
+none,explicit non-answer
+nothing,explicit non-answer
+not sure,"stated inability to answer, not an association"
+unsure,"stated inability to answer, not an association"
+i don't know,explicit non-answer
+i don’t know,"explicit non-answer, curly apostrophe"
+i dont know,explicit non-answer
+i do not know,explicit non-answer
+i donot know,"explicit non-answer, as typed"
+no idea,explicit non-answer
+no clue,explicit non-answer
+no comment,explicit non-answer
+idk,explicit non-answer
+na,explicit non-answer
+n/a,explicit non-answer
+no,explicit non-answer
+nope,explicit non-answer
+nada,explicit non-answer
+?,punctuation only
+??,punctuation only
+???,punctuation only
+????,punctuation only
+?????,punctuation only
+??????,punctuation only

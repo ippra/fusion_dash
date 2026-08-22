@@ -17,13 +17,13 @@ source(here::here("00_paths.R"))
 # front end fills at render time.
 #
 # Run after 02, from anywhere:
-#   Rscript 03_build_dashboard.R
+#   Rscript 04_build_dashboard.R
 #
-# Writes outputs/03_site/ — plain static files, fully self-contained. Preview:
-#   python3 -m http.server --directory outputs/03_site 8899
+# Writes outputs/04_site/ — plain static files, fully self-contained. Preview:
+#   python3 -m http.server --directory outputs/04_site 8899
 
 data_in <- file.path(outputs, "02_question_data")
-out <- file.path(outputs, "03_site")
+out <- file.path(outputs, "04_site")
 
 needed <- file.path(data_in, c("questions.json", "splits.json", "meta.json"))
 if (!all(file.exists(needed))) {
@@ -44,6 +44,20 @@ wjson <- function(x, path, pretty = FALSE) {
   write_json(x, file.path(out, path), pretty = pretty, auto_unbox = TRUE,
              na = "null", digits = NA)
 }
+
+# Open Responses ---------------------------------------------------------------
+# Copied through unchanged, like the question data: 03 counts and screens, this
+# script only moves the result.
+open_in <- file.path(outputs, "03_open_responses")
+if (!file.exists(file.path(open_in, "index.json"))) {
+  stop("No open-response data - run 03_create_open_response_data.R first.")
+}
+dir.create(file.path(out, "data", "open", "verbatims"), recursive = TRUE)
+invisible(file.copy(list.files(open_in, pattern = "\\.json$", full.names = TRUE),
+                    file.path(out, "data", "open")))
+invisible(file.copy(
+  list.files(file.path(open_in, "verbatims"), full.names = TRUE),
+  file.path(out, "data", "open", "verbatims")))
 
 # Question Data ----------------------------------------------------------------
 # Copied through unchanged - these ARE the statistics, and they stay 02's.
@@ -202,17 +216,19 @@ config <- list(
          chart = list(x_label = "Response", y_label = "Respondents (%)"),
          blurb = paste0("Weighted response distributions for every closed-",
                         "ended question, split thirteen ways.")),
-    list(id = "public-qual", component = "placeholder",
+    list(id = "public-qual", component = "open_responses",
          nav_group = "Public",
-         label = "Explore Qualitative Data",
-         intro = paste0("What people wrote in their own words: why they ",
-                        "oppose or support fusion energy, what they would ask ",
-                        "a fusion expert, and anything else they wanted to ",
-                        "tell us."),
-         note = paste0("The survey collected these open responses and they ",
-                       "are in the data, but nothing is coded or summarised ",
-                       "yet, so there is nothing to show."),
-         blurb = "Open-ended responses from the public survey."),
+         label = "Explore Open Responses",
+         index = "data/open/index.json",
+         words = "data/open/words.json",
+         verbatims = "data/open/verbatims/{id}.json",
+         intro = paste0("What people said in their own words. Nothing here is ",
+                        "grouped into themes: words are counted as they were ",
+                        "typed and answers are shown whole, because there is ",
+                        "no coding frame yet and inventing one would put ",
+                        "words in respondents' mouths."),
+         blurb = paste0("Word associations, why people support or oppose ",
+                        "fusion, and what they would ask an expert.")),
     list(id = "sme-survey", component = "placeholder",
          nav_group = "SMEs",
          label = "Explore Survey Data",
@@ -288,6 +304,7 @@ if (length(leaked) > 0) {
 
 required <- c("index.html", "engine.js", "engine.css", "config.json",
               "data/questions.json", "data/meta.json",
+              "data/open/index.json", "data/open/words.json",
               "assets/vendor/chart.umd.min.js",
               "assets/vendor/chartjs-plugin-datalabels.min.js",
               "assets/vendor/jspdf.umd.min.js")

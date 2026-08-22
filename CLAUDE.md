@@ -15,8 +15,9 @@ reason rather than the history. The full guide is `~/.claude/ippra-r-style.md`.
 
 ```sh
 Rscript 02_create_question_data.R          # srvyr statistics; seconds
-Rscript 03_build_dashboard.R               # assemble the site; seconds
-python3 -m http.server --directory outputs/03_site 8901
+Rscript 03_create_open_response_data.R     # words + verbatims; seconds
+Rscript 04_build_dashboard.R               # assemble the site; seconds
+python3 -m http.server --directory outputs/04_site 8901
 ```
 
 There is no `01` script — `01_variable_reference/` is a directory holding the
@@ -232,6 +233,38 @@ them — one denominator cannot serve items resting on different samples. That
 last check is why the missingness pattern within each battery was verified
 before any of this was built.
 
+## Open responses (03)
+
+`03_create_open_response_data.R` builds the qualitative page: word
+associations, the three why-items, and the questions people would put to a
+fusion expert. It **counts and screens, it does not summarise**. Words are
+counted as typed - "clean" and "clean energy" stay separate, because deciding
+they are one word is coding - and verbatims are carried whole. There is no
+coding frame, and a build script inventing one would put words in respondents'
+mouths with nothing on the page to say so.
+
+Three things in it are easy to undo:
+
+- **A word's share is of respondents, not of entries.** Everyone gave up to
+  three words, so counting entries would let one person's repetition read as
+  agreement. A word mentioned twice by the same person counts once.
+- **`word_stoplist.csv`** holds the 24 explicit non-answers ("none", "not
+  sure", "n/a", bare question marks) - 440 of 7,056 entries. Versioned rather
+  than a regex in code, because whether "not sure" is a non-answer or a real
+  association is a judgment someone may want to revisit. "unknown" is *not* on
+  it: 43 people meant it.
+- **The identifier screen is a net, not a review.** It catches emails, URLs,
+  phone numbers, long digit runs and @handles, holds them back, and writes
+  `held_back_for_review.csv`. It currently catches nothing across 3,580
+  responses - verified against probes, so that is a real result and not a
+  broken pattern. It cannot catch "I live in New York City", which is in the
+  data. A human has to read these before the site is published anywhere
+  public.
+
+The three why-items carry a caution: they are gated partly on `fusion_host`,
+which randomized the distance to 10 or 50 miles, and 52 responses mention the
+distance they were shown.
+
 ## Pages
 
 Six, declared in `03`'s `config$pages`:
@@ -240,7 +273,7 @@ Six, declared in `03`'s `config$pages`:
 |---|---|---|
 | `home` | `fu_landing` | Home |
 | `explore` | `explore` | Public → Explore Survey Data |
-| `public-qual` | `placeholder` | Public → Explore Qualitative Data |
+| `public-qual` | `open_responses` | Public → Explore Open Responses |
 | `sme-survey` | `placeholder` | SMEs → Explore Survey Data |
 | `sme-qual` | `placeholder` | SMEs → Explore Qualitative Data |
 | `about` | `static_page` | About |

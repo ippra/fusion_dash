@@ -14,6 +14,7 @@ outputs <- file.path(project_root, "outputs")
 
 variable_reference <- file.path(reference_dir, "variable_reference.csv")
 arms_reference <- file.path(reference_dir, "arms.csv")
+word_stoplist <- file.path(reference_dir, "word_stoplist.csv")
 
 # The waves the dashboard covers. Adding one is a row here plus a column_fu27
 # in the variable reference; every script iterates this table rather than
@@ -31,7 +32,7 @@ waves <- tibble::tribble(
 # an unweighted percentage looks entirely reasonable and is wrong.
 weight_var <- "weight"
 
-absent <- c(variable_reference, arms_reference, waves$data)
+absent <- c(variable_reference, arms_reference, word_stoplist, waves$data)
 absent <- absent[!file.exists(absent)]
 
 if (length(absent) > 0) {

@@ -1128,6 +1128,152 @@ components.fu_landing = async function (page, container) {
   } catch { chartCard.remove(); }
 };
 
+/* ---- open responses ------------------------------------------------------
+ * The qualitative half of the public survey: word associations, the three
+ * why-items, and the questions people would put to a fusion expert.
+ *
+ * Nothing here is themed or summarised, because 03 does not theme or summarise
+ * — words are counted as typed and verbatims are carried whole. A page that
+ * grouped them into themes would be showing a coding frame that does not
+ * exist. */
+
+// Diverging ramp for word valence: dark red at "very negative" through near
+// white at the midpoint to dark blue at "very positive". ColorBrewer RdBu,
+// which is colourblind-safe; the greyscale theme swaps it for greys like the
+// rest of the data colour.
+const RDBU_STOPS = [
+  [178,24,43],[239,138,98],[253,219,199],[247,247,247],
+  [209,229,240],[103,169,207],[33,102,172]
+];
+
+components.open_responses = async function (page, container) {
+  const index = await fetchJSON(page.index);
+  const views = [{ id: "words", label: "Word associations" }]
+    .concat(index.verbatims.map(v => ({ id: v.id, label: v.label, n: v.n })));
+
+  let current = getParam("view");
+  if (!views.some(v => v.id === current)) current = views[0].id;
+
+  const intro = el("p", { class: "fu-explore-intro" }, page.intro || "");
+  const bar = el("div", { class: "card fu-toolbar" });
+  const sel = el("select", { class: "grouping", id: "op-view", onchange: () => {
+    current = sel.value; setParams({ view: current }); render();
+  } });
+  for (const v of views)
+    sel.append(el("option", { value: v.id },
+      v.label + (v.n != null ? ` (${v.n.toLocaleString()})` : "")));
+  sel.value = current;
+  bar.append(el("label", { class: "field-label", for: "op-view" }, "Show"), sel);
+
+  const panel = el("div");
+  container.append(el("div", { class: "page" },
+    el("div", { class: "content" }, intro, bar, panel)));
+
+  async function render() {
+    panel.textContent = "";
+    if (current === "words") await renderWords(panel);
+    else await renderVerbatims(panel, current);
+  }
+
+  async function renderWords(host) {
+    const data = await fetchJSON(page.words);
+    const card = el("div", { class: "card" });
+    card.append(el("h3", {}, "The first words that come to mind"));
+    card.append(el("p", { class: "fu-caption" },
+      `Everyone was asked for the first three words or phrases they think of ` +
+      `when they hear "fusion energy", and how they feel about each one. ` +
+      `${data.entries.toLocaleString()} words from ` +
+      `${data.respondents.toLocaleString()} people, ` +
+      `${data.words.length.toLocaleString()} of them distinct. Bars are the ` +
+      `weighted share of people who used the word; colour is how they felt ` +
+      `about it, from ${data.scale.min_label.toLowerCase()} to ` +
+      `${data.scale.max_label.toLowerCase()}. Words are counted as typed and ` +
+      `nothing is merged, so "clean" and "clean energy" are separate. ` +
+      `${data.excluded_nonanswer.toLocaleString()} answers that only said so ` +
+      `much as "none" or "not sure" are left out.`));
+
+    const tools = el("div", { class: "table-tools" });
+    const search = el("input", { type: "search", placeholder: "Find a word…",
+      oninput: () => draw() });
+    const count = el("span", { class: "count" });
+    const sizeSel = el("select", { onchange: () => draw() });
+    for (const n of [25, 50, 100, 250])
+      sizeSel.append(el("option", { value: n }, String(n)));
+    sizeSel.value = "50";
+    tools.append(search, el("label", { class: "pagesize" },
+      "Show top ", sizeSel), count);
+
+    const legend = el("div", { class: "fu-valence-legend" });
+    legend.append(el("span", {}, data.scale.min_label));
+    const strip = el("span", { class: "fu-valence-strip" });
+    const stops = dataStops(RDBU_STOPS);
+    strip.style.background = "linear-gradient(to right, " +
+      [0,.2,.4,.6,.8,1].map(t => rampColor(stops, t)).join(",") + ")";
+    legend.append(strip, el("span", {}, data.scale.max_label));
+
+    const list = el("div", { class: "fu-wordlist" });
+    card.append(tools, legend, list);
+    host.append(card);
+
+    function draw() {
+      const q = search.value.trim().toLowerCase();
+      const hits = data.words.filter(w => !q || w.word.includes(q));
+      const shown = hits.slice(0, Number(sizeSel.value));
+      const top = shown.length ? shown[0].pct : 1;
+      list.textContent = "";
+      for (const w of shown) {
+        const row = el("div", { class: "fu-word-row" });
+        row.append(el("span", { class: "fu-word-name" }, w.word));
+        const track = el("span", { class: "fu-word-track" });
+        const fill = el("span", { class: "fu-word-fill" });
+        fill.style.width = Math.max(1, 100 * w.pct / top) + "%";
+        // Valence is a 1-5 mean; map it onto the ramp's 0-1.
+        fill.style.background = w.valence == null ? "var(--text-muted)"
+          : rampColor(dataStops(RDBU_STOPS), (w.valence - data.scale.min) /
+                      (data.scale.max - data.scale.min));
+        track.append(fill);
+        row.append(track);
+        row.append(el("span", { class: "fu-word-pct" }, w.pct.toFixed(1) + "%"));
+        row.append(el("span", { class: "fu-word-val", title:
+          `mean feeling ${w.valence == null ? "n/a" : w.valence} of 5, ` +
+          `${w.respondents} ${w.respondents === 1 ? "person" : "people"}` },
+          w.valence == null ? "—" : w.valence.toFixed(1)));
+        list.append(row);
+      }
+      count.textContent = `${shown.length.toLocaleString()} of ` +
+        `${hits.length.toLocaleString()} words`;
+    }
+    draw();
+  }
+
+  async function renderVerbatims(host, id) {
+    const v = await fetchJSON(page.verbatims.replace("{id}", id));
+    const card = el("div", { class: "card" });
+    card.append(el("h3", {}, v.label));
+    let note = `${v.n.toLocaleString()} people answered, in their own words. ` +
+      `Responses are shown whole and unedited.`;
+    if (v.asked_if) note += ` Not everyone was asked: the question was shown ` +
+      `only when ${v.asked_if}.`;
+    card.append(el("p", { class: "fu-caption" }, v.question || ""),
+                el("p", { class: "fu-caption" }, note));
+    if (typeof v.caution === "string" && v.caution)
+      card.append(el("p", { class: "fu-placeholder-note" }, v.caution));
+
+    const columns = [{ id: "text", label: "Response", width: "72%",
+      render: (r) => el("div", { class: "fu-verbatim-text" }, r.text) }];
+    if (typeof v.context_label === "string" && v.context_label)
+      columns.push({ id: "context", label: v.context_label, width: "16%" });
+    columns.push({ id: "year", label: "Survey" });
+    card.append(dataTable({
+      columns, rows: v.rows, pageSize: 25,
+      pageSizeOptions: [25, 50, 100, 250], columnFilters: false
+    }));
+    host.append(card);
+  }
+
+  await render();
+};
+
 /* A page whose data is not collected or wired up yet. It says what will go
  * here and what is missing, rather than rendering an empty shell that looks
  * like something failed to load. */
