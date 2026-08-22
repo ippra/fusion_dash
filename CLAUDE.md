@@ -278,6 +278,17 @@ Three things in it are easy to undo:
   data. A human has to read these before the site is published anywhere
   public.
 
+**The three why-items are restricted to one routing rule across both waves.**
+The waves gated them differently — FU25 asked "why do you oppose" of anyone
+negative on *either* the power-plants question or the facility-nearby
+question, FU26 only of people negative on both — so FU25's oppose corpus
+included people who back fusion and object only to the siting. `00_paths.R`
+declares `why_item_kept()`, FU26's rule; `03` and the theme skill's
+`export_for_coding.R` both apply it, which is why it lives in the shared file
+rather than in either script. It withholds 220 of FU25's 297 oppose
+responses, and `03` prints the number rather than letting a total quietly
+shrink. `support` and `uncertain` lose nothing. Full account in `NOTES.md`.
+
 The three why-items show **both** gate variables beside each response —
 `new_fusion` (fusion power plants) and `fusion_host` (a facility nearby) —
 because a person reached the question through either one and the two often
@@ -307,7 +318,7 @@ shown.
 
 `01_variable_reference/themes.csv` holds one primary theme per response, keyed
 on `case_id`; `theme_labels.csv` holds the roster and the order the filter menu
-reads in. Coded so far: `oppose` (403 responses, 15 themes), `support` (377, 15) and
+reads in. Coded so far: `oppose` (183 responses, 14 themes), `support` (377, 15) and
 `uncertain` (1,630, 17). An item
 with no coding gets no theme column; nothing is guessed.
 

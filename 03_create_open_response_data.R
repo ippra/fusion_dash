@@ -233,6 +233,22 @@ SITING_CAUTION <- paste0(
   "shown."
 )
 #
+# The second half of the caution is filled in per item with that item's own
+# withheld count, because "some responses are not shown" without a number is
+# the kind of caveat a reader cannot act on.
+routing_caution <- function(withheld) {
+  n <- sum(withheld)
+  if (n == 0) return(NULL)
+  paste0(
+    "The 2025 and 2026 surveys decided who saw this question by different ",
+    "rules: 2025 asked it of anyone who leaned that way on either the power ",
+    "plants question or the facility-nearby question, 2026 only of people ",
+    "who leaned that way on both. Shown here are the responses that meet ",
+    "2026's rule in both years, so the two are comparable. That withholds ",
+    n, " responses from 2025."
+  )
+}
+#
 # Many people asked several questions at once - one wrote five, numbered. The
 # coding records the one they lead with, so a reader ranking the themes is
 # reading how many people led with a subject, not how many times it was asked.
@@ -267,10 +283,30 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
       out[[paste0("ctx_", contexts$variable[k])]] <-
         if (is.na(src)) NA_character_ else support_band(d[[src]])
     }
+    # One routing rule across both waves - see why_item_kept() in 00_paths.R.
+    # Applied before the text filter so the withheld count is of responses,
+    # not of everyone the gate reached.
+    if (gated) {
+      out <- out |>
+        filter(why_item_kept(id, d[[column_for("new_fusion", field)]],
+                             d[[column_for("fusion_host", field)]]))
+    }
     out
   }) |>
     bind_rows() |>
     filter(!is.na(text), text != "")
+
+  # What the rule withheld, by wave, so the number is on the page and in this
+  # log rather than inferred from a total that quietly shrank.
+  withheld <- if (!gated) integer(0) else
+    map2_int(waves_data$raw, waves_data$year, function(d, year) {
+      field <- waves$column[waves$year == year]
+      col <- ref[[field]]
+      if (is.na(col)) return(0L)
+      answered <- !is.na(d[[col]]) & str_squish(d[[col]]) != ""
+      sum(answered & !why_item_kept(id, d[[column_for("new_fusion", field)]],
+                                    d[[column_for("fusion_host", field)]]))
+    })
 
   # Themes joined on the respondent id, then the id dropped: it identifies a
   # person and has no business in a published file.
@@ -312,13 +348,17 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
       as.list(theme_roster |> filter(item == id) |> arrange(theme_order) |>
                 pull(label)),
     theme_noun = theme_noun,
-    caution = caution,
+    # A list so an item can carry more than one caveat, each its own
+    # paragraph. auto_unbox would collapse a single one to a bare string.
+    cautions = as.list(c(caution, routing_caution(withheld))) |>
+      discard(is.na),
     n = nrow(rows),
     rows = rows
   ), file.path("verbatims", paste0(id, ".json")))
 
   list(id = id, label = label, n = nrow(rows),
        question = ref$question_text,
+       withheld = sum(withheld),
        waves = as.list(as.character(sort(unique(rows$year)))))
 })
 
@@ -331,7 +371,12 @@ wjson(list(
   compiled = format(Sys.time(), "%Y-%m-%d %H:%M")
 ), "index.json", pretty = TRUE)
 
-for (v in verbatims_cfg) message("  ", v$label, ": ", v$n, " responses")
+for (v in verbatims_cfg) {
+  message("  ", v$label, ": ", v$n, " responses",
+          if (v$withheld > 0)
+            paste0(" (", v$withheld, " withheld: 2025 routed them here on a ",
+                   "rule 2026 does not use)") else "")
+}
 
 # Reported, never silent: a response withheld from the page is a response the
 # reader will never know existed unless the number is here.

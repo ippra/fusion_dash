@@ -74,16 +74,34 @@ documents say. Tick an item when it is resolved, and date the tick.
       would want a facility to be in a remote region" is filed under why
       people oppose.
 
-      Decide before any trend or pooled claim on these items: report them by
-      wave, or restrict FU25 to the rows FU26's rule would also have routed
-      there. Note this reaches the theme coding too, which pools both waves.
+      **Settled 2026-08-22: publish the corpus FU26's rule defines, in both
+      waves.** `why_item_kept()` in `00_paths.R` is that rule, applied by `03`
+      and by the theme skill's export script so the coded set and the
+      published set cannot drift apart. It withholds 220 of FU25's 297 oppose
+      responses; `oppose` is now 183 (77 from 2025, 106 from 2026) and the
+      count is printed by `03` and stated on the page. `support` and
+      `uncertain` lose nothing - FU25's support routing is already a subset of
+      FU26's, and no FU25 unsure row would have gone elsewhere.
+
+      The themes were re-ranked on the restricted corpus and *Does not
+      actually oppose* removed, its single member being the person who wrote
+      "I meant to indicate that I support fusion energy" - mis-routed by the
+      `or` gate, and excluded by the rule that replaced it. *Not near where
+      people live* falls hardest, 64 to 19: those were the siting objections
+      from people who back fusion in general, which is exactly what the `or`
+      gate swept in.
+
+      Reversing this is a one-line change to `why_item_kept()`, but the 220
+      responses' theme codes were dropped from `themes.csv` with it - recover
+      them from git rather than re-reading.
 - [ ] **The `asked_if` column describes neither wave's rule.** It records
       `new_fusion <= 2 or fusion_host <= 2` and its two siblings, taken from
       the documents. FU26 uses `and`, and neither instrument states the
       priority between the three conditions, which is what actually decides
-      the overlapping cases. The sheet records what the documents say — but
-      the documents are wrong about what was fielded, so the plain-language
-      caption on the page is wrong too, in the same way, for both waves.
+      the overlapping cases. The sheet records what the documents say, so both
+      columns stay as they are; the page carries the correction in the item's
+      `caution`, which is the field for exactly this. Fix the documents at the
+      next fielding and the two can agree again.
 - [ ] **`confirm_attention` filters nobody.** Every FU26 respondent in the
       released data answered Yes. It has no variance and cannot be used as a
       quality screen after the fact.

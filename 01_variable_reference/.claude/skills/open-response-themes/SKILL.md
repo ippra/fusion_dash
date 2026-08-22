@@ -10,9 +10,14 @@ response**, keyed on `case_id`, plus a labelled roster in `theme_labels.csv`.
 The dashboard shows the theme as a filterable column beside the raw text, which
 is never altered.
 
-Coded so far: `oppose` (403 responses, 15 themes), `support` (377, 15),
+Coded so far: `oppose` (183 responses, 14 themes), `support` (377, 15),
 `uncertain` (1,630, 17) and `ask` (1,170, 22) — the whole corpus. An uncoded
 item shows no theme column; `03_create_open_response_data.R` does not guess.
+
+`oppose` was coded at 403 and restricted to 183 afterwards: the two waves
+gated it differently and the corpus is now the one FU26's rule defines. The
+export script applies that rule, so what you read is what the page shows —
+see **When the corpus changes under you** below.
 
 ## Read the responses. Do not write a matcher.
 
@@ -34,7 +39,7 @@ More of what defeats matching, all of it real in this corpus:
 |---|---|
 | "It sounds dangerous. Just from all the movies and media… or a terrorist target." | Safety — the terrorism line is where the impression came from, not the claim |
 | "our world isn't built to last off of fusion energy/solar" | Not a preference for solar; it dismisses solar too |
-| "I meant to indicate that I support fusion energy. I could not go back to correct my error." | Does not actually oppose — the gate caught someone who does not belong |
+| "I meant to indicate that I support fusion energy. I could not go back to correct my error." | Not opposition at all — the gate caught someone who did not belong, which is how the gate defect was found |
 | "Do it on the rich. They have plenty of land. Experiment on them!!!!!" | A siting objection, written as sarcasm |
 | "I was not oppose it I just don't think it should be within 10 miles" | Correctly gated: they oppose the siting, not the technology |
 | "Already near a nuc plant" | Siting — four words, and the reason is that they already host one |
@@ -135,6 +140,33 @@ the response belongs elsewhere.
 the same reason it is wrong for the support bands. Order by frequency, with
 *No reason given* and any "does not actually belong here" theme last.
 
+## When the corpus changes under you
+
+A coded item can be re-scoped after the fact. `oppose` was: coded at 403, then
+cut to 183 when the two waves turned out to have gated it by different rules
+and the decision was to publish only what FU26's rule defines.
+
+What that costs, and what it does not:
+
+- **The assignments survive.** Each was made by reading one response, so
+  removing other responses cannot change it. There is no need to re-code.
+- **The roster does not.** Re-rank `theme_order` on what remains, and drop any
+  theme left with no members. *Does not actually oppose* went that way — its
+  one member was the person above who had meant to click support, and the rule
+  that replaced the faulty gate excludes them. A theme that exists only
+  because of a defect should disappear when the defect does.
+- **Re-read the themes whose membership moved most**, not all of them. *Not
+  near where people live* fell 64 to 19, because the `or` gate had been
+  sweeping in people who back fusion and object only to the siting. Reading
+  the survivors together confirmed they are opposed to both.
+- **Prune `themes.csv` to match**, or `check_themes.py` reports the removed
+  rows as `extra` from then on. Git holds the codes if the scope is reversed.
+
+**The export script applies the same restriction `03` does** — `why_item_kept()`
+in `00_paths.R`, declared once and used by both. If they ever disagree you
+will be reading and coding responses the dashboard does not show, and the
+checker will tell you only after the work is done.
+
 Then `Rscript 03_create_open_response_data.R && Rscript 04_build_dashboard.R`.
 
 ## Rules that matter
@@ -143,10 +175,10 @@ Then `Rscript 03_create_open_response_data.R && Rscript 04_build_dashboard.R`.
 effects* may well also mention property values; the coding does not pretend
 otherwise, and the page tells the reader as much.
 
-**Small themes stay small.** *Security and weapons risk* has three members.
+**Small themes stay small.** *Security and weapons risk* has two members.
 That is what the corpus contains, and padding it by pulling in adjacent
-responses would misrepresent it. *Does not actually oppose* has one, and earns
-its place by saying something true about the gate.
+responses would misrepresent it. The checker flags one- and two-member themes
+so you look again; it does not ask you to merge them.
 
 **The raw text is never edited.** Not for spelling, not for grammar, not for
 length. The theme sits beside it; the reader can always see what was actually
@@ -215,7 +247,7 @@ ranked* — which is the deliverable — rather than as a taxonomy of the corpus
 
 What coding it settled, and what the next question item should expect:
 
-- **Twenty-two themes for 1,170 responses**, against fifteen for 403 on
+- **Twenty-two themes for 1,170 responses**, against fifteen for the 403 then
   `oppose`. A question item spreads wider because people ask about subjects
   the position items never raise — waste, jobs, regulation, how to explain
   fusion at all — and each of those is small (7 to 24 responses) and worth

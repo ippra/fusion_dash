@@ -1273,8 +1273,10 @@ components.open_responses = async function (page, container) {
       `on, where it raises more than one. Themes were drafted by reading the ` +
       `whole set, assigned by reading each response, and checked by reading ` +
       `each theme's responses together. Filter by theme in the column header.`));
-    if (typeof v.caution === "string" && v.caution)
-      card.append(el("p", { class: "fu-placeholder-note" }, v.caution));
+    // A list, one paragraph each: an item can rest on more than one caveat.
+    (Array.isArray(v.cautions) ? v.cautions : [])
+      .filter(c => typeof c === "string" && c)
+      .forEach(c => card.append(el("p", { class: "fu-placeholder-note" }, c)));
 
     const wide = themed ? "40%" : (ctx.length ? "50%" : "78%");
     const columns = [{ id: "text", label: "Response", width: wide,

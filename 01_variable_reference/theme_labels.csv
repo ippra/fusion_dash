@@ -1,19 +1,4 @@
 item,theme,label,theme_order
-oppose,safety,Safety and accident risk,1
-oppose,siting,Not near where people live,2
-oppose,noinfo,Not enough information to judge,3
-oppose,unproven,Too new or unproven,4
-oppose,env,Environmental harm and waste,5
-oppose,nuclear,Association with nuclear power,6
-oppose,health,Health effects,7
-oppose,distrust,"Distrust of government, industry or science",8
-oppose,preferother,Prefer other energy sources,9
-oppose,local,Local impact on my area,10
-oppose,cost,Cost to taxpayers and bill payers,11
-oppose,nature,Should not meddle with nature,12
-oppose,security,Security and weapons risk,13
-oppose,optout,Does not actually oppose,14
-oppose,none,No reason given,15
 support,clean,Clean energy and lower emissions,1
 support,cheaper,Cheaper energy and lower bills,2
 support,nuclearcmp,Compares well with nuclear power,3
@@ -68,3 +53,17 @@ ask,jobs,What will it do to jobs and the economy?,19
 ask,misuse,Could it be misused or attacked?,20
 ask,notq,Not a question - a statement about fusion,21
 ask,none,No question offered,22
+oppose,safety,Safety and accident risk,1
+oppose,noinfo,Not enough information to judge,2
+oppose,env,Environmental harm and waste,3
+oppose,siting,Not near where people live,4
+oppose,preferother,Prefer other energy sources,5
+oppose,nuclear,Association with nuclear power,6
+oppose,unproven,Too new or unproven,7
+oppose,distrust,"Distrust of government, industry or science",8
+oppose,cost,Cost to taxpayers and bill payers,9
+oppose,health,Health effects,10
+oppose,nature,Should not meddle with nature,11
+oppose,local,Local impact on my area,12
+oppose,security,Security and weapons risk,13
+oppose,none,No reason given,14

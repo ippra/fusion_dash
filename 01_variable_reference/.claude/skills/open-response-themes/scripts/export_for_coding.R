@@ -29,13 +29,28 @@ if (!item %in% names(variables)) {
 }
 row <- reference |> filter(variable == variables[[item]])
 
+# The three why-items are restricted to one routing rule across both waves -
+# why_item_kept() in 00_paths.R, which is also what 03 publishes. Applied here
+# so the set you read is the set that reaches the page: coding a response the
+# dashboard does not show is wasted, and check_themes.py would report it as
+# extra forever.
+gate_column <- function(variable, field) {
+  r <- reference |> filter(variable == !!variable)
+  if (nrow(r) != 1) stop("No single reference row for ", variable)
+  r[[field]]
+}
+
 out <- pmap(list(waves$data, waves$year, waves$column),
             function(path, year, field) {
   col <- row[[field]]
   if (is.na(col)) return(NULL)
   d <- read_csv(path, col_types = cols(.default = col_character()),
                 na = c("", "NA"))
-  tibble(case_id = d$case_id, year = year, text = str_squish(d[[col]]))
+  keep <- if (item == "ask") TRUE else
+    why_item_kept(item, d[[gate_column("new_fusion", field)]],
+                  d[[gate_column("fusion_host", field)]])
+  tibble(case_id = d$case_id, year = year,
+         text = str_squish(d[[col]]))[keep, ]
 }) |>
   bind_rows() |>
   filter(!is.na(text), text != "")

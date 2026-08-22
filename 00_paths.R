@@ -34,6 +34,43 @@ waves <- tibble::tribble(
 # an unweighted percentage looks entirely reasonable and is wrong.
 weight_var <- "weight"
 
+# Why-item routing --------------------------------------------------------------
+# The three why-items are alternatives, and the two waves routed them by
+# different rules. Both are deterministic and each reproduces its own wave
+# exactly, but FU25 tests the oppose gate with `or` and FU26 with `and`:
+#
+#            FU25                              FU26
+#   oppose   new_fusion <= 2 OR host <= 2      new_fusion <= 2 AND host <= 2
+#   support  neither gate 3-5, one >= 6        new_fusion >= 6 AND host >= 6
+#   unsure   everything else                   everything else
+#
+# So FU25 asked "why do you oppose" of anyone negative on *either* question,
+# including people who back fusion plants and object only to the siting. That
+# is 220 of its 297 oppose responses, and it is why the oppose corpus fell
+# from 297 to 106 between waves - the gate changed, not the opinion.
+#
+# Decided 2026-08-22: publish the corpus FU26's rule defines, in both waves,
+# so the two are one population and a theme count means the same thing in
+# each. why_item_kept() is that rule. It is declared here because
+# 03_create_open_response_data.R and the theme skill's export_for_coding.R
+# both apply it, and a routing rule written twice will drift - the coding
+# would then be checked against a corpus that is not the published one.
+#
+# Returns TRUE for a respondent who belongs in `item` under FU26's rule.
+# Rows whose gate answers are missing are kept: they were routed somehow and
+# this rule cannot say otherwise.
+why_item_kept <- function(item, new_fusion, fusion_host) {
+  nf <- suppressWarnings(as.integer(new_fusion))
+  fh <- suppressWarnings(as.integer(fusion_host))
+  routed <- dplyr::case_when(
+    is.na(nf) | is.na(fh) ~ NA_character_,
+    nf <= 2 & fh <= 2     ~ "oppose",
+    nf >= 6 & fh >= 6     ~ "support",
+    TRUE                  ~ "uncertain"
+  )
+  is.na(routed) | routed == item
+}
+
 absent <- c(variable_reference, arms_reference, word_stoplist, themes_reference,
             theme_labels, waves$data)
 absent <- absent[!file.exists(absent)]
