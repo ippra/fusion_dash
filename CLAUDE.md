@@ -291,6 +291,34 @@ They also carry a caution: the gate includes `fusion_host`, which randomized
 the distance to 10 or 50 miles, and 52 responses mention the distance they were
 shown.
 
+## Themes on open responses
+
+`01_variable_reference/themes.csv` holds one primary theme per response, keyed
+on `case_id`; `theme_labels.csv` holds the roster and the order the filter menu
+reads in. Only `oppose` is coded so far — 403 responses, 15 themes. An item
+with no coding gets no theme column; nothing is guessed.
+
+**Coded in three passes, by reading.** Draft the themes from reading the whole
+set; assign one to each response by reading it; then read each theme's members
+together and fix what landed wrong. That third pass is not optional — it is
+what caught "Scared" sitting under *No reason given* while "Scary" sat under
+*Safety*, and a response filed under *Prefer other energy sources* that in fact
+dismissed solar too.
+
+A keyword rule would be worse than useless here. "I don't know what fusion is,
+it sounds dangerous, and I don't want it near my house" contains the trigger
+words for four themes; which one it *is* depends on which the writer leads with
+and dwells on, and only reading tells you that.
+
+**One theme per response**, the concern it leads with or dwells on. Many raise
+two. A response coded *Health effects* may well also mention property values;
+the coding records the dominant concern, not the only one.
+
+`case_id` is the join key and is **dropped before writing**: it identifies a
+person and has no business in a published file. `03` halts if any response in a
+coded item has no theme — a partly-coded item would let the filter hide
+whatever was missed.
+
 ## Pages
 
 Six, declared in `03`'s `config$pages`:

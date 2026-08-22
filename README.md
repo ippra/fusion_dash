@@ -158,6 +158,13 @@ Arm membership is declared in `01_variable_reference/arms.csv` rather than
 matched on the raw assignment value, because `rand_lab` writes the same arm as
 "US national laboratories…" in 2025 and "U.S. national laboratories…" in 2026.
 
+**Open responses carry a theme where they have been read.** The 403 "why
+people oppose" answers are coded into 15 themes — safety and accident risk
+(81), not near where people live (64), not enough information to judge (47),
+and so on — assigned by reading every response, not by keyword. The theme is a
+filter on the table; the raw text stays exactly as written. Uncoded items show
+no theme rather than a guessed one.
+
 **Response labels are never truncated.** Twenty-five options run past 78
 characters and three run past 400; the chart wraps them in full and grows to
 fit. The three regulatory proposals differ only in their later clauses, so an

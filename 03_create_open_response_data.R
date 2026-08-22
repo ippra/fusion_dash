@@ -32,6 +32,29 @@ dir.create(file.path(out, "verbatims"), recursive = TRUE)
 reference <- read_csv(variable_reference, guess_max = Inf, show_col_types = FALSE)
 stoplist <- read_csv(word_stoplist, show_col_types = FALSE)
 
+# Themes ------------------------------------------------------------------------
+# Hand-coded, one primary theme per response, keyed on the respondent id so the
+# coding survives any reordering of the data. Read the whole set to draft the
+# themes, read every response to assign one, then read each theme's members
+# together to catch the ones that landed in the wrong place - the same three
+# passes the codebook takes, and for the same reason: a keyword rule would put
+# "I don't know what fusion is, it sounds dangerous" under whichever word it
+# matched first.
+#
+# An item with no coding simply gets no theme column; nothing is guessed.
+themes <- read_csv(themes_reference, col_types = cols(
+  item = col_character(), case_id = col_character(), year = col_integer(),
+  theme = col_character()))
+theme_roster <- read_csv(theme_labels, col_types = cols(
+  item = col_character(), theme = col_character(), label = col_character(),
+  theme_order = col_integer()))
+
+unlabelled <- themes |> anti_join(theme_roster, by = c("item", "theme"))
+if (nrow(unlabelled) > 0) {
+  print(unlabelled |> count(item, theme))
+  stop("Themes above are assigned but have no label in theme_labels.csv.")
+}
+
 wjson <- function(x, path, pretty = FALSE) {
   write_json(x, file.path(out, path), pretty = pretty, auto_unbox = TRUE,
              na = "null", digits = NA)
@@ -208,7 +231,8 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     field <- waves$column[waves$year == year]
     col <- ref[[field]]
     if (is.na(col)) return(NULL)
-    out <- tibble(year = year, text = str_squish(d[[col]]))
+    out <- tibble(year = year, case_id = d$case_id,
+                  text = str_squish(d[[col]]))
     for (k in seq_len(nrow(contexts))) {
       src <- column_for(contexts$variable[k], field)
       out[[paste0("ctx_", contexts$variable[k])]] <-
@@ -218,6 +242,27 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   }) |>
     bind_rows() |>
     filter(!is.na(text), text != "")
+
+  # Themes joined on the respondent id, then the id dropped: it identifies a
+  # person and has no business in a published file.
+  coded <- themes |> filter(item == id)
+  has_themes <- nrow(coded) > 0
+  if (has_themes) {
+    rows <- rows |>
+      left_join(coded |> select(case_id, theme), by = "case_id")
+    uncoded <- sum(is.na(rows$theme))
+    if (uncoded > 0) {
+      stop(uncoded, " responses to ", id, " have no theme. Every response ",
+           "must be coded or none of them, or the filter would silently ",
+           "hide whatever was missed.")
+    }
+    rows <- rows |>
+      left_join(theme_roster |> filter(item == id) |> select(theme, label),
+                by = "theme") |>
+      mutate(theme = label) |>
+      select(-label)
+  }
+  rows <- rows |> select(-case_id)
 
   flagged <- rows |> filter(screen(text))
   if (nrow(flagged) > 0) {
@@ -234,6 +279,9 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     contexts = pmap(contexts, function(variable, label)
       list(key = paste0("ctx_", variable), label = label)),
     context_order = as.list(SUPPORT_BANDS),
+    themes = if (!has_themes) NA else
+      as.list(theme_roster |> filter(item == id) |> arrange(theme_order) |>
+                pull(label)),
     caution = caution,
     n = nrow(rows),
     rows = rows

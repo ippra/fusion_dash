@@ -1263,19 +1263,31 @@ components.open_responses = async function (page, container) {
     if (v.asked_if) note += ` Not everyone was asked: ${v.asked_if}`;
     card.append(el("p", { class: "fu-caption" }, v.question || ""),
                 el("p", { class: "fu-caption" }, note));
+    const ctx = Array.isArray(v.contexts) ? v.contexts : [];
+    const themed = Array.isArray(v.themes) && v.themes.length;
+    if (themed) card.append(el("p", { class: "fu-caption" },
+      `Each response carries one theme — the concern it leads with or dwells ` +
+      `on, where it raises more than one. Themes were drafted by reading the ` +
+      `whole set, assigned by reading each response, and checked by reading ` +
+      `each theme's responses together. Filter by theme in the column header.`));
     if (typeof v.caution === "string" && v.caution)
       card.append(el("p", { class: "fu-placeholder-note" }, v.caution));
 
-    const ctx = Array.isArray(v.contexts) ? v.contexts : [];
-    const wide = ctx.length ? "50%" : "78%";
+    const wide = themed ? "40%" : (ctx.length ? "50%" : "78%");
     const columns = [{ id: "text", label: "Response", width: wide,
       filter: "none",
       render: (r) => el("div", { class: "fu-verbatim-text" }, r.text) }];
     // Both sides of the gate: someone reached this question because of how
     // they answered about power plants OR about a facility near them, and the
     // two often disagree — which is half of what the answer explains.
+    // The theme, where the responses have been read and coded. First column
+    // after the text, because it is what a reader scans down.
+    if (Array.isArray(v.themes) && v.themes.length)
+      columns.push({ id: "theme", label: "Theme", width: "18%",
+                     filter: "select", filterAll: "All themes",
+                     filterOrder: v.themes });
     for (const c of ctx)
-      columns.push({ id: c.key, label: c.label, width: "16%",
+      columns.push({ id: c.key, label: c.label, width: "14%",
                      filter: "select", filterAll: "Any",
                      filterOrder: v.context_order });
     columns.push({ id: "year", label: "Survey", filter: "select",
