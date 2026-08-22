@@ -252,6 +252,50 @@ GATE_CONTEXTS <- tribble(
   "new_fusion",  "Fusion power plants",
   "fusion_host", "A facility nearby"
 )
+
+# Theme distribution -----------------------------------------------------------
+# The share of each item's responses carrying each theme, for the page to draw
+# above the verbatims. Computed here on the rows that are actually published -
+# after the routing restriction, the content withhold and the identifier screen
+# - so the bars and the table beneath them cannot disagree. Computing them in
+# the front end from the rows would give the same answer today and quietly stop
+# doing so the first time a row is held back.
+#
+# Weighted, like the word associations on the same page and every percentage on
+# the explore page. Weighting moves nothing here by more than 1.4 points on the
+# two large items, so this is about a reader not having to ask which kind of
+# number they are looking at. The unweighted count travels alongside every bar,
+# because a theme with two members must not read as a rate.
+#
+# Percentages are within a group and across themes, so each group sums to 100.
+# One theme per response is what makes that true; a multi-response item could
+# not be drawn this way.
+theme_distribution <- function(rows, theme_order, splits) {
+  values <- map(splits, function(sp) {
+    key <- sp$key
+    d <- rows |>
+      filter(!is.na(.data[[key]])) |>
+      summarise(n = n(), w = sum(w), .by = all_of(c("theme", key))) |>
+      rename(group = all_of(key)) |>
+      # Complete the grid so a theme absent from a group draws an empty bar
+      # rather than closing the gap and misaligning the row.
+      complete(theme = theme_order, group = sp$groups,
+               fill = list(n = 0L, w = 0)) |>
+      mutate(pct = round(100 * w / sum(w), 1), .by = group) |>
+      mutate(theme = factor(theme, levels = theme_order),
+             group = factor(group, levels = sp$groups)) |>
+      arrange(theme, group)
+    pmap(list(as.character(d$theme), as.character(d$group), d$pct, d$n),
+         function(theme, group, pct, n)
+           list(theme = theme, group = group, pct = pct, n = n))
+  })
+  names(values) <- map_chr(splits, "id")
+  list(
+    splits = map(splits, function(sp)
+      list(id = sp$id, label = sp$label, groups = as.list(sp$groups))),
+    values = values
+  )
+}
 #
 # `caution` is shown with the responses. The three why-items are gated on two
 # questions, and one of them - fusion_host - randomized the distance to 10 or
@@ -284,6 +328,18 @@ review_caution <- function(reviewed, n_held, reviewed_on) {
       paste0(n_held, " were withheld, for content directed at groups of ",
              "people rather than at fusion energy.")
     }
+  )
+}
+
+small_group_caution <- function(dropped) {
+  if (nrow(dropped) == 0) return(NULL)
+  paste0(
+    "One split leaves a group out: ",
+    paste0(dropped$split, " - ", dropped$g, ", ", dropped$n,
+           if (nrow(dropped) == 1) " responses" else " responses",
+           collapse = "; "),
+    ". Too few to draw as a share without inviting a comparison the number ",
+    "cannot support. Those responses are still in the table below."
   )
 }
 
@@ -326,6 +382,7 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     col <- ref[[field]]
     if (is.na(col)) return(NULL)
     out <- tibble(year = year, case_id = d$case_id,
+                  w = as.numeric(d[[weight_var]]),
                   text = str_squish(d[[col]]))
     for (k in seq_len(nrow(contexts))) {
       src <- column_for(contexts$variable[k], field)
@@ -409,6 +466,48 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   }
   rows <- rows |> filter(!screen(text))
 
+  # The splits the reader can look at the distribution through. Everyone always;
+  # survey year and each gate context only where the data actually holds more
+  # than one group, so `ask` - fielded in 2026 only - does not offer a year
+  # menu with one entry in it.
+  theme_labels_ordered <- theme_roster |> filter(item == id) |>
+    arrange(theme_order) |> pull(label)
+  candidate_splits <- c(
+    list(list(id = "all", label = "Everyone", key = "all",
+              groups = "Everyone")),
+    list(list(id = "year", label = "Survey year", key = "year",
+              groups = as.character(sort(unique(rows$year))))),
+    pmap(contexts, function(variable, label)
+      list(id = paste0("ctx_", variable), label = label,
+           key = paste0("ctx_", variable), groups = SUPPORT_BANDS))
+  )
+  dist_rows <- rows |> mutate(all = "Everyone", year = as.character(year))
+  # A group too small to carry a percentage does not get drawn as one. Eight
+  # people who oppose fusion plants outright and still landed in the unsure
+  # item are a real eight people, but "12.5%" beside a group of 1,300 invites
+  # a comparison of rates that the smaller number cannot support. Dropped
+  # groups are named with their size in the caption rather than vanishing.
+  MIN_GROUP <- 30L
+  small <- list()
+  splits <- candidate_splits |>
+    map(function(sp) {
+      sizes <- dist_rows |> count(g = .data[[sp$key]]) |> filter(!is.na(g))
+      too_small <- sizes |> filter(n < MIN_GROUP, g %in% sp$groups)
+      if (nrow(too_small) > 0 && sp$id != "all") {
+        small[[sp$id]] <<- too_small |> mutate(split = sp$label)
+      }
+      # SUPPORT_BANDS is the order, not a promise that all three occur.
+      sp$groups <- sp$groups[sp$groups %in% sizes$g[sizes$n >= MIN_GROUP]]
+      sp
+    }) |>
+    keep(function(sp) length(sp$groups) > 1 || sp$id == "all")
+  dropped_groups <- bind_rows(small)
+
+  theme_dist <- if (!has_themes) NA else
+    theme_distribution(dist_rows, theme_labels_ordered, splits)
+
+  rows <- rows |> select(-w)
+
   wjson(list(
     id = id, label = label, variable = variable,
     question = ref$question_text,
@@ -422,9 +521,11 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
       as.list(theme_roster |> filter(item == id) |> arrange(theme_order) |>
                 pull(label)),
     theme_noun = theme_noun,
+    theme_dist = theme_dist,
     # A list so an item can carry more than one caveat, each its own
     # paragraph. auto_unbox would collapse a single one to a bare string.
     cautions = as.list(c(caution, routing_caution(withheld),
+                         small_group_caution(dropped_groups),
                          review_caution(seen$reviewed, nrow(held_content),
                                         seen$reviewed_on))) |>
       discard(is.na),

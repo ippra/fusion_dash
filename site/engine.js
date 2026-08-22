@@ -451,9 +451,12 @@ function groupingSelect(onChange, initial, labelText = "Select a grouping") {
 /* Generic table: sort (click header), global search, optional per-column
    filters (Shiny DT filter="top" equivalent), pagination. rows = array of
    objects; columns = [{id, label, width?}]. */
-function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, columnFilters = true, clickable = false, onRowClick = null, searchFields = [] }) {
+function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, columnFilters = true, clickable = false, onRowClick = null, onFilterChange = null, searchFields = [] }) {
   let sortCol = null, sortDir = 1, page = 0, globalQ = "";
   const colQ = {};
+  // The menu elements, kept so a control outside the table can drive a filter
+  // and stay in step with it - the theme bars above the verbatims do both.
+  const filterEls = {};
   // Columns filtered by menu match exactly; text columns match on substring.
   // A menu that matched substrings would let "Regulation" also select a topic
   // merely containing the word.
@@ -499,7 +502,9 @@ function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, colum
       } else if (c.filter === "select") {
         const sel = el("select", { onchange: () => {
           colQ[c.id] = sel.value; page = 0; refresh();
+          onFilterChange && onFilterChange(c.id, sel.value);
         } });
+        filterEls[c.id] = sel;
         sel.append(el("option", { value: "" }, c.filterAll || "All"));
         const present = new Set(rows.map(r => String(r[c.id] ?? "")).filter(Boolean));
         // An ordered menu where the column has one - bands read wrong in any
@@ -590,6 +595,15 @@ function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, colum
     if (i >= 0) { selectedRow = rows[i]; page = Math.floor(i / pageSize); refresh(); }
   };
   root.selectFirst = () => root.selectRow(() => true);
+  // Set a column filter from outside. Moves the menu too, so the table never
+  // shows a filtered set with its own control saying "All".
+  root.setFilter = (id, value) => {
+    colQ[id] = value || "";
+    if (filterEls[id]) filterEls[id].value = value || "";
+    page = 0;
+    refresh();
+  };
+  root.getFilter = (id) => colQ[id] || "";
   return root;
 }
 
@@ -1272,11 +1286,19 @@ components.open_responses = async function (page, container) {
       `Each response carries one theme — the ${unit} it leads with or dwells ` +
       `on, where it raises more than one. Themes were drafted by reading the ` +
       `whole set, assigned by reading each response, and checked by reading ` +
-      `each theme's responses together. Filter by theme in the column header.`));
+      `each theme's responses together. Click a theme below to filter the ` +
+      `responses to it.`));
     // A list, one paragraph each: an item can rest on more than one caveat.
     (Array.isArray(v.cautions) ? v.cautions : [])
       .filter(c => typeof c === "string" && c)
       .forEach(c => card.append(el("p", { class: "fu-placeholder-note" }, c)));
+
+    // The distribution, above the responses it summarises. Every number here
+    // is 03's; the bars re-scale but never re-compute, which is what keeps
+    // them from disagreeing with the rows underneath.
+    let bars = null;
+    if (themed && v.theme_dist && Array.isArray(v.theme_dist.splits))
+      bars = themeBars(v, (theme) => table && table.setFilter("theme", theme));
 
     const wide = themed ? "40%" : (ctx.length ? "50%" : "78%");
     const columns = [{ id: "text", label: "Response", width: wide,
@@ -1297,11 +1319,118 @@ components.open_responses = async function (page, container) {
                      filterOrder: v.context_order });
     columns.push({ id: "year", label: "Survey", filter: "select",
                    filterAll: "Both" });
-    card.append(dataTable({
+    const table = dataTable({
       columns, rows: v.rows, pageSize: 25,
-      pageSizeOptions: [25, 50, 100, 250]
-    }));
+      pageSizeOptions: [25, 50, 100, 250],
+      // Two-way: picking a theme in the column menu lights the same bar.
+      onFilterChange: (id, value) => {
+        if (id === "theme" && bars) bars.setSelected(value);
+      }
+    });
+    if (bars) card.append(bars);
+    card.append(table);
     host.append(card);
+  }
+
+  /* Ranked theme bars, with a split control.
+   *
+   * Themes keep 03's order in every split - frequency across everyone, with
+   * "No reason given" last - so changing the split recolours the chart rather
+   * than reshuffling it. That is the rule the battery charts on the explore
+   * page already follow, and for the same reason: a reader comparing groups
+   * should not have to re-find the row they were looking at.
+   *
+   * Bars share one scale across the whole split, so a bar twice as long is
+   * twice the share wherever it sits. The unweighted count rides on every bar
+   * because a theme with two members must not read as a rate. */
+  function themeBars(v, onPick) {
+    const dist = v.theme_dist;
+    const wrap = el("div", { class: "fu-theme-dist" });
+    let split = dist.splits[0];
+    let selected = "";
+
+    const tools = el("div", { class: "fu-theme-tools" });
+    if (dist.splits.length > 1) {
+      const sel = el("select", { class: "grouping", id: "op-split",
+        onchange: () => {
+          split = dist.splits.find(s => s.id === sel.value) || dist.splits[0];
+          draw();
+        } });
+      for (const s of dist.splits)
+        sel.append(el("option", { value: s.id }, s.label));
+      tools.append(el("label", { class: "field-label", for: "op-split" },
+                     "Split by"), sel);
+    }
+    const hint = el("span", { class: "fu-theme-hint" },
+      "Click a theme to filter the responses below");
+    tools.append(hint);
+    const legend = el("div", { class: "fu-theme-legend" });
+    const list = el("div", { class: "fu-theme-rows" });
+    wrap.append(tools, legend, list);
+
+    function draw() {
+      const rows = dist.values[split.id] || [];
+      const groups = split.groups;
+      const colors = viridis(groups.length);
+      const byTheme = new Map();
+      for (const r of rows) {
+        if (!byTheme.has(r.theme)) byTheme.set(r.theme, new Map());
+        byTheme.get(r.theme).set(r.group, r);
+      }
+      // One scale for the whole split, not per row.
+      const top = Math.max(1, ...rows.map(r => r.pct));
+
+      legend.textContent = "";
+      if (groups.length > 1) {
+        groups.forEach((g, i) => {
+          const key = el("span", { class: "fu-theme-key" });
+          const dot = el("span", { class: "fu-theme-dot" });
+          dot.style.background = colors[i];
+          key.append(dot, el("span", {}, g));
+          legend.append(key);
+        });
+      }
+
+      list.textContent = "";
+      for (const theme of v.themes) {
+        const cells = byTheme.get(theme);
+        if (!cells) continue;
+        const row = el("div", { class: "fu-theme-row" });
+        if (selected && selected !== theme) row.classList.add("dim");
+        if (selected === theme) row.classList.add("on");
+        row.append(el("button", { class: "fu-theme-name",
+          title: selected === theme ? "Show all themes again"
+                                    : "Filter the responses to this theme",
+          onclick: () => {
+            selected = selected === theme ? "" : theme;
+            onPick(selected);
+            draw();
+          } }, theme));
+        const stack = el("div", { class: "fu-theme-bars" });
+        groups.forEach((g, i) => {
+          const d = cells.get(g) || { pct: 0, n: 0 };
+          const bar = el("div", { class: "fu-theme-bar" });
+          const track = el("span", { class: "fu-theme-track" });
+          const fill = el("span", { class: "fu-theme-fill" });
+          fill.style.width = Math.max(d.pct > 0 ? 1 : 0, 100 * d.pct / top) + "%";
+          fill.style.background = colors[i];
+          track.append(fill);
+          bar.append(track, el("span", { class: "fu-theme-pct" },
+            d.pct.toFixed(1) + "%"),
+            el("span", { class: "fu-theme-n",
+              title: `${d.n} ${d.n === 1 ? "response" : "responses"}` +
+                     (groups.length > 1 ? ` in ${g}` : "") },
+              d.n.toLocaleString()));
+          stack.append(bar);
+        });
+        row.append(stack);
+        list.append(row);
+      }
+    }
+
+    wrap.setSelected = (theme) => { selected = theme || ""; draw(); };
+    draw();
+    return wrap;
   }
 
   await render();

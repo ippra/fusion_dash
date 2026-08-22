@@ -396,6 +396,45 @@ person and has no business in a published file. `03` halts if any response in a
 coded item has no theme — a partly-coded item would let the filter hide
 whatever was missed.
 
+## The theme distribution
+
+The qualitative page draws a ranked bar per theme above the verbatims it
+summarises, with a **Split by** control and click-to-filter. Four things in it
+are easy to undo:
+
+- **`03` computes it, on the rows that are actually published** — after the
+  routing restriction, the content withhold and the identifier screen. The
+  engine re-scales the bars but never re-computes them. Computing them in the
+  front end from `v.rows` would give the same answer today and quietly stop
+  the first time a row is held back; the withheld *Local impact on my area*
+  response is why that item reads 75 and not 76.
+- **Weighted, with the unweighted count beside every bar.** Weighted because
+  the word list on the same page and every percentage on the explore page are,
+  and a reader should not have to ask which kind of number they are looking
+  at. Weighting moves nothing by more than 1.4 points on the two large items.
+  The count is there so a two-response theme cannot be read as a rate.
+- **Theme order is 03's, in every split** — frequency across everyone, *No
+  reason given* last. Changing the split recolours the chart rather than
+  reshuffling it, the same rule the battery charts follow, so a reader
+  comparing groups does not lose the row they were looking at. Bars also share
+  one scale across the whole split.
+- **A group under 30 responses is not drawn**, and the caption names it with
+  its size. Eight people who oppose fusion plants outright and still landed in
+  the unsure item are eight real people, but "12.5%" beside a group of 1,300
+  invites a comparison that eight cannot support. They stay in the table.
+
+Splits offer themselves only where the data holds more than one group of that
+size, which is why `ask` has no year menu (FU26 only) and why `oppose` and
+`support` have no gate-band menu: under FU26's routing rule everyone in them
+sits on the same side of both gates, so the split would be a single bar at
+100%. That is the same tautology the `source` column suppresses on the explore
+page, arrived at for free.
+
+Clicking a theme filters the table below and moves its Theme menu; using the
+menu lights the bar. `dataTable` gained `setFilter` / `getFilter` and an
+`onFilterChange` hook for this, which is the third thing on it that is not
+upstream in wxdash.
+
 ## Pages
 
 Six, declared in `03`'s `config$pages`:
