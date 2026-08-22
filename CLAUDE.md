@@ -130,6 +130,41 @@ risk, cost and information batteries). `02` counts and prints them at the end
 so the warnings have a number beside them. Verified 2026-08-21: every
 single-response group sums to 100%, and no interval is missing or inverted.
 
+## Every chart carries the R that rebuilds it
+
+The explore page has a **Show the R code** toggle under each chart. It reveals
+a self-contained script that rebuilds *that* plot — that question, that split,
+that arm — from the released CSVs and nothing else: read both waves as
+character, derive `IDEOL_GROUP` and `GCC_GROUP`, stack, map the arm, estimate
+with `srvyr`, order by the instrument, draw with ggplot2.
+
+- **`02` generates it**, not the front end. The script that did the computing
+  writes the code that reproduces it, which is the same property that makes
+  `04` carry numbers rather than calculate them. A snippet assembled in
+  JavaScript would agree on the day it was written and quietly stop agreeing
+  after the next change to `02`.
+- **`02` then runs it and compares.** `verify_r_code()` evaluates each
+  generated script against the same CSVs a reader would download and checks
+  its estimates against the ones being written to the question file. The build
+  halts on a mismatch and prints the count at the end — *79 of 79*. It caught
+  a real defect on its first run: the arm join named `year` while joining on
+  `survey_year`. Publishing code that does not reproduce the chart would be
+  worse than publishing none.
+- **Two placeholders, `{{SPLIT}}` and `{{ARM}}`**, are all the engine fills in.
+  They land in named constants at the top of the script, so a reader who wants
+  a different split edits one line instead of hunting for where the grouping
+  is applied. Substitution is not computation; the numbers still come from
+  `02`.
+- **The verification uses a cached `read_csv`** bound in the evaluation
+  environment. The generated script defines `read_wave()` during eval, so its
+  closure finds that binding by lexical scope — same arguments, same result,
+  and the build does not read the two CSVs 158 times. Verification adds about
+  ten seconds.
+
+The generated code is where the FU25 renaming becomes visible to a reader:
+`fusion_source_online = fusion_source_2` sits right there in the stacking
+step, which is more use than a note saying the names differ.
+
 ## Splits are declared once
 
 The roster lives in the `splits` tribble at the top of `02`, and reaches the

@@ -134,6 +134,12 @@ about_html <- paste0(
   "themselves and recorded in <code>variable_reference.csv</code>, alongside ",
   "<code>NOTES.md</code>, which lists what the instruments got wrong and what ",
   "still needs checking.</p>",
+  "<p><strong>Reproducing a chart.</strong> Every chart on the survey page ",
+  "carries the R that rebuilds it from the released data files and nothing ",
+  "else - click <em>Show the R code</em> beneath it. The script is generated ",
+  "by the same code that produced the published estimates and is re-checked ",
+  "against them on every build, so what it draws is what you are looking at. ",
+  "It needs the tidyverse and srvyr.</p>",
   "<p><strong>Contact.</strong> ",
   "<a href=\"mailto:jtr@ou.edu\">Joe Ripberger</a> at OU IPPRA.</p>")
 

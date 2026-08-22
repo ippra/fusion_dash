@@ -1093,3 +1093,37 @@ table.data th select {
 @media (max-width: 640px) {
   .fu-theme-row { grid-template-columns: 1fr; gap: 2px; }
 }
+
+/* ---------- reproduction code ---------- */
+/* The R that rebuilds the chart above it. Collapsed by default: it is a
+   hundred-odd lines and most readers want the picture, but it is one click
+   away rather than a file someone has to be told about. */
+.fu-rcode-bar {
+  display: flex; align-items: center; gap: 10px; margin-top: 10px;
+}
+.fu-rcode-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font-size: 12.5px; cursor: pointer; color: inherit;
+}
+.fu-rcode-toggle:hover { background: var(--row-hover); }
+.fu-rcode-msg { font-size: 11.5px; color: var(--text-muted); }
+.fu-rcode { margin-top: 10px; }
+.fu-rcode-note {
+  font-size: 11.5px; color: var(--text-muted); margin: 0 0 8px;
+  max-width: 78ch;
+}
+.fu-rcode-tools { display: flex; gap: 8px; margin-bottom: 8px; }
+.fu-rcode-act {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 3px 9px; font-size: 12px; cursor: pointer; color: inherit;
+}
+.fu-rcode-act:hover { background: var(--row-hover); }
+/* Scrolls in its own box: a long line of generated code must not push the
+   page sideways, and the script is taller than any reasonable card. */
+.fu-rcode-pre {
+  margin: 0; max-height: 460px; overflow: auto;
+  background: var(--row-hover); border: 1px solid var(--border);
+  border-radius: 4px; padding: 10px 12px;
+  font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px; line-height: 1.45; white-space: pre; tab-size: 2;
+}
