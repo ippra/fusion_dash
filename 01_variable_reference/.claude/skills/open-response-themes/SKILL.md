@@ -10,8 +10,8 @@ response**, keyed on `case_id`, plus a labelled roster in `theme_labels.csv`.
 The dashboard shows the theme as a filterable column beside the raw text, which
 is never altered.
 
-Coded so far: `oppose` (403 responses, 15 themes). Not coded: `support` (377),
-`uncertain` (1,630), `ask` (1,170). An uncoded item shows no theme column —
+Coded so far: `oppose` (403 responses, 15 themes) and `support` (377, 15).
+Not coded: `uncertain` (1,630), `ask` (1,170). An uncoded item shows no theme column —
 `03_create_open_response_data.R` does not guess.
 
 ## Read the responses. Do not write a matcher.
@@ -156,6 +156,16 @@ the same population, cut by where people sit on the support scales — so their
 theme lists will overlap heavily but should not be copied across: what people
 say when asked why they *support* something is not the mirror of why they
 oppose it. Draft each from its own reading.
+
+Coding `support` bore this out. Its themes are not the oppose list inverted:
+*Willing to host it here* has no counterpart on the oppose side beyond a plain
+refusal, and *Doubts it will be allowed to happen* — supporters who expect
+industry or politics to block it — exists only here.
+
+It also runs a much higher *No reason given* rate: 16% against opposition's
+4.5%. That is the corpus, not the coding. An opposing answer almost always
+names the thing feared; a supporting one is often just "It's a positive thing".
+Watch for the temptation to rescue those into a theme they do not earn.
 
 `ask` is a different kind of item entirely. Those are questions, not positions,
 and the useful theme is what the person wants to know rather than what they
