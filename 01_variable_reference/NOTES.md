@@ -52,6 +52,38 @@ documents say. Tick an item when it is resolved, and date the tick.
       derived `Gender`, `Race`, `Education`, `Income`, `Party_ID` columns. Both
       waves carry the derived columns, so any split that pools waves must use
       those — splitting on the FU26 raw items drops 2025 entirely.
+- [ ] **The two waves routed the three why-items by different rules.** Both
+      are deterministic and both reproduce their wave exactly (0 mismatches in
+      2,410 routed respondents), but they are not the same rule:
+
+      | | FU25 | FU26 |
+      |---|---|---|
+      | oppose | `new_fusion <= 2` **or** `fusion_host <= 2` | `new_fusion <= 2` **and** `fusion_host <= 2` |
+      | support | neither gate in 3-5, and one >= 6 | `new_fusion >= 6` **and** `fusion_host >= 6` |
+      | unsure | everything else | everything else |
+
+      FU25 tests oppose first and unsure second, so `or` on the oppose gate
+      pulls in anyone negative on **either** question. FU26 requires both.
+      The effect is large and in one direction: **221 FU25 respondents (18%)
+      were asked why they oppose who FU26 would have asked why they are
+      unsure**, and 264 FU26 respondents (21%) the reverse. So `oppose`
+      falling from 297 responses in 2025 to 106 in 2026 is a change in the
+      gate, not a change in opinion, and the two waves' oppose corpora are
+      different populations. Ten of the FU25 oppose responses come from people
+      who scored 6 or 7 on fusion plants — "I support fusion energy but I
+      would want a facility to be in a remote region" is filed under why
+      people oppose.
+
+      Decide before any trend or pooled claim on these items: report them by
+      wave, or restrict FU25 to the rows FU26's rule would also have routed
+      there. Note this reaches the theme coding too, which pools both waves.
+- [ ] **The `asked_if` column describes neither wave's rule.** It records
+      `new_fusion <= 2 or fusion_host <= 2` and its two siblings, taken from
+      the documents. FU26 uses `and`, and neither instrument states the
+      priority between the three conditions, which is what actually decides
+      the overlapping cases. The sheet records what the documents say — but
+      the documents are wrong about what was fielded, so the plain-language
+      caption on the page is wrong too, in the same way, for both waves.
 - [ ] **`confirm_attention` filters nobody.** Every FU26 respondent in the
       released data answered Yes. It has no variance and cannot be used as a
       quality screen after the fact.

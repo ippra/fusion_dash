@@ -284,12 +284,20 @@ because a person reached the question through either one and the two often
 disagree: 940 of the 1,630 "unsure" rows have them landing in different bands.
 
 Both sit on the same 1-7 scale, and the instrument labels only its ends. They
-are banded into five using those two words and nothing else — 1 "Strongly
-opposes", 2-3 "Opposes", 4 "Neither", 5-6 "Supports", 7 "Strongly supports" —
-because "Opposes" is as much as can be said about a 3 without inventing a label
-the respondent never saw. `SUPPORT_BANDS` names the order so the filter menus
-read in it; alphabetical would put "Strongly opposes" between "Opposes" and
-"Supports".
+are banded into three on **the survey's own cut points** — 1-2 "Opposes", 3-5
+"Neither for nor against", 6-7 "Supports" — because those are the boundaries
+the routing itself uses, and they are the only ones the instrument asserts.
+`SUPPORT_BANDS` names the order so the filter menus read in it; alphabetical
+would put "Neither for nor against" first.
+
+A five-band scheme cutting at 1 / 2-3 / 4 / 5-6 / 7 was in place until
+2026-08-22. It was invented here rather than read off the routing, and it
+crossed the gate boundaries both ways: a 5 read "Supports" and a 3 read
+"Opposes" where the survey had treated both as middle ground. The unsure item
+then showed 395 responses supporting on both gate columns and 118 opposing on
+both — every one caused by a 5 or a 3, and every one a contradiction the
+coding did not contain. **Bands that disagree with the routing make the
+routing look broken.** Do not re-cut them without checking the routing first.
 
 They also carry a caution: the gate includes `fusion_host`, which randomized
 the distance to 10 or 50 miles, and 52 responses mention the distance they were

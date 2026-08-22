@@ -74,6 +74,22 @@ column_for <- function(variable, wave_field) {
   row[[wave_field]]
 }
 
+# The three why-items are alternatives: the routing sends each respondent to
+# exactly one, so nobody should appear in two. Checked here rather than
+# assumed, because two of them landing in the same row would mean the same
+# person's words were counted twice and themed twice, and nothing downstream
+# would notice. Holds in both waves as released.
+why_items <- c("fusion_oppose_why", "fusion_support_why", "fusion_uncertain_why")
+doubled <- map2_int(waves_data$raw, waves_data$column, function(d, field) {
+  cols <- map_chr(why_items, column_for, wave_field = field)
+  sum(rowSums(!is.na(d[, cols[!is.na(cols)], drop = FALSE])) > 1)
+})
+if (any(doubled > 0)) {
+  stop("Respondents answering more than one why-item, by wave: ",
+       paste(waves$year, doubled, sep = ": ", collapse = ", "),
+       ". They are alternatives - one person cannot have been asked two.")
+}
+
 # Screening --------------------------------------------------------------------
 # Respondents were promised their answers would be de-identified. Free text can
 # carry an identifier whatever the respondent intended, so anything matching one
@@ -172,22 +188,26 @@ message("Words: ", nrow(words), " distinct across ", entries_total,
 #
 # Both gate variables sit on the same 1-7 scale, and the instrument labels only
 # its ends: 1 is "Strongly oppose", 7 is "Strongly support", and 2 through 6
-# carry no wording at all. Banded into five using those two words and nothing
-# else - "Opposes" is as much as can be said about a 3 without inventing a
-# label the respondent never saw. The bands are named in SUPPORT_BANDS so the
-# front end can order the filter menu by them rather than alphabetically, which
-# would put "Strongly opposes" between "Opposes" and "Strongly supports".
-SUPPORT_BANDS <- c("Strongly opposes", "Opposes", "Neither", "Supports",
-                   "Strongly supports")
+# carry no wording at all. Band on the survey's own cut points and nothing
+# else - 1-2 is what routed a respondent towards the oppose item, 6-7 towards
+# support, 3-5 towards neither - because those are the only boundaries the
+# instrument itself asserts.
+#
+# An earlier five-band scheme cut at 1 / 2-3 / 4 / 5-6 / 7, invented here
+# rather than read off the routing, and it crossed the gate boundaries in both
+# directions. It labelled a 5 "Supports" and a 3 "Opposes" when the survey had
+# treated both as middle ground, so 395 responses in the unsure item read as
+# support on both gate columns and 118 read as opposition - a contradiction
+# the coding did not contain, every one of them caused by a 5 or a 3. Bands
+# that disagree with the routing make the routing look broken.
+SUPPORT_BANDS <- c("Opposes", "Neither for nor against", "Supports")
 
 support_band <- function(x) {
   v <- suppressWarnings(as.integer(x))
   case_when(
-    v == 1      ~ SUPPORT_BANDS[1],
-    v %in% 2:3  ~ SUPPORT_BANDS[2],
-    v == 4      ~ SUPPORT_BANDS[3],
-    v %in% 5:6  ~ SUPPORT_BANDS[4],
-    v == 7      ~ SUPPORT_BANDS[5],
+    v %in% 1:2  ~ SUPPORT_BANDS[1],
+    v %in% 3:5  ~ SUPPORT_BANDS[2],
+    v %in% 6:7  ~ SUPPORT_BANDS[3],
     TRUE        ~ NA_character_
   )
 }
