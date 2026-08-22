@@ -23,6 +23,7 @@ source(here::here("00_paths.R"))
 out <- file.path(outputs, "02_question_data")
 unlink(out, recursive = TRUE)
 dir.create(file.path(out, "q"), recursive = TRUE)
+dir.create(file.path(out, "rcode"), recursive = TRUE)
 
 # ref_row is the sheet's own row order, which is survey order: FU26's sequence
 # with each FU25-only block placed where FU25 asked it. The question table is
@@ -360,207 +361,190 @@ order_rows <- function(out, split_id, resp_order) {
 # Every chart carries the R that rebuilds it from the released CSVs and nothing
 # else. Generated here, by the script that did the computing, so it cannot
 # drift from what was computed - the same property that makes 04 carry numbers
-# rather than calculate them. A snippet assembled in the front end would agree
-# on the day it was written and quietly stop agreeing after the next change
-# here.
+# rather than calculate them.
 #
-# Two placeholders are left for the page to fill in, because the reader is
-# looking at one split and one arm and the code should be for that plot:
-# {{SPLIT}} and {{ARM}}. They are substituted into string literals the reader
-# can then edit, which is why they are named constants at the top of the script
-# rather than woven through it.
+# One script per (arm, split), not one template with placeholders, because a
+# script for a specific plot should name that plot's variables and nothing
+# more. Splitting by gender should not make a reader read a roster of thirteen
+# grouping columns, and it should say `Gender`, not `.data[[SPLIT]]`. So the
+# splits differ enough that a template would have to be read around rather
+# than read.
 #
-# The generated script is checked against this script's own output further
-# down - see `verify_r_code`. Publishing code that does not reproduce the chart
-# would be worse than publishing none.
+# Rules the generated code follows, and they are the point of it:
+#   - no helper functions. Every step is a call the reader can run on its own.
+#   - column names written where they are used, never through .data[[ ]].
+#   - only the columns this plot needs.
+#
+# Checked against this script's own output below - see `verify_r_code`.
 
 r_quote <- function(x) paste0('"', gsub('([\\\\"])', '\\\\\\1', x), '"')
 
-r_vector <- function(x, indent = 2) {
+# c("a", "b", ...) wrapped to fit. Breaks between elements only: strwrap()
+# breaks at any whitespace, which puts a newline inside a response label and
+# quietly changes the string. The verification below caught that.
+r_vec <- function(x, indent) {
   pad <- strrep(" ", indent)
-  paste0("c(\n", pad, paste(r_quote(x), collapse = paste0(",\n", pad)),
-         "\n", strrep(" ", max(0, indent - 2)), ")")
+  parts <- paste0(r_quote(x), c(rep(",", length(x) - 1), ""))
+  lines <- character(0)
+  cur <- ""
+  for (piece in parts) {
+    if (!nzchar(cur)) {
+      cur <- piece
+    } else if (indent + nchar(cur) + 1 + nchar(piece) > 78) {
+      lines <- c(lines, cur)
+      cur <- piece
+    } else {
+      cur <- paste(cur, piece)
+    }
+  }
+  paste0("c(", paste(c(lines, cur), collapse = paste0("\n", pad)), ")")
 }
 
-# The banding in derive_groups(), written out rather than referenced, because
-# the reader has this script and nothing else.
-r_derive_groups <- paste0(
-  "      IDEOL_GROUP = case_when(\n",
-  "        ideol %in% 1:3 ~ \"Liberal\",\n",
-  "        ideol == 4     ~ \"Moderate\",\n",
-  "        ideol %in% 5:7 ~ \"Conservative\",\n",
-  "        TRUE           ~ NA_character_\n",
-  "      ),\n",
-  "      GCC_GROUP = case_when(\n",
-  "        gcc == 1 ~ \"Greenhouse gases are warming the planet\",\n",
-  "        gcc == 0 ~ \"They are not\",\n",
-  "        TRUE     ~ NA_character_\n",
-  "      ),")
+# The two derived splits, written out where they are used. A reader with this
+# script and the CSV has everything; a reader sent to look up derive_groups()
+# does not.
+r_derive <- list(
+  IDEOL_GROUP = paste0(
+    "      IDEOL_GROUP = case_when(\n",
+    "        ideol %in% 1:3 ~ \"Liberal\",\n",
+    "        ideol == 4     ~ \"Moderate\",\n",
+    "        ideol %in% 5:7 ~ \"Conservative\"\n",
+    "      ),"),
+  GCC_GROUP = paste0(
+    "      GCC_GROUP = case_when(\n",
+    "        gcc == 1 ~ \"Greenhouse gases are warming the planet\",\n",
+    "        gcc == 0 ~ \"They are not\"\n",
+    "      ),")
+)
 
-r_code_for <- function(title, asked, options, split_ids, arms_cfg = NULL,
-                       arm_rowfield = NULL, items = NULL, multi = FALSE,
-                       intro = NA_character_) {
-  keep <- c("survey_year", "weight", "All", split_columns,
-            "IDEOL_GROUP", "GCC_GROUP")
+# A question stem runs to 539 characters in this survey. One string literal
+# that long is a line nobody can read, so it is broken into fragments.
+r_title <- function(title) {
+  if (nchar(title) <= 60) return(r_quote(title))
+  parts <- strwrap(title, 60)
+  paste0("paste(\n      ",
+         paste(r_quote(parts), collapse = ",\n      "), "\n    )")
+}
 
-  # One prep() call per wave. `resp` for a single-response question; for a
-  # battery the item columns come across under their canonical names, because
-  # FU25 released ten of them under names its own instrument no longer uses.
-  wave_calls <- pmap_chr(list(asked$wave, asked$year, asked$column,
-                              asked$arm_column, asked$file),
-    function(wave, year, col, arm_col, file) {
-      cols <- if (multi)
-        paste0("      ",
-               paste0(items$variable, " = ", items[[paste0("col_", tolower(wave))]],
-                      collapse = ",\n      "))
+r_script <- function(title, intro, asked, options, split, group_order = NULL,
+                     items = NULL, multi = FALSE, arm_label = NULL,
+                     split_label = split) {
+  obj <- paste0("fu", substr(asked$wave, 3, 4))     # fu25, fu26
+  grp <- if (split == "All") NULL else split
+
+  # What each wave contributes: the weight, the grouping column if there is
+  # one, and the answer.
+  stack <- pmap_chr(list(obj, asked$year, asked$column, asked$arm_column,
+                         asked$arm_value),
+    function(o, year, col, arm_col, arm_value) {
+      pre <- if (is.na(arm_col)) "" else
+        paste0(" |>\n    filter(", arm_col, " == ", r_quote(arm_value), ")")
+      lines <- c("      weight = as.numeric(weight)")
+      if (!is.null(grp)) {
+        if (grp == "survey_year") lines <- c(lines,
+          paste0("      survey_year = ", r_quote(as.character(year))))
+        else if (!is.null(r_derive[[grp]]))
+          lines <- c(lines, sub(",$", "", r_derive[[grp]]))
+        else lines <- c(lines, paste0("      ", grp))
+      }
+      answers <- if (multi)
+        paste0("      ", items$variable, " = ", items[[o]])
       else paste0("      resp = ", col)
-      paste0(
-        "  prep(read_wave(file.path(DATA_DIR, ", r_quote(basename(file)), ")),\n",
-        "       ", r_quote(as.character(year)), ",\n",
-        "       ", if (is.na(arm_col)) "NULL" else r_quote(arm_col), ") |>\n",
-        "    transmute(across(all_of(KEEP)), arm_raw,\n", cols, ")")
+      paste0("  ", o, pre, " |>\n    transmute(\n",
+             paste(c(lines, answers), collapse = ",\n"), "\n    )")
     })
 
-  arm_block <- if (is.null(arms_cfg)) "" else paste0(
-    "\n# ---- 3. Pick the arm ---------------------------------------------------\n",
-    "# This question was split-sampled: respondents did not all read the same\n",
-    "# thing, so each arm is estimated on its own. Pooling them would average\n",
-    "# across the treatment the experiment was built to measure. The raw\n",
-    "# assignment value differs between waves, so it is mapped, not matched.\n",
-    "ARM <- \"{{ARM}}\"   # one of: ",
-    paste(unique(arms_cfg$arm_id), collapse = ", "), "\n\n",
-    "arm_map <- tribble(\n",
-    "  ~survey_year, ~value, ~arm_id,\n",
-    paste0("  ", pmap_chr(list(arms_cfg$year, arms_cfg$value, arms_cfg$arm_id),
-      function(y, v, a) paste(r_quote(as.character(y)), r_quote(v), r_quote(a),
-                              sep = ", ")), collapse = ",\n"), "\n)\n\n",
-    "d <- d |>\n",
-    "  left_join(arm_map, by = c(\"survey_year\", \"arm_raw\" = \"value\")) |>\n",
-    "  filter(arm_id == ARM)\n")
+  drop_na <- c(if (multi) paste0("!is.na(", items$variable[1], ")")
+               else "!is.na(resp)",
+               if (!is.null(grp) && grp != "survey_year")
+                 paste0("!is.na(", grp, ")"))
 
-  est_block <- if (multi) paste0(
-    "# A select-all battery is not a distribution. Each item is its own\n",
-    "# proportion - the share of the people shown the battery who ticked that\n",
-    "# box - so they are estimated one at a time with survey_mean rather than\n",
-    "# normalised against each other. They do not sum to 100.\n",
-    "design <- d |>\n",
-    "  filter(!is.na(.data[[SPLIT]])) |>\n",
-    "  rename(group = all_of(SPLIT)) |>\n",
-    "  as_survey_design(weights = weight)\n\n",
-    "est <- map(OPTIONS$value, function(item) {\n",
-    "  design |>\n",
-    "    group_by(group) |>\n",
-    "    summarise(p = survey_mean(.data[[item]] == \"1\", proportion = TRUE,\n",
-    "                              vartype = \"ci\"),\n",
-    "              .groups = \"drop\") |>\n",
-    "    transmute(group, resp = item, p = 100 * p,\n",
-    "              p_low = 100 * p_low, p_upp = 100 * p_upp)\n",
-    "}) |>\n  bind_rows()\n")
+  # Estimation. A single-response question is a distribution over its options;
+  # a select-all battery is one proportion per item, each over the same people,
+  # so the items do not sum to 100.
+  est <- if (multi) paste0(
+    "# Each item is its own proportion - the share of the people shown the\n",
+    "# battery who ticked that box - so the bars do not sum to 100.\n",
+    "design <- as_survey_design(d, weights = weight)\n\n",
+    "est <- bind_rows(\n",
+    paste(paste0(
+      "  design |>\n",
+      if (is.null(grp)) "" else paste0("    group_by(", grp, ") |>\n"),
+      "    summarise(p = survey_mean(", items$variable, " == \"1\",\n",
+      "                              proportion = TRUE, vartype = \"ci\")) |>\n",
+      "    mutate(resp = ", r_quote(items$variable), ")"),
+      collapse = ",\n"),
+    "\n)\n")
   else paste0(
-    "# survey_prop(proportion = TRUE) is the logit-scale interval, used whether\n",
-    "# or not the intervals are drawn, so the point estimate never moves when\n",
-    "# they are switched on.\n",
     "est <- d |>\n",
-    "  filter(!is.na(.data[[SPLIT]])) |>\n",
-    "  rename(group = all_of(SPLIT)) |>\n",
     "  as_survey_design(weights = weight) |>\n",
-    "  group_by(group, resp) |>\n",
+    "  group_by(", paste(c(grp, "resp"), collapse = ", "), ") |>\n",
     "  summarise(p = survey_prop(proportion = TRUE, vartype = \"ci\"),\n",
-    "            .groups = \"drop\") |>\n",
-    "  transmute(group, resp, p = 100 * p,\n",
-    "            p_low = 100 * p_low, p_upp = 100 * p_upp)\n")
+    "            .groups = \"drop\")\n")
+
+  # Order. Response codes are character, so sorting them as strings puts 10
+  # between 1 and 2; the instrument's order is used instead.
+  order_block <- paste0(
+    "est <- est |>\n",
+    "  mutate(\n",
+    "    p = 100 * p, p_low = 100 * p_low, p_upp = 100 * p_upp,\n",
+    "    resp = factor(\n",
+    "      resp,\n",
+    "      levels = ", r_vec(options$value, 17), ",\n",
+    "      labels = ", r_vec(options$label, 17), "\n",
+    "    )",
+    if (!is.null(group_order)) paste0(",\n    ", grp, " = factor(\n",
+      "      ", grp, ",\n      levels = ",
+      r_vec(group_order, 17), "\n    )") else "",
+    "\n  )\n")
+
+  fill <- if (is.null(grp)) "" else paste0(", fill = ", grp)
+  dodge <- if (is.null(grp)) "" else
+    "\n                position = position_dodge2(reverse = TRUE),"
+  plot <- paste0(
+    "ggplot(est, aes(x = p, y = fct_rev(resp)", fill, ")) +\n",
+    "  geom_col(", if (is.null(grp)) "" else
+      "position = position_dodge2(reverse = TRUE), ", "width = 0.8) +\n",
+    "  geom_errorbar(aes(xmin = p_low, xmax = p_upp),", dodge, "\n",
+    "                width = 0.2, linewidth = 0.3) +\n",
+    "  labs(\n",
+    "    title = str_wrap(", r_title(title), ", 70),\n",
+    "    x = ", r_quote(if (multi) "Share who picked it (%)"
+                       else "Share of respondents (%)"), ",\n",
+    "    y = NULL", if (is.null(grp)) "" else paste0(",\n    fill = ",
+                                                    r_quote(split_label)), "\n",
+    "  ) +\n",
+    "  theme_minimal()\n")
 
   paste0(
-    "# ", title, "\n",
+    paste(strwrap(title, 76, prefix = "# "), collapse = "\n"), "\n",
     if (!is.na(intro) && nzchar(intro))
-      paste0(paste(strwrap(intro, 76, prefix = "# "), collapse = "\n"), "\n")
-    else "",
+      paste0("#\n", paste(strwrap(intro, 76, prefix = "# "), collapse = "\n"),
+             "\n") else "",
     "#\n",
-    "# IPPRA Fusion Energy Survey. This script rebuilds the chart of the same\n",
-    "# name from the released data files and nothing else. It was generated by\n",
-    "# the same script that produced the published estimates, and is checked\n",
-    "# against them on every build.\n",
-    "#\n",
-    "# Needs: ", paste(basename(asked$file), collapse = ", "), "\n\n",
+    "# IPPRA Fusion Energy Survey. Rebuilds this plot from the released data\n",
+    "# files and nothing else.\n",
+    if (is.null(arm_label)) "" else
+      paste0("# Version shown to this half of the sample: ", arm_label, "\n"),
+    if (split == "All") "" else
+      paste0("# Split by ", split_label, " (the `", split, "` column).\n"),
+    "\n",
     "library(tidyverse)\n",
     "library(srvyr)\n\n",
-    "DATA_DIR <- \".\"   # where the CSVs are\n",
-    "# Any of these can go in SPLIT:\n",
-    paste(strwrap(paste(split_ids, collapse = ", "), 74, prefix = "#   "),
-          collapse = "\n"), "\n",
-    "SPLIT <- \"{{SPLIT}}\"\n\n",
-    "# ---- 1. Read the waves -------------------------------------------------\n",
-    "# Every column as character: the two files type the same item differently\n",
-    "# once a wave has a column that is empty for its first thousand rows.\n",
-    "# Reading as character removes the guess rather than widening it.\n",
-    "read_wave <- function(path) {\n",
-    "  read_csv(path, col_types = cols(.default = col_character()),\n",
-    "           na = c(\"\", \"NA\"), guess_max = Inf)\n",
-    "}\n\n",
-    "# The splits the dashboard offers. The seven demographics are the vendor's\n",
-    "# derived columns, not the self-reported items: 2025 has no self-reported\n",
-    "# demographics at all, so splitting on those would drop it without saying so.\n",
-    "KEEP <- ", r_vector(keep), "\n\n",
-    "prep <- function(raw, year, arm_col) {\n",
-    "  raw |>\n",
-    "    mutate(\n",
-    r_derive_groups, "\n",
-    "      All = \"All\",\n",
-    "      survey_year = year,\n",
-    "      weight = as.numeric(weight),\n",
-    "      arm_raw = if (is.null(arm_col)) NA_character_ else .data[[arm_col]]\n",
-    "    )\n",
-    "}\n\n",
-    "# ---- 2. Stack the waves ------------------------------------------------\n",
-    "d <- bind_rows(\n",
-    paste(wave_calls, collapse = ",\n"), "\n) |>\n",
-    if (multi) paste0("  filter(if_any(", r_vector(items$variable, 4),
-                      ", ~ !is.na(.x)))\n")
-    else "  filter(!is.na(resp))\n",
-    arm_block,
-    "\n# ---- ", if (is.null(arms_cfg)) "3" else "4",
-    ". The response options, in the instrument's order ------------\n",
-    "# Response codes are character, and sorting them as strings puts 10 between\n",
-    "# 1 and 2 on every eleven-point scale. Ordered by the instrument instead.\n",
-    "OPTIONS <- tribble(\n",
-    "  ~value, ~label,\n",
-    paste0("  ", map2_chr(options$value, options$label,
-      ~paste(r_quote(.x), r_quote(.y), sep = ", ")), collapse = ",\n"), "\n)\n\n",
-    "# ---- ", if (is.null(arms_cfg)) "4" else "5",
-    ". Estimate, on the wave weights ------------------------------\n",
-    est_block,
-    "\n# ---- ", if (is.null(arms_cfg)) "5" else "6",
-    ". Draw -------------------------------------------------------\n",
-    "# Group order matters where the split is ordinal: alphabetical puts\n",
-    "# \"Liberal, Moderate, Conservative\" in the wrong order in every locale.\n",
-    "GROUP_ORDER <- list(\n",
-    paste0("  ", names(group_order), " = ",
-           map_chr(group_order, r_vector, indent = 4), collapse = ",\n"),
-    "\n)\n\n",
-    "plot_data <- est |>\n",
-    "  mutate(\n",
-    "    resp = factor(resp, levels = OPTIONS$value, labels = OPTIONS$label),\n",
-    "    group = factor(group, levels = if (is.null(GROUP_ORDER[[SPLIT]]))\n",
-    "                      sort(unique(group)) else GROUP_ORDER[[SPLIT]])\n",
-    "  ) |>\n",
-    "  arrange(group, resp)\n\n",
-    "ggplot(plot_data, aes(x = p, y = fct_rev(resp), fill = group)) +\n",
-    "  geom_col(position = position_dodge2(reverse = TRUE, padding = 0.1),\n",
-    "           width = 0.8) +\n",
-    "  geom_errorbar(aes(xmin = p_low, xmax = p_upp),\n",
-    "                position = position_dodge2(reverse = TRUE, padding = 0.1),\n",
-    "                width = 0.25, linewidth = 0.3) +\n",
-    "  scale_x_continuous(labels = function(x) paste0(x, \"%\"),\n",
-    "                     expand = expansion(mult = c(0, 0.05))) +\n",
-    "  scale_y_discrete(labels = function(l) str_wrap(l, 40)) +\n",
-    "  labs(title = str_wrap(", r_quote(title), ", 70),\n",
-    "       x = ", if (multi) r_quote("Share who picked it")
-                 else r_quote("Share of respondents"), ",\n",
-    "       y = NULL, fill = SPLIT,\n",
-    "       caption = \"IPPRA Fusion Energy Survey. Weighted; bars show 95% CIs.\") +\n",
-    "  theme_minimal(base_size = 11) +\n",
-    "  theme(legend.position = if (SPLIT == \"All\") \"none\" else \"right\",\n",
-    "        panel.grid.major.y = element_blank())\n")
+    "# Read as character: the two files type the same item differently once a\n",
+    "# wave has a column that is empty for its first thousand rows. Reading as\n",
+    "# character removes the guess rather than widening it.\n",
+    paste0(obj, " <- read_csv(", r_quote(basename(asked$file)),
+           ",\n", strrep(" ", nchar(obj) + 13),
+           "col_types = cols(.default = col_character()))",
+           collapse = "\n"), "\n\n",
+    if (any(!is.na(asked$arm_column)))
+      paste0("# This question was split-sampled - respondents did not all read the\n",
+             "# same thing - so this arm is estimated on its own. Pooling them\n",
+             "# would average across the treatment.\n") else "",
+    "d <- bind_rows(\n", paste(stack, collapse = ",\n"), "\n) |>\n",
+    "  filter(", paste(drop_na, collapse = ", "), ")\n\n",
+    est, "\n", order_block, "\n", plot)
 }
 
 wjson <- function(x, path, pretty = FALSE) {
@@ -569,59 +553,71 @@ wjson <- function(x, path, pretty = FALSE) {
 }
 
 # Does the generated script actually rebuild the chart? Checked, not asserted.
-# Each question's code is run against the same CSVs a reader would download and
-# its estimates compared with the ones written to the question file. Publishing
+# Each script is run against the same CSVs a reader would download and its
+# estimates compared with the ones written to the question file. Publishing
 # code that does not reproduce the plot would be worse than publishing none,
 # and a generator is exactly the kind of thing that goes subtly wrong.
 #
-# read_csv is shimmed to a cache in the evaluation environment: the generated
-# script defines read_wave() during eval, so its closure finds this binding by
-# lexical scope. Same arguments, same result, 158 file reads become four.
+# read_csv is shimmed to a cache in the evaluation environment, so the build
+# does not read the two files a thousand times. Same arguments, same result.
 r_code_cache <- new.env(parent = emptyenv())
 cached_read_csv <- function(file, ...) {
-  key <- normalizePath(file, mustWork = FALSE)
+  key <- file.path(data_dir, file)
   if (is.null(r_code_cache[[key]])) {
-    r_code_cache[[key]] <- readr::read_csv(file, ...)
+    r_code_cache[[key]] <- readr::read_csv(key, ...)
   }
   r_code_cache[[key]]
 }
 
 r_code_checks <- 0L
+r_code_scripts <- 0L
 
-verify_r_code <- function(code, expect, split, arm, label) {
-  script <- gsub("{{SPLIT}}", split, code, fixed = TRUE)
-  if (!is.na(arm)) script <- gsub("{{ARM}}", arm, script, fixed = TRUE)
-  script <- sub('DATA_DIR <- "."', paste0("DATA_DIR <- ", encodeString(data_dir,
-                quote = '"')), script, fixed = TRUE)
-
+verify_r_code <- function(script, expect, options, label) {
   e <- new.env(parent = globalenv())
   assign("read_csv", cached_read_csv, envir = e)
   ok <- try(suppressWarnings(suppressMessages(
     eval(parse(text = script), envir = e))), silent = TRUE)
   if (inherits(ok, "try-error")) {
-    cat(script, sep = "\n")
+    cat(script)
     stop("The generated R for ", label, " does not run: ",
          conditionMessage(attr(ok, "condition")))
   }
 
-  got <- get("est", envir = e) |>
-    transmute(group = as.character(group), resp = as.character(resp),
-              p = round(p, 2)) |>
-    arrange(group, resp)
+  # The script labels its responses, so the published codes are labelled to
+  # match rather than the other way round: comparing on the codes would not
+  # notice a levels/labels pairing that had drifted.
+  got <- get("est", envir = e) |> as_tibble()
+  gcol <- setdiff(names(got), c("resp", "p", "p_low", "p_upp", "p_se"))
+  got <- got |>
+    transmute(group = if (length(gcol) == 1) as.character(.data[[gcol]])
+                      else "All",
+              resp = as.character(resp), gen = round(p, 2))
   want <- expect |>
-    transmute(group = as.character(group), resp = as.character(resp),
-              p = round(p, 2)) |>
-    arrange(group, resp)
+    left_join(options, by = c("resp" = "value")) |>
+    transmute(group = as.character(group), resp = label, pub = round(p, 2))
 
-  if (!isTRUE(all.equal(as.data.frame(got), as.data.frame(want),
-                        tolerance = 1e-6))) {
-    print(full_join(want, got, by = c("group", "resp"),
-                    suffix = c("_published", "_generated")) |>
-            filter(is.na(p_published) | is.na(p_generated) |
-                   abs(p_published - p_generated) > 0.01))
+  cmp <- full_join(want, got, by = c("group", "resp"))
+  if (any(is.na(cmp$pub)) || any(is.na(cmp$gen)) ||
+      max(abs(cmp$pub - cmp$gen)) > 0.011) {
+    print(cmp |> filter(is.na(pub) | is.na(gen) | abs(pub - gen) > 0.011))
     stop("The generated R for ", label, " does not reproduce its chart.")
   }
   r_code_checks <<- r_code_checks + 1L
+}
+
+# Which (arm, split) pairs get run. Every question is checked, and within it
+# every shape the generator can produce - no grouping, a plain column, a
+# derived column, the wave - plus every arm at least once. Running all ~1,100
+# would add minutes for no more coverage than this.
+verify_pairs <- function(arm_ids, split_ids) {
+  shapes <- c("All",
+              setdiff(split_ids, c("All", "IDEOL_GROUP", "GCC_GROUP",
+                                   "survey_year"))[1],
+              intersect(c("IDEOL_GROUP", "GCC_GROUP"), split_ids)[1],
+              intersect("survey_year", split_ids))
+  shapes <- unique(shapes[!is.na(shapes)])
+  c(map(shapes, ~list(arm = arm_ids[1], split = .x)),
+    map(arm_ids[-1], ~list(arm = .x, split = "All")))
 }
 
 dropped_report <- list()
@@ -772,19 +768,35 @@ for (i in seq_len(nrow(questions))) {
   d <- d_all
   }
 
-  # The splits this question actually offers, so the SPLIT constant in the
-  # generated script lists what will work rather than the whole roster.
-  offered <- names(arm_splits[[1]])
-  r_code <- r_code_for(
-    title = q$question_text, asked = asked, options = options,
-    split_ids = offered, intro = q$question_intro,
-    arms_cfg = if (is.null(arms_cfg)) NULL else
-      arm_map |> left_join(waves |> select(wave, year), by = "wave") |>
-        select(year, value, arm_id))
+  # One script per (arm, split): a script for a specific plot names that
+  # plot's variables and nothing else, and the splits differ by more than a
+  # name - some need a derived column, some an order, Everyone needs none.
+  arm_keys <- names(arm_splits)
+  r_code <- list()
+  for (ak in arm_keys) {
+    per_split <- list()
+    for (sp in names(arm_splits[[ak]])) {
+      per_split[[sp]] <- r_script(
+        title = q$question_text, intro = q$question_intro,
+        asked = asked |> mutate(
+          arm_value = if (ak == "all") NA_character_ else
+            arm_map$value[match(paste(wave, ak),
+                                paste(arm_map$wave, arm_map$arm_id))],
+          arm_column = if (ak == "all") NA_character_ else arm_column),
+        options = options, split = sp, group_order = group_order[[sp]],
+        split_label = splits$label[match(sp, splits$id)],
+        arm_label = if (ak == "all") NULL else
+          arms_cfg$label[match(ak, arms_cfg$arm_id)])
+    }
+    r_code[[ak]] <- per_split
+    r_code_scripts <- r_code_scripts + length(per_split)
+  }
 
-  verify_r_code(r_code, arm_splits[[1]][[offered[1]]], offered[1],
-                if (is.null(arms_cfg)) NA_character_ else arms_cfg$arm_id[1],
-                q$variable)
+  for (pair in verify_pairs(arm_keys, names(arm_splits[[1]]))) {
+    verify_r_code(r_code[[pair$arm]][[pair$split]],
+                  arm_splits[[pair$arm]][[pair$split]], options,
+                  paste(q$variable, pair$arm, pair$split))
+  }
 
   wjson(list(
     id = q$variable,
@@ -814,8 +826,12 @@ for (i in seq_len(nrow(questions))) {
     arm_prompt = if (is.null(arms_cfg)) NA_character_ else arm_map$prompt[1],
     splits = arm_splits,
     summaries = arm_summaries,
-    r_code = r_code
+    # The scripts live in their own file, fetched only when a reader asks for
+    # one: fusion_reg_choice has three arms and twelve splits, and 174 KB of
+    # code nobody clicked has no business riding along with every chart.
+    has_r_code = TRUE
   ), file.path("q", paste0(q$variable, ".json")))
+  wjson(r_code, file.path("rcode", paste0(q$variable, ".json")))
 
   catalog[[length(catalog) + 1]] <- tibble(
     id = q$variable,
@@ -949,16 +965,22 @@ for (b in batteries) {
   # the column it lives in per wave, which is what stacks FU25's
   # fusion_source_1..10 onto FU26's names inside the generated code too.
   items <- b |> select(variable, all_of(waves$column))
-  names(items) <- c("variable", paste0("col_", tolower(waves$wave)))
-  r_code <- r_code_for(
-    title = b$question_intro[1],
-    asked = asked |> mutate(file = data, arm_column = NA_character_,
-                            column = NA_character_),
-    options = options, split_ids = names(splits_out),
-    items = items |> arrange(match(variable, b$variable)), multi = TRUE)
+  names(items) <- c("variable", paste0("fu", substr(waves$wave, 3, 4)))
+  items <- items |> arrange(match(variable, b$variable))
 
-  verify_r_code(r_code, splits_out[[1]], names(splits_out)[1],
-                NA_character_, bid)
+  asked_b <- asked |> mutate(file = data, arm_column = NA_character_,
+                             arm_value = NA_character_, column = NA_character_)
+  r_code <- list(all = map(set_names(names(splits_out)), function(sp)
+    r_script(title = b$question_intro[1], intro = NA_character_,
+             asked = asked_b, options = options, split = sp,
+             group_order = group_order[[sp]], items = items, multi = TRUE,
+             split_label = splits$label[match(sp, splits$id)])))
+
+  r_code_scripts <- r_code_scripts + length(r_code[["all"]])
+  for (pair in verify_pairs("all", names(splits_out))) {
+    verify_r_code(r_code[["all"]][[pair$split]], splits_out[[pair$split]],
+                  options, paste(bid, pair$split))
+  }
 
   wjson(list(
     id = bid,
@@ -979,8 +1001,9 @@ for (b in batteries) {
     arm_prompt = NA_character_,
     splits = list(all = splits_out),
     summaries = list(all = summaries_out),
-    r_code = r_code
+    has_r_code = TRUE
   ), file.path("q", paste0(bid, ".json")))
+  wjson(r_code, file.path("rcode", paste0(bid, ".json")))
 
   catalog[[length(catalog) + 1]] <- tibble(
     id = bid,
@@ -1018,8 +1041,8 @@ wjson(list(
 message("Written to ", out)
 message("  ", nrow(catalog), " questions, ",
         sum(map_int(waves_data$raw, nrow)), " respondents")
-message("  reproduction scripts checked against their own charts: ",
-        r_code_checks, " of ", nrow(catalog))
+message("  reproduction scripts: ", r_code_scripts, " written, ",
+        r_code_checks, " run and checked against their own chart")
 
 # Respondents lost to a missing grouping value, reported rather than absorbed:
 # a split whose caption says 2,444 answered while the bars rest on 1,900 is the

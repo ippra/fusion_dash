@@ -133,39 +133,50 @@ single-response group sums to 100%, and no interval is missing or inverted.
 ## Every chart carries the R that rebuilds it
 
 The explore page has a **Show the R code** toggle under each chart. It reveals
-a self-contained script that rebuilds *that* plot — that question, that split,
-that arm — from the released CSVs and nothing else: read both waves as
-character, derive `IDEOL_GROUP` and `GCC_GROUP`, stack, map the arm, estimate
-with `srvyr`, order by the instrument, draw with ggplot2.
+a script that rebuilds *that* plot — that question, that split, that arm —
+from the released CSVs and nothing else.
 
-- **`02` generates it**, not the front end. The script that did the computing
-  writes the code that reproduces it, which is the same property that makes
-  `04` carry numbers rather than calculate them. A snippet assembled in
-  JavaScript would agree on the day it was written and quietly stop agreeing
-  after the next change to `02`.
-- **`02` then runs it and compares.** `verify_r_code()` evaluates each
-  generated script against the same CSVs a reader would download and checks
-  its estimates against the ones being written to the question file. The build
-  halts on a mismatch and prints the count at the end — *79 of 79*. It caught
-  a real defect on its first run: the arm join named `year` while joining on
-  `survey_year`. Publishing code that does not reproduce the chart would be
-  worse than publishing none.
-- **Two placeholders, `{{SPLIT}}` and `{{ARM}}`**, are all the engine fills in.
-  They land in named constants at the top of the script, so a reader who wants
-  a different split edits one line instead of hunting for where the grouping
-  is applied. Substitution is not computation; the numbers still come from
-  `02`.
-- **The verification uses a cached `read_csv`** bound in the evaluation
-  environment. The generated script defines `read_wave()` during eval, so its
-  closure finds that binding by lexical scope — same arguments, same result,
-  and the build does not read the two CSVs 158 times. Verification adds about
-  ten seconds.
+**One script per (arm, split), not one template.** 1,099 of them. A script for
+a specific plot names that plot's variables and no others: splitting by gender
+should not make a reader read a roster of thirteen grouping columns, and it
+should say `Gender`, not `.data[[SPLIT]]`. Three rules the generated code
+follows, and they are the point of it:
 
-The generated code is where the FU25 renaming becomes visible to a reader:
-`fusion_source_online = fusion_source_2` sits right there in the stacking
-step, which is more use than a note saying the names differ.
+- **no helper functions** — every step is a call the reader can run on its own;
+- **column names written where they are used**, never through `.data[[ ]]`;
+- **only the columns this plot needs** — no grouping column at all under
+  Everyone.
 
-## Splits are declared once
+Splits differ by more than a name, which is why a template would not do: some
+need a derived column written out, some an order, Everyone needs neither.
+
+**`02` generates them**, not the front end. The script that did the computing
+writes the code that reproduces it — the same property that makes `04` carry
+numbers rather than calculate them. The engine does a lookup and composes
+nothing.
+
+**`02` then runs them and compares.** `verify_r_code()` evaluates a script
+against the same CSVs a reader would download and checks its estimates against
+the rows being written to the question file — matching on *labels*, so a
+levels/labels pairing that had drifted would not slip through. The build halts
+on a mismatch and prints the count. `verify_pairs()` picks the coverage: every
+question, every shape the generator can produce (no grouping, a plain column, a
+derived column, the wave), and every arm at least once — 277 of the 1,099,
+which is all the distinct code paths. It has caught two real defects: an arm
+join naming `year` while joining on `survey_year`, and `strwrap()` breaking a
+line *inside* a quoted response label and silently changing the string.
+
+**The scripts live in `data/rcode/<id>.json`, fetched on first click.**
+`fusion_reg_choice` carries three arms by twelve splits — 174 KB — and code
+nobody clicked has no business loading with every chart. The question file just
+carries `has_r_code`.
+
+Two things the generated code makes visible that the pipeline only describes:
+`fusion_source_online = fusion_source_2` in every battery script, and
+`filter(distance == "50")` against `filter(rand_dist == "50")` in every
+split-sample one.
+
+## Splits are declared once## Splits are declared once
 
 The roster lives in the `splits` tribble at the top of `02`, and reaches the
 front end through `splits.json` → `config.groupings`. wxdash declares its
