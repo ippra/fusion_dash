@@ -20,10 +20,12 @@ source(here::here("00_paths.R"))
 #
 # Writes outputs/03_open_responses/.
 #
-# NOTHING HERE IS THEMED OR SUMMARISED. Words are counted as typed and
-# verbatims are carried whole. A theme is a coding decision, and there is no
-# coding frame yet; inventing one in a build script would put words in
-# respondents' mouths and no reader could tell.
+# NOTHING HERE IS SUMMARISED, AND NOTHING IS THEMED BY THIS SCRIPT. Words are
+# counted as typed and verbatims are carried whole. Themes exist, but they were
+# assigned by reading and arrive from themes.csv; a coding frame invented in a
+# build script would put words in respondents' mouths and no reader could tell.
+# The same goes for the content review: this script applies a decision someone
+# made by reading, and refuses to build an item nobody has read.
 
 out <- file.path(outputs, "03_open_responses")
 unlink(out, recursive = TRUE)
@@ -53,6 +55,36 @@ unlabelled <- themes |> anti_join(theme_roster, by = c("item", "theme"))
 if (nrow(unlabelled) > 0) {
   print(unlabelled |> count(item, theme))
   stop("Themes above are assigned but have no label in theme_labels.csv.")
+}
+
+# Content review ---------------------------------------------------------------
+# The identifier screen below sees shapes, not meaning. It cannot tell that a
+# response objects to a facility because of who it would bring to the
+# neighbourhood. Only reading can, so someone reads every verbatim before it is
+# published and records two things: that the item was read, and which responses
+# should not be shown.
+#
+# `verbatim_review.csv` carries the count of responses in the corpus at the
+# moment it was read. `03` checks that count against what it is about to
+# publish and halts if they differ, because a corpus that grew - a new wave, a
+# widened routing rule - is a corpus nobody has read. That check is the whole
+# point: without it "reviewed" is a claim in a commit message rather than a
+# property of the build.
+#
+# `verbatim_withheld.csv` names the responses held back and says why, one row
+# each. Declared in a file rather than a rule in code because whether a
+# response crosses the line is a judgement someone may want to overturn, and
+# they can only overturn what they can see.
+review <- read_csv(verbatim_review, col_types = cols(
+  item = col_character(), reviewed = col_integer(),
+  reviewed_on = col_date(), note = col_character()))
+withheld_content <- read_csv(verbatim_withheld, col_types = cols(
+  item = col_character(), case_id = col_character(), reason = col_character()))
+
+orphan <- withheld_content |> anti_join(review, by = "item")
+if (nrow(orphan) > 0) {
+  print(orphan)
+  stop("Responses above are withheld from an item with no review row.")
 }
 
 wjson <- function(x, path, pretty = FALSE) {
@@ -97,8 +129,8 @@ if (any(doubled > 0)) {
 # at the end.
 #
 # This is a net, not a review. It catches the mechanical shapes; it cannot catch
-# "my brother works at the plant in <town>". A human still has to read these
-# before the site goes anywhere public - see README.
+# "my brother works at the plant in <town>". The reading that catches meaning
+# is the content review above; this runs alongside it, not instead of it.
 IDENTIFIER_PATTERNS <- c(
   email = "[[:alnum:]._%+-]+@[[:alnum:].-]+\\.[[:alpha:]]{2,}",
   url = "(?i)(https?://|www\\.)[[:graph:]]+",
@@ -236,6 +268,25 @@ SITING_CAUTION <- paste0(
 # The second half of the caution is filled in per item with that item's own
 # withheld count, because "some responses are not shown" without a number is
 # the kind of caveat a reader cannot act on.
+# Reported, never silent, and the same rule as the identifier screen: a
+# response withheld from the page is one the reader will never know existed
+# unless the number is here.
+review_caution <- function(reviewed, n_held, reviewed_on) {
+  paste0(
+    "Every one of these ", format(reviewed, big.mark = ","), " responses was ",
+    "read before publication, on ", format(reviewed_on, "%d %B %Y"), ". ",
+    if (n_held == 0) {
+      "None was withheld."
+    } else if (n_held == 1) {
+      paste0("One was withheld, for content directed at a group of people ",
+             "rather than at fusion energy.")
+    } else {
+      paste0(n_held, " were withheld, for content directed at groups of ",
+             "people rather than at fusion energy.")
+    }
+  )
+}
+
 routing_caution <- function(withheld) {
   n <- sum(withheld)
   if (n == 0) return(NULL)
@@ -306,6 +357,31 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
                                     d[[column_for("fusion_host", field)]]))
     })
 
+  # Nothing is published that nobody has read. The count in the review file is
+  # the size of the corpus at the moment it was read; if what we are about to
+  # publish is a different size, the difference is unread and the build stops.
+  seen <- review |> filter(item == id)
+  if (nrow(seen) != 1) {
+    stop("No content-review row for '", id, "' in verbatim_review.csv. Read ",
+         "the item, then record it - see the open-response-themes skill.")
+  }
+  if (nrow(rows) != seen$reviewed) {
+    stop("'", id, "' holds ", nrow(rows), " responses but ", seen$reviewed,
+         " were read for content on ", seen$reviewed_on, ". The difference ",
+         "has not been read. Re-review the item and update ",
+         "verbatim_review.csv.")
+  }
+
+  # Held back by that reading, with the reason recorded beside each one.
+  held_content <- withheld_content |> filter(item == id)
+  missing_id <- setdiff(held_content$case_id, rows$case_id)
+  if (length(missing_id) > 0) {
+    stop("verbatim_withheld.csv names ", length(missing_id), " response(s) in ",
+         "'", id, "' that the corpus does not contain. A stale withhold hides ",
+         "nothing and masks a real one.")
+  }
+  rows <- rows |> filter(!case_id %in% held_content$case_id)
+
   # Themes joined on the respondent id, then the id dropped: it identifies a
   # person and has no business in a published file.
   coded <- themes |> filter(item == id)
@@ -348,7 +424,9 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     theme_noun = theme_noun,
     # A list so an item can carry more than one caveat, each its own
     # paragraph. auto_unbox would collapse a single one to a bare string.
-    cautions = as.list(c(caution, routing_caution(withheld))) |>
+    cautions = as.list(c(caution, routing_caution(withheld),
+                         review_caution(seen$reviewed, nrow(held_content),
+                                        seen$reviewed_on))) |>
       discard(is.na),
     n = nrow(rows),
     rows = rows
@@ -357,6 +435,8 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   list(id = id, label = label, n = nrow(rows),
        question = ref$question_text,
        withheld = sum(withheld),
+       reviewed = seen$reviewed,
+       held_content = nrow(held_content),
        waves = as.list(as.character(sort(unique(rows$year)))))
 })
 
@@ -374,6 +454,8 @@ for (v in verbatims_cfg) {
           if (v$withheld > 0)
             paste0(" (", v$withheld, " withheld: 2025 routed them here on a ",
                    "rule 2026 does not use)") else "")
+  message("      read for content: ", v$reviewed, "; withheld by that ",
+          "reading: ", v$held_content)
 }
 
 # Reported, never silent: a response withheld from the page is a response the

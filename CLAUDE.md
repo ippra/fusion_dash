@@ -281,11 +281,50 @@ Three things in it are easy to undo:
   it: 43 people meant it.
 - **The identifier screen is a net, not a review.** It catches emails, URLs,
   phone numbers, long digit runs and @handles, holds them back, and writes
-  `held_back_for_review.csv`. It currently catches nothing across 3,580
-  responses - verified against probes, so that is a real result and not a
-  broken pattern. It cannot catch "I live in New York City", which is in the
-  data. A human has to read these before the site is published anywhere
-  public.
+  `held_back_for_review.csv`. It currently catches nothing across the corpus -
+  verified against probes, so that is a real result and not a broken pattern.
+  It cannot catch "I live in New York City", which is in the data. The reading
+  that catches meaning is the content review below; the screen runs alongside
+  it, not instead of it.
+
+## The content review
+
+Every verbatim is read before it is published. Two files record the outcome,
+and `03` will not build an item without them:
+
+- `verbatim_review.csv` — one row per item: how many responses were in the
+  corpus when it was read, and when. **`03` compares that count against what
+  it is about to publish and halts if they differ.** That check is the point.
+  A corpus that grew — a new wave, a widened routing rule, a reversed
+  withhold — contains responses nobody has read, and without the check
+  "reviewed" is a claim in a commit message rather than a property of the
+  build. Re-read the item and update the count; do not just bump the number.
+- `verbatim_withheld.csv` — one row per withheld response: `item`, `case_id`,
+  and the reason in prose. Declared in a file rather than a rule in code
+  because whether a response crosses the line is a judgement someone may want
+  to overturn, and they can only overturn what they can see. `03` halts on a
+  withhold naming a response the corpus does not contain, since a stale
+  withhold hides nothing and masks a real one.
+
+Reviewed 2026-08-22, all 3,360 responses. **Two withheld, both from
+`uncertain`**, both for content directed at groups of people rather than at
+fusion energy: one objecting to a facility because of the racial groups it
+would bring to the respondent's neighbourhood, one asserting that immigrants
+admitted under the previous administration would want to cause a nuclear
+disaster. The second is the borderline call and is marked as such in the file.
+
+Nothing else was withheld, and the line is deliberately narrow. Ordinary
+political opinion stays in, including sharp opinion about named public
+figures; so does mild profanity, conspiracy theory, and criticism of the
+survey itself. Location detail stays in at region level — the corpus names
+Three Mile Island, Hanford, Oak Ridge, Los Alamos, the Mojave and one small
+Florida town — because none of it identifies a person on its own. Withholding
+opinions because they are unwelcome would misrepresent the corpus, which is
+the same failure as a keyword coding frame.
+
+The count of what was withheld is stated on the page beside every item, the
+same rule the identifier screen follows: a response the reader will never know
+existed unless the number is there.
 
 **The three why-items are restricted to one routing rule across both waves.**
 The waves gated them differently — FU25 asked "why do you oppose" of anyone

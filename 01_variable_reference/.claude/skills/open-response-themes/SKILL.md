@@ -131,7 +131,7 @@ python3 <skill>/scripts/check_themes.py oppose <scratch>/oppose_raw.txt
 flags themes with one or two members — not an error, but look again in case
 the response belongs elsewhere.
 
-### 6. Write the files
+### 6. Write the theme files
 
 `themes.csv` — `item, case_id, year, theme`, one row per response.
 `theme_labels.csv` — `item, theme, label, theme_order`, one row per theme.
@@ -167,7 +167,45 @@ in `00_paths.R`, declared once and used by both. If they ever disagree you
 will be reading and coding responses the dashboard does not show, and the
 checker will tell you only after the work is done.
 
-Then `Rscript 03_create_open_response_data.R && Rscript 04_build_dashboard.R`.
+### 7. Read it once more, for content
+
+Coding asks *what is this response about*. Publishing asks a different
+question: **should this be on a public web page at all?** The identifier
+screen in `03` catches emails, phone numbers and URLs — shapes. It cannot see
+that a response objects to a facility because of who it would bring to the
+neighbourhood. Only reading can, and the coding pass does not count: you were
+looking for the concern, not for the harm.
+
+Record the outcome in two files, both read by `03`:
+
+- `verbatim_review.csv` — `item, reviewed, reviewed_on, note`. `reviewed` is
+  the number of responses in the corpus when you read it, which is the number
+  the export script printed. **`03` halts if the item it is about to publish
+  is a different size**, because the difference is text nobody has read. Never
+  just bump the number to make a build pass.
+- `verbatim_withheld.csv` — `item, case_id, reason`, one row per response held
+  back, with the reason in prose. `03` drops those rows and states the count
+  on the page.
+
+Keep the line narrow, and write the reason down so someone can disagree with
+it. What was withheld from this corpus: two responses, both attributing bad
+character or intent to a group of people defined by race or national origin.
+What was **not** withheld, deliberately: sharp political opinion including
+about named public figures, mild profanity, conspiracy theory, contempt for
+the survey, and every self-identifying detail short of an actual identifier —
+"I worked at 3 Mile Island", "I live near Hanford", one named small town.
+Withholding opinions because they are unwelcome misrepresents the corpus,
+which is the same failure as a keyword coding frame, arrived at from the other
+direction.
+
+Note that the export still contains a content-withheld response, so it stays
+coded and `check_themes.py` stays clean. The withhold applies at publication,
+not at coding — which is why `reviewed` matches the export count rather than
+the published count.
+
+### 8. Build
+
+`Rscript 03_create_open_response_data.R && Rscript 04_build_dashboard.R`.
 
 ## Rules that matter
 

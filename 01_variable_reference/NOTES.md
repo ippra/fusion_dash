@@ -192,7 +192,17 @@ These are in the released data. Correcting them in the sheet breaks the join.
 
 ## 6. Before the open-response page is published
 
-- [ ] **A response has to be read for content, not only for identifiers.**
+- [x] **A response has to be read for content, not only for identifiers.**
+      *Done 2026-08-22.* All 3,360 verbatims read. Two withheld, both from
+      `uncertain`: the response named below, and one asserting that immigrants
+      admitted under the previous administration would want to cause a nuclear
+      disaster here. `verbatim_review.csv` records what was read and when;
+      `verbatim_withheld.csv` records what was held back and why; `03` halts if
+      the corpus is a different size from what was read, so a new wave cannot
+      publish unread text. Counts are stated on the page. The original note
+      follows, because its reasoning still governs the next review.
+
+      **A response has to be read for content, not only for identifiers.**
       `03_create_open_response_data.R` screens every verbatim for emails, URLs,
       phone numbers, long digit runs and @handles, and currently catches
       nothing across 3,580 responses. That screen sees shapes, not meaning, and
@@ -206,11 +216,20 @@ These are in the released data. Correcting them in the sheet breaks the join.
       Decide before the site is served anywhere public: publish the corpus
       whole, withhold specific responses with the count stated, or show themes
       and counts without the raw text for these items. Whichever is chosen, say
-      it on the page.
-- [ ] **Free text carries location detail the screen cannot catch** — "I live
+      it on the page. **Chosen: withhold specific responses, count stated.**
+- [x] **Free text carries location detail the screen cannot catch** — "I live
       in New York City", "I live within 50 miles of Canada and Buffalo", "I
       live near the Hanford WA Nuclear Plant". Individually harmless; worth a
-      judgement about the set.
+      judgement about the set. *Judged 2026-08-22: publish.* The set was read
+      in full. Every self-location is at region level or coarser — a metro
+      area, a state, a named landmark within tens of miles, and in one case a
+      Florida town of a few thousand. Several respondents also give an
+      occupation, or a relative's: "I worked at 3 Mile Island", "my brother
+      was a reactor operator", "I work with the NNSS", "I am a physician". One
+      names a sitting state utility commissioner in his public role. None of it
+      identifies a respondent on its own, and stripping it would remove the
+      reason many of these answers make sense. Re-judge if a future wave asks
+      anything that narrows location further.
 
 ## 7. Open questions
 
