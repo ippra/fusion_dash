@@ -132,9 +132,16 @@ single-response group sums to 100%, and no interval is missing or inverted.
 
 ## Every chart carries the R that rebuilds it
 
-The explore page has a **Show the R code** toggle under each chart. It reveals
-a script that rebuilds *that* plot — that question, that split, that arm —
-from the released CSVs and nothing else.
+The explore page has a **Download R code** button in the toolbar, beside
+*Download chart (PDF)*. It saves a script that rebuilds *that* plot — that
+question, that split, that arm — from the released CSVs and nothing else.
+
+**Download only; there is no on-page viewer.** A collapsible panel showing the
+code under the chart was built and then removed: someone who wants the script
+wants it in their editor, not in a scrolling box. `.fu-toolbar-actions` groups
+the two download buttons, because `.fu-pdf-btn` takes `margin-left: auto` and
+two of them loose in the row each push themselves to the right edge, ending up
+at opposite ends of it.
 
 **One script per (arm, split), not one template.** 1,099 of them. A script for
 a specific plot names that plot's variables and no others: splitting by gender
@@ -166,10 +173,11 @@ which is all the distinct code paths. It has caught two real defects: an arm
 join naming `year` while joining on `survey_year`, and `strwrap()` breaking a
 line *inside* a quoted response label and silently changing the string.
 
-**The scripts live in `data/rcode/<id>.json`, fetched on first click.**
-`fusion_reg_choice` carries three arms by twelve splits — 174 KB — and code
-nobody clicked has no business loading with every chart. The question file just
-carries `has_r_code`.
+**The scripts live in `data/rcode/<id>.json`, fetched on the first download
+and cached.** `fusion_reg_choice` carries three arms by twelve splits — 174 KB
+— and code nobody asked for has no business loading with every chart. The
+question file just carries `has_r_code`, which is also what hides the button
+for a question with no script.
 
 Two things the generated code makes visible that the pipeline only describes:
 `fusion_source_online = fusion_source_2` in every battery script, and
