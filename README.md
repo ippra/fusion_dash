@@ -75,6 +75,11 @@ the first attempt here was a regex parser: it reached about 90% and the last
 what the text means is not. Adding a wave means following the procedure, not
 improvising.
 
+The open-response themes are built the same way, under
+`.claude/skills/open-response-themes/`: read every answer, assign one theme by
+judgment, then read each theme's answers together to catch what drifted. That
+third pass is where the errors turn up.
+
 `NOTES.md` beside it is the part someone acts on — what the instruments got
 wrong, what must not be "fixed" because it is in the released data, and what
 the documents could not settle. Read it before pooling the waves.

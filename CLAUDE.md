@@ -58,6 +58,10 @@ The procedure is `01_variable_reference/.claude/skills/fusion-variable-reference
 Adding an instrument means following it, not improvising. Its worked examples
 are the traps that actually occur in these two documents.
 
+The same rule governs theming the open responses, under its own skill —
+`open-response-themes` — for the same reason: a keyword pass produces a column
+that looks coded and is wrong exactly where it matters.
+
 ## The variable reference
 
 `01_variable_reference/variable_reference.csv` — 152 rows, 20 columns, one per
@@ -297,6 +301,11 @@ shown.
 on `case_id`; `theme_labels.csv` holds the roster and the order the filter menu
 reads in. Only `oppose` is coded so far — 403 responses, 15 themes. An item
 with no coding gets no theme column; nothing is guessed.
+
+The procedure is
+`01_variable_reference/.claude/skills/open-response-themes/SKILL.md`, with an
+export script and a coverage checker beside it. Coding a new item means
+following it, not improvising.
 
 **Coded in three passes, by reading.** Draft the themes from reading the whole
 set; assign one to each response by reading it; then read each theme's members
