@@ -10,9 +10,9 @@ response**, keyed on `case_id`, plus a labelled roster in `theme_labels.csv`.
 The dashboard shows the theme as a filterable column beside the raw text, which
 is never altered.
 
-Coded so far: `oppose` (403 responses, 15 themes), `support` (377, 15) and
-`uncertain` (1,630, 17). Not coded: `ask` (1,170). An uncoded item shows no theme column —
-`03_create_open_response_data.R` does not guess.
+Coded so far: `oppose` (403 responses, 15 themes), `support` (377, 15),
+`uncertain` (1,630, 17) and `ask` (1,170, 22) — the whole corpus. An uncoded
+item shows no theme column; `03_create_open_response_data.R` does not guess.
 
 ## Read the responses. Do not write a matcher.
 
@@ -178,11 +178,64 @@ It also runs a much higher *No reason given* rate: 16% against opposition's
 names the thing feared; a supporting one is often just "It's a positive thing".
 Watch for the temptation to rescue those into a theme they do not earn.
 
-`ask` is a different kind of item entirely. Those are questions, not positions,
-and the useful theme is what the person wants to know rather than what they
-believe. The FU26 instrument promises these will be shared with people working
-on fusion communication, so a theme list that helps that audience find their
-own area is the point.
+### Question items
+
+`ask` is a different kind of item, and the difference is what a theme **names**,
+not how you arrive at one. All six steps are unchanged.
+
+- On a position item — `oppose`, `support`, `uncertain` — a theme names a
+  position: a concern held or a benefit claimed. *Safety and accident risk.*
+- On a question item, a theme names **a subject the person wants explained**.
+  *How safe is it. What will it cost. How does it compare to nuclear.*
+
+Phrase them as the question being asked, not as a topic area. "Safety" is a
+label; "How safe is it, and what happens if it fails" is the thing 200 people
+actually asked. The label invites the same failure the rule above warns
+about — tagging a response because a word appears in it rather than because
+that is what the person wanted to know.
+
+Two traps specific to question items:
+
+- **A question is not a position.** "Why are we spending money on this when it
+  will never work?" is rhetorical opposition wearing a question mark; "How much
+  will it cost to build?" is a request for a number. They are different themes
+  and sorting them takes reading, because both mention cost.
+- **Many responses hold several questions.** One respondent asked five in a
+  numbered list. The primary theme is still the one they lead with or dwell
+  on — the same rule — but say so on the page, because a reader scanning a
+  ranked list of subjects will otherwise assume the counts are of questions
+  rather than of respondents. `03` carries that sentence as the item's
+  `caution`, and supplies `theme_noun` so the standing caption reads "the
+  question it leads with" rather than "the concern".
+
+`ask` has a named audience: the FU26 instrument tells respondents their
+questions will be shared with people working on how fusion energy is
+communicated. The themes should read as *what the public wants explained,
+ranked* — which is the deliverable — rather than as a taxonomy of the corpus.
+
+What coding it settled, and what the next question item should expect:
+
+- **Twenty-two themes for 1,170 responses**, against fifteen for 403 on
+  `oppose`. A question item spreads wider because people ask about subjects
+  the position items never raise — waste, jobs, regulation, how to explain
+  fusion at all — and each of those is small (7 to 24 responses) and worth
+  keeping separate.
+- **Split the risk question or it eats the corpus.** *How safe is it* still
+  takes 16.7% after *What happens if something goes wrong*, *What are the
+  health effects*, *What would it mean for my community*, *What will it do to
+  the environment* and *What happens to the waste* were pulled out of it.
+  Those five are different asks with different answers; leaving them merged
+  would have produced one meaningless 35% bar.
+- **Two boundary rules did most of the work.** A question about people living
+  near a facility is *community*, whatever harm it names; a question about
+  harm to people generally is *health*. And where a short answer is a bare
+  list — "Cost and safety", "Costs, risks, environmental concerns" — code the
+  word it leads with, the same lead-or-dwell rule applied to a list.
+- **Two themes are not questions**: dismissals and challenges aimed at the
+  survey or the expert (16), and non-answers (71). Both belong at the bottom
+  of the order. But a bare statement of fear — "It looks like it's not a safe
+  thing" — is a concern, not a dismissal, and the verify pass caught it
+  filed as one.
 
 ## Where the coding lives
 

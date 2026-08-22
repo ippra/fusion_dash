@@ -1265,8 +1265,11 @@ components.open_responses = async function (page, container) {
                 el("p", { class: "fu-caption" }, note));
     const ctx = Array.isArray(v.contexts) ? v.contexts : [];
     const themed = Array.isArray(v.themes) && v.themes.length;
+    // A why-item's theme names a concern; a question item's names a question.
+    // 03 supplies the noun so the sentence reads right for either.
+    const unit = typeof v.theme_noun === "string" ? v.theme_noun : "concern";
     if (themed) card.append(el("p", { class: "fu-caption" },
-      `Each response carries one theme — the concern it leads with or dwells ` +
+      `Each response carries one theme — the ${unit} it leads with or dwells ` +
       `on, where it raises more than one. Themes were drafted by reading the ` +
       `whole set, assigned by reading each response, and checked by reading ` +
       `each theme's responses together. Filter by theme in the column header.`));
