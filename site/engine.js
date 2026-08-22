@@ -1287,7 +1287,9 @@ components.open_responses = async function (page, container) {
       `on, where it raises more than one. Themes were drafted by reading the ` +
       `whole set, assigned by reading each response, and checked by reading ` +
       `each theme's responses together. Click a theme below to filter the ` +
-      `responses to it.`));
+      `responses to it. Bars are the plain share of responses, unweighted — ` +
+      `unlike the word associations and the survey questions elsewhere on ` +
+      `this site, which are weighted to the population.`));
     // A list, one paragraph each: an item can rest on more than one caveat.
     (Array.isArray(v.cautions) ? v.cautions : [])
       .filter(c => typeof c === "string" && c)
@@ -1341,8 +1343,12 @@ components.open_responses = async function (page, container) {
    * should not have to re-find the row they were looking at.
    *
    * Bars share one scale across the whole split, so a bar twice as long is
-   * twice the share wherever it sits. The unweighted count rides on every bar
-   * because a theme with two members must not read as a rate. */
+   * twice the share wherever it sits. The count rides on every bar because a
+   * theme with two members must not read as a rate.
+   *
+   * These shares are unweighted, which the caption above says out loud: they
+   * are the only bars on the site that are not a population estimate, and the
+   * weighted word list sits directly above them. */
   function themeBars(v, onPick) {
     const dist = v.theme_dist;
     const wrap = el("div", { class: "fu-theme-dist" });

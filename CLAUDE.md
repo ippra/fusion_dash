@@ -408,11 +408,14 @@ are easy to undo:
   front end from `v.rows` would give the same answer today and quietly stop
   the first time a row is held back; the withheld *Local impact on my area*
   response is why that item reads 75 and not 76.
-- **Weighted, with the unweighted count beside every bar.** Weighted because
-  the word list on the same page and every percentage on the explore page are,
-  and a reader should not have to ask which kind of number they are looking
-  at. Weighting moves nothing by more than 1.4 points on the two large items.
-  The count is there so a two-response theme cannot be read as a rate.
+- **Unweighted**, and the caption says so. The percentage is the count over
+  its group, nothing more. These are the only bars on the site that are not a
+  population estimate — the word associations directly above them are
+  weighted, and so is every percentage on the explore page — so the caption
+  names the difference rather than leaving a reader to trip over it. It
+  changes little either way: weighting moved nothing by more than 1.4 points
+  on the two large items. The count sits on every bar so a two-response theme
+  cannot be read as a rate.
 - **Theme order is 03's, in every split** — frequency across everyone, *No
   reason given* last. Changing the split recolours the chart rather than
   reshuffling it, the same rule the battery charts follow, so a reader

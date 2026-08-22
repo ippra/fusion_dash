@@ -261,11 +261,18 @@ GATE_CONTEXTS <- tribble(
 # the front end from the rows would give the same answer today and quietly stop
 # doing so the first time a row is held back.
 #
-# Weighted, like the word associations on the same page and every percentage on
-# the explore page. Weighting moves nothing here by more than 1.4 points on the
-# two large items, so this is about a reader not having to ask which kind of
-# number they are looking at. The unweighted count travels alongside every bar,
-# because a theme with two members must not read as a rate.
+# Unweighted: these are counts of texts that were read and coded, and the
+# percentage is that count over its group. Deliberately not weighted, which
+# makes this the one bar list on the site that is not a population estimate -
+# the word associations directly above it are weighted, and so is every
+# percentage on the explore page. That difference is stated in the caption
+# rather than left for a reader to trip over, because two bar lists on one
+# page meaning different things is exactly the kind of silence this project
+# guards against. It changes little either way: weighting moved nothing here
+# by more than 1.4 points on the two large items.
+#
+# The count rides on every bar regardless, because a theme with two members
+# must not read as a rate.
 #
 # Percentages are within a group and across themes, so each group sums to 100.
 # One theme per response is what makes that true; a multi-response item could
@@ -274,14 +281,16 @@ theme_distribution <- function(rows, theme_order, splits) {
   values <- map(splits, function(sp) {
     key <- sp$key
     d <- rows |>
-      filter(!is.na(.data[[key]])) |>
-      summarise(n = n(), w = sum(w), .by = all_of(c("theme", key))) |>
+      # Only the groups this split actually draws. A group dropped for size
+      # would otherwise survive summarise() and land in the file with a null
+      # name, which the front end ignores and a reader of the JSON would not.
+      filter(.data[[key]] %in% sp$groups) |>
+      summarise(n = n(), .by = all_of(c("theme", key))) |>
       rename(group = all_of(key)) |>
       # Complete the grid so a theme absent from a group draws an empty bar
       # rather than closing the gap and misaligning the row.
-      complete(theme = theme_order, group = sp$groups,
-               fill = list(n = 0L, w = 0)) |>
-      mutate(pct = round(100 * w / sum(w), 1), .by = group) |>
+      complete(theme = theme_order, group = sp$groups, fill = list(n = 0L)) |>
+      mutate(pct = round(100 * n / sum(n), 1), .by = group) |>
       mutate(theme = factor(theme, levels = theme_order),
              group = factor(group, levels = sp$groups)) |>
       arrange(theme, group)
@@ -382,7 +391,6 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     col <- ref[[field]]
     if (is.na(col)) return(NULL)
     out <- tibble(year = year, case_id = d$case_id,
-                  w = as.numeric(d[[weight_var]]),
                   text = str_squish(d[[col]]))
     for (k in seq_len(nrow(contexts))) {
       src <- column_for(contexts$variable[k], field)
@@ -506,7 +514,6 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   theme_dist <- if (!has_themes) NA else
     theme_distribution(dist_rows, theme_labels_ordered, splits)
 
-  rows <- rows |> select(-w)
 
   wjson(list(
     id = id, label = label, variable = variable,
