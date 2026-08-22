@@ -493,13 +493,21 @@ function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, colum
       // than as a text box: the reader sees what is on offer instead of
       // guessing at spelling, and picks in one motion. Options are read off
       // the rows, so a value added upstream appears without an edit here.
-      if (c.filter === "select") {
+      if (c.filter === "none") {
+        // A column of prose has nothing useful to filter on, and a box under
+        // its header is a box a reader will type into and get nowhere.
+      } else if (c.filter === "select") {
         const sel = el("select", { onchange: () => {
           colQ[c.id] = sel.value; page = 0; refresh();
         } });
         sel.append(el("option", { value: "" }, c.filterAll || "All"));
-        const values = [...new Set(rows.map(r => String(r[c.id] ?? "")))]
-          .filter(Boolean).sort((a, b) => a.localeCompare(b));
+        const present = new Set(rows.map(r => String(r[c.id] ?? "")).filter(Boolean));
+        // An ordered menu where the column has one - bands read wrong in any
+        // order but their own, and alphabetical puts "Strongly opposes"
+        // between "Opposes" and "Supports".
+        const values = c.filterOrder
+          ? c.filterOrder.filter(v => present.has(v))
+          : [...present].sort((a, b) => a.localeCompare(b));
         for (const v of values) sel.append(el("option", { value: v }, v));
         th.append(sel);
         selectCols.add(c.id);
@@ -1259,14 +1267,23 @@ components.open_responses = async function (page, container) {
     if (typeof v.caution === "string" && v.caution)
       card.append(el("p", { class: "fu-placeholder-note" }, v.caution));
 
-    const columns = [{ id: "text", label: "Response", width: "72%",
+    const ctx = Array.isArray(v.contexts) ? v.contexts : [];
+    const wide = ctx.length ? "50%" : "78%";
+    const columns = [{ id: "text", label: "Response", width: wide,
+      filter: "none",
       render: (r) => el("div", { class: "fu-verbatim-text" }, r.text) }];
-    if (typeof v.context_label === "string" && v.context_label)
-      columns.push({ id: "context", label: v.context_label, width: "16%" });
-    columns.push({ id: "year", label: "Survey" });
+    // Both sides of the gate: someone reached this question because of how
+    // they answered about power plants OR about a facility near them, and the
+    // two often disagree — which is half of what the answer explains.
+    for (const c of ctx)
+      columns.push({ id: c.key, label: c.label, width: "16%",
+                     filter: "select", filterAll: "Any",
+                     filterOrder: v.context_order });
+    columns.push({ id: "year", label: "Survey", filter: "select",
+                   filterAll: "Both" });
     card.append(dataTable({
       columns, rows: v.rows, pageSize: 25,
-      pageSizeOptions: [25, 50, 100, 250], columnFilters: false
+      pageSizeOptions: [25, 50, 100, 250]
     }));
     host.append(card);
   }

@@ -147,6 +147,37 @@ message("Words: ", nrow(words), " distinct across ", entries_total,
 # answer readable: knowing someone scored 2 out of 7 on supporting fusion
 # plants is what makes their explanation an explanation.
 #
+# Both gate variables sit on the same 1-7 scale, and the instrument labels only
+# its ends: 1 is "Strongly oppose", 7 is "Strongly support", and 2 through 6
+# carry no wording at all. Banded into five using those two words and nothing
+# else - "Opposes" is as much as can be said about a 3 without inventing a
+# label the respondent never saw. The bands are named in SUPPORT_BANDS so the
+# front end can order the filter menu by them rather than alphabetically, which
+# would put "Strongly opposes" between "Opposes" and "Strongly supports".
+SUPPORT_BANDS <- c("Strongly opposes", "Opposes", "Neither", "Supports",
+                   "Strongly supports")
+
+support_band <- function(x) {
+  v <- suppressWarnings(as.integer(x))
+  case_when(
+    v == 1      ~ SUPPORT_BANDS[1],
+    v %in% 2:3  ~ SUPPORT_BANDS[2],
+    v == 4      ~ SUPPORT_BANDS[3],
+    v %in% 5:6  ~ SUPPORT_BANDS[4],
+    v == 7      ~ SUPPORT_BANDS[5],
+    TRUE        ~ NA_character_
+  )
+}
+
+# Both sides of the gate, not just one: a person reached these questions
+# because of how they answered about power plants OR about a facility near
+# them, and the two can disagree.
+GATE_CONTEXTS <- tribble(
+  ~variable,     ~label,
+  "new_fusion",  "Fusion power plants",
+  "fusion_host", "A facility nearby"
+)
+#
 # `caution` is shown with the responses. The three why-items are gated on two
 # questions, and one of them - fusion_host - randomized the distance to 10 or
 # 50 miles. That reaches the answers themselves: 52 responses across the two
@@ -159,29 +190,31 @@ SITING_CAUTION <- paste0(
   "shown."
 )
 verbatim_items <- tribble(
-  ~id,          ~variable,              ~label,                          ~context,      ~caution,
-  "oppose",     "fusion_oppose_why",    "Why people oppose",             "new_fusion",  SITING_CAUTION,
-  "support",    "fusion_support_why",   "Why people support",            "new_fusion",  SITING_CAUTION,
-  "uncertain",  "fusion_uncertain_why", "Why people are unsure",         "new_fusion",  SITING_CAUTION,
-  "ask",        "fusion_question",      "Questions for a fusion expert", NA_character_, NA_character_
+  ~id,          ~variable,              ~label,                          ~gated, ~caution,
+  "oppose",     "fusion_oppose_why",    "Why people oppose",             TRUE,   SITING_CAUTION,
+  "support",    "fusion_support_why",   "Why people support",            TRUE,   SITING_CAUTION,
+  "uncertain",  "fusion_uncertain_why", "Why people are unsure",         TRUE,   SITING_CAUTION,
+  "ask",        "fusion_question",      "Questions for a fusion expert", FALSE,  NA_character_
 )
 
 held_back <- list()
 
-verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, context,
+verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
                                           caution) {
   ref <- reference |> filter(variable == !!variable)
+  contexts <- if (gated) GATE_CONTEXTS else GATE_CONTEXTS[0, ]
 
   rows <- map2(waves_data$raw, waves_data$year, function(d, year) {
-    col <- ref[[waves$column[waves$year == year]]]
+    field <- waves$column[waves$year == year]
+    col <- ref[[field]]
     if (is.na(col)) return(NULL)
-    ctx_col <- if (is.na(context)) NA_character_ else
-      column_for(context, waves$column[waves$year == year])
-    tibble(
-      year = year,
-      text = str_squish(d[[col]]),
-      context = if (is.na(ctx_col)) NA_character_ else d[[ctx_col]]
-    )
+    out <- tibble(year = year, text = str_squish(d[[col]]))
+    for (k in seq_len(nrow(contexts))) {
+      src <- column_for(contexts$variable[k], field)
+      out[[paste0("ctx_", contexts$variable[k])]] <-
+        if (is.na(src)) NA_character_ else support_band(d[[src]])
+    }
+    out
   }) |>
     bind_rows() |>
     filter(!is.na(text), text != "")
@@ -196,11 +229,11 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, context,
     id = id, label = label, variable = variable,
     question = ref$question_text,
     asked_if = ref$asked_if,
-    # NA, not NULL: jsonlite writes NULL as {}, which is truthy in JavaScript,
-    # so the column would appear on the one item that has no context and its
-    # header would render as [object Object].
-    context_label = if (is.na(context)) NA_character_ else
-      "Support for plants (1-7)",
+    # A list, empty for an ungated item. auto_unbox leaves an empty list as [],
+    # which the front end reads as no context columns.
+    contexts = pmap(contexts, function(variable, label)
+      list(key = paste0("ctx_", variable), label = label)),
+    context_order = as.list(SUPPORT_BANDS),
     caution = caution,
     n = nrow(rows),
     rows = rows

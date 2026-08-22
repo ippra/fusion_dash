@@ -261,9 +261,22 @@ Three things in it are easy to undo:
   data. A human has to read these before the site is published anywhere
   public.
 
-The three why-items carry a caution: they are gated partly on `fusion_host`,
-which randomized the distance to 10 or 50 miles, and 52 responses mention the
-distance they were shown.
+The three why-items show **both** gate variables beside each response —
+`new_fusion` (fusion power plants) and `fusion_host` (a facility nearby) —
+because a person reached the question through either one and the two often
+disagree: 940 of the 1,630 "unsure" rows have them landing in different bands.
+
+Both sit on the same 1-7 scale, and the instrument labels only its ends. They
+are banded into five using those two words and nothing else — 1 "Strongly
+opposes", 2-3 "Opposes", 4 "Neither", 5-6 "Supports", 7 "Strongly supports" —
+because "Opposes" is as much as can be said about a 3 without inventing a label
+the respondent never saw. `SUPPORT_BANDS` names the order so the filter menus
+read in it; alphabetical would put "Strongly opposes" between "Opposes" and
+"Supports".
+
+They also carry a caution: the gate includes `fusion_host`, which randomized
+the distance to 10 or 50 miles, and 52 responses mention the distance they were
+shown.
 
 ## Pages
 
