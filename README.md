@@ -48,7 +48,7 @@ outputs/04_site/                the deployable site, 2.2 MB
 ```sh
 Rscript 02_create_question_data.R          # after any data or reference change
 Rscript 04_build_dashboard.R               # always; seconds
-python3 -m http.server --directory outputs/04_site 8901
+python3 preview.py            # http://localhost:8901
 ```
 
 R packages: `tidyverse`, `srvyr`, `survey`, `jsonlite`, `here`. `xml2` and

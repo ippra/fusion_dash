@@ -17,7 +17,7 @@ reason rather than the history. The full guide is `~/.claude/ippra-r-style.md`.
 Rscript 02_create_question_data.R          # srvyr statistics; seconds
 Rscript 03_create_open_response_data.R     # words + verbatims; seconds
 Rscript 04_build_dashboard.R               # assemble the site; seconds
-python3 -m http.server --directory outputs/04_site 8901
+python3 preview.py                         # http://localhost:8901
 ```
 
 There is no `01` script — `01_variable_reference/` is a directory holding the
@@ -37,7 +37,15 @@ python3 01_variable_reference/.claude/skills/fusion-variable-reference/scripts/c
 and must be only randomization variables, the consent item and the
 please-specify boxes — see the skill.
 
-Port 8899 is often already serving the wxdash site on this machine. Use 8901.
+Port 8899 is often already serving the wxdash site on this machine; `preview.py`
+defaults to 8901.
+
+**Preview through `preview.py`, not `python3 -m http.server`.** The plain
+server sends no cache headers, so the browser keeps `index.html` and goes on
+requesting the previous build's `engine.js?v=…`. A rebuild then appears to have
+done nothing, and the page shows stale text no amount of rebuilding fixes —
+which is how a caption that had already been corrected was still doubling its
+show condition on screen. `preview.py` sends `Cache-Control: no-cache`.
 
 ## The rule that matters most
 

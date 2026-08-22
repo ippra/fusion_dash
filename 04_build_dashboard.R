@@ -20,7 +20,7 @@ source(here::here("00_paths.R"))
 #   Rscript 04_build_dashboard.R
 #
 # Writes outputs/04_site/ — plain static files, fully self-contained. Preview:
-#   python3 -m http.server --directory outputs/04_site 8899
+#   python3 preview.py
 
 data_in <- file.path(outputs, "02_question_data")
 out <- file.path(outputs, "04_site")
@@ -318,4 +318,4 @@ size_mb <- sum(file.size(list.files(out, recursive = TRUE,
 message("Site written to ", out)
 message("  build ", BUILD, ", ", length(q_files), " questions, ",
         round(size_mb, 1), " MB")
-message("  preview: python3 -m http.server --directory ", out, " 8899")
+message("  preview: python3 preview.py")
