@@ -240,12 +240,10 @@ routing_caution <- function(withheld) {
   n <- sum(withheld)
   if (n == 0) return(NULL)
   paste0(
-    "The 2025 and 2026 surveys decided who saw this question by different ",
-    "rules: 2025 asked it of anyone who leaned that way on either the power ",
-    "plants question or the facility-nearby question, 2026 only of people ",
-    "who leaned that way on both. Shown here are the responses that meet ",
-    "2026's rule in both years, so the two are comparable. That withholds ",
-    n, " responses from 2025."
+    "The condition above is 2026's. In 2025 it was looser - either question ",
+    "was enough, rather than both - so 2025 asked this of people 2026 would ",
+    "not have. Holding both years to the same condition makes them ",
+    "comparable and withholds ", n, " responses from 2025."
   )
 }
 #

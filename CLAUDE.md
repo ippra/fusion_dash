@@ -87,6 +87,15 @@ Its judgment columns are easy to confuse:
   clause, because a caveat a reader cannot decode is not a caveat. `02` halts
   on a condition with no plain text, since the caption would otherwise print
   "Not everyone was asked:" and stop.
+
+  Every one of the 30 conditions was checked against both waves on
+  2026-08-22 — for each, does the item hold a value exactly when the
+  condition is true? All 30 hold with **no respondent answering an item the
+  condition excludes**, except the three why-items, where the document
+  describes neither wave as fielded. Those three carry `asked_if` as the
+  document writes it and `asked_if_plain` as the survey actually behaved,
+  with the divergence spelled out in `notes`. They are the only rows where
+  the two columns are not renderings of each other; do not "fix" that.
 - `battery` — which select-all set a `checkbox_item` belongs to. Declared, not
   inferred from the shared stem, so editing one item's wording cannot split a
   battery in two.

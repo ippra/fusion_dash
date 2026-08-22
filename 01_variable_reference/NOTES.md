@@ -98,10 +98,24 @@ documents say. Tick an item when it is resolved, and date the tick.
       `new_fusion <= 2 or fusion_host <= 2` and its two siblings, taken from
       the documents. FU26 uses `and`, and neither instrument states the
       priority between the three conditions, which is what actually decides
-      the overlapping cases. The sheet records what the documents say, so both
-      columns stay as they are; the page carries the correction in the item's
-      `caution`, which is the field for exactly this. Fix the documents at the
-      next fielding and the two can agree again.
+      the overlapping cases.
+
+      **Settled 2026-08-22.** `asked_if` stays as the document writes it — the
+      sheet records what the documents say. `asked_if_plain`, which is the
+      clause the reader actually sees, was corrected to state FU26's rule,
+      which is what governs the published corpus in both waves. The `notes`
+      column on all three rows spells out the divergence, and it is the only
+      place in the sheet where the two condition columns are not renderings of
+      each other. Fix the documents at the next fielding and they can agree
+      again.
+
+      The other 27 conditions were audited the same way on the same date —
+      for each, does the item hold a value exactly when the condition is
+      true, in each wave? **All 27 hold, with no respondent answering an item
+      its condition excludes.** So the defect is confined to these three rows;
+      it is not a general problem with how the sheet records show conditions.
+      Worth re-running after any new wave: the check is a cross-tab of the
+      gate variables against whether the item was answered.
 - [ ] **`confirm_attention` filters nobody.** Every FU26 respondent in the
       released data answered Yes. It has no variance and cannot be used as a
       quality screen after the fact.
