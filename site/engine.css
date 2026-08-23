@@ -1111,3 +1111,9 @@ table.data th select {
   border-left: 3px solid var(--accent); background: var(--row-hover);
   border-radius: 0 4px 4px 0;
 }
+
+/* The numbers behind a comparison's bars. Narrower than the explore table and
+   with no filter row: ten rows have nothing to filter. */
+.fu-compare-table { font-size: 12.5px; margin-top: 12px; }
+.fu-compare-table th { white-space: nowrap; }
+.fu-compare-table td:first-child { min-width: 16ch; }

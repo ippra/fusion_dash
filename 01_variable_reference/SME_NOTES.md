@@ -94,11 +94,33 @@ the document says. Tick an item when it is resolved, and date the tick.
 
 ## 5. Open questions
 
-- [ ] `fusion_sup_cor` asks experts which factors most strongly correlate with
-      public support. The actual correlates can be computed from the public
-      data and are not, yet — that comparison would be the strongest test of
-      expert calibration in the survey, and it is the one prediction item with
-      no counterpart on the comparison page.
+- [x] `fusion_sup_cor` asks experts which factors most strongly correlate with
+      public support. *Done 2026-08-23.* Computed in `04` and drawn as the
+      eleventh comparison. The mapping from each expert factor to a public
+      measure is declared in `sme_correlates.csv`, because half of them are
+      the vendor's derived columns rather than reference variables.
+
+      Strength is η, bias-corrected — the share of variation in support that
+      lies between a factor's groups rather than within them. One measure for
+      all ten so they are comparable: it assumes no ordering, which race and
+      awareness do not have, and it catches a relationship that is not a
+      straight line. Correcting for group count matters here because the
+      factors range from two categories to eleven.
+
+      Two of the ten are measure-sensitive, and both alternatives are computed
+      and shown in the table rather than left in a footnote:
+      **partisanship** scores 0.05 on `Party_ID` and 0.15 on `ideol`;
+      **environmental concern** scores 0.00 on `worry_enviro` and 0.10 on
+      `gccrsk`. Neither choice moves the factor across the table, but the
+      first number alone would overstate how settled it is.
+- [ ] **`nuclear_support` rests on half the sample.** It is FU26 only, so the
+      strongest correlate in the table is computed on 1,243 respondents while
+      the other nine use 2,444. Worth asking whether it returns in FU27.
+- [ ] **The trust measure is partly downstream of the outcome.** `univ_trust`
+      is trust in university scientists *as a source of information about
+      fusion energy*, not general trust in science. Someone who already
+      supports fusion has reason to trust the people who study it. A general
+      trust-in-science item would settle it; neither wave has one.
 - [ ] `fusion_pub_word_1..3` asks experts to predict the public's most common
       word associations. The public words are already counted on the public
       qualitative page; nobody has compared the two lists.

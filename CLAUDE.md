@@ -521,6 +521,22 @@ things follow:
   on a mismatch — a comparison that disagreed with the public page would be
   worse than none.
 
+**The eleventh comparison is computed, not carried.** `fusion_sup_cor` asks
+experts to name the strongest correlates of public support, and the correlates
+are computable — so `04` computes them: η, bias-corrected, of `new_fusion`
+across the groups of each factor. One measure for all ten so they rank against
+each other; it assumes no ordering (race and awareness have none) and catches
+a curve (age and ideology need that); the correction matters because the
+factors run from two categories to eleven.
+
+`sme_correlates.csv` declares which public measure stands for each expert
+factor, because half of them are the vendor's derived columns rather than
+reference variables. Two carry an `alternative_column` that is computed and
+shown beside the first: partisanship scores 0.05 on `Party_ID` and 0.15 on
+`ideol`, environmental concern 0.00 on `worry_enviro` and 0.10 on `gccrsk`.
+Showing only the primary number would make a measure-sensitive result look
+settled.
+
 Three response types the public pipeline never had, and the question file
 carries `value_kind` so the front end labels the axis rather than assuming a
 percentage:

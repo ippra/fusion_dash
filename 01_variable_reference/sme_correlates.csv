@@ -1,0 +1,11 @@
+sme_item,label,public_column,alternative_column,source,waves,note
+fusion_sup_cor_age,Age,Age,,vendor,both,Vendor-derived band. The self-reported age item exists in FU26 only.
+fusion_sup_cor_educ,Education,Education,,vendor,both,Vendor-derived band.
+fusion_sup_cor_gender,Gender,Gender,,vendor,both,Vendor-derived. Two categories as released.
+fusion_sup_cor_income,Income,Income,,vendor,both,"Vendor-derived, and only two bands - a coarser measure than the others, which can only lower its score."
+fusion_sup_cor_race,Race/ethnicity,Race,,vendor,both,Vendor-derived. Four categories as released.
+fusion_sup_cor_party,Partisanship or political ideology,Party_ID,ideol,vendor,both,The expert item names partisanship or ideology; Party_ID is used because it is vendor-derived and present in both waves. ideol gives a similar answer.
+fusion_sup_cor_aware,Prior awareness or familiarity with fusion energy,fusion_know,,survey,both,"Had you heard of fusion energy before reading the description. Three groups: yes, no, not sure."
+fusion_sup_cor_trust,Trust in scientists or scientific institutions,univ_trust,nas_trust,survey,both,"Trust in information about fusion energy from university scientists who study it. Measures trust in scientists AS A SOURCE ON FUSION, so it is partly downstream of fusion attitudes rather than independent of them. nas_trust gives a close answer. labs_trust is excluded: it is split-sampled between two different organisations."
+fusion_sup_cor_fission,Views toward traditional nuclear (fission) energy,nuclear_support,,survey,fu26,"FU26 only, so this one rests on 1,244 respondents rather than 2,444. Worded to match new_fusion word for word, which is what makes it a clean comparison."
+fusion_sup_cor_climate,Concern about climate change or environmental issues,worry_enviro,gccrsk,survey,both,Concern about the environment including pollution and climate change. gccrsk (perceived risk of global warming) and gcc (belief) are close alternatives.

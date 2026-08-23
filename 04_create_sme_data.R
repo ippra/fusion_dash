@@ -373,11 +373,13 @@ published <- function(variable) {
 
 comparisons <- list()
 add_comparison <- function(id, title, note, rows, categories, benchmark = NULL,
-                           value_kind = "share", axis = "Share of respondents") {
+                           value_kind = "share", axis = "Share of respondents",
+                           table = NULL) {
   comparisons[[length(comparisons) + 1]] <<- list(
     id = id, title = title, note = note, value_kind = value_kind, axis = axis,
     categories = as.list(categories), rows = rows,
-    benchmark = if (is.null(benchmark)) NA else benchmark)
+    benchmark = if (is.null(benchmark)) NA else benchmark,
+    table = if (is.null(table)) NA else table)
 }
 
 same <- reference |> filter(compare_kind == "same_question")
@@ -529,6 +531,161 @@ add_comparison("cmp_feeling",
                    value = round(pub_feel_mean, 2),
                    category = feel_opts$label[round(pub_feel_mean)]),
   axis = "Share of experts")
+
+# Which factors actually predict public support ---------------------------------
+# The one prediction item with no natural counterpart: experts picked up to
+# three factors they thought were the strongest correlates of public support,
+# and the correlates can be computed. This is the sharpest test of calibration
+# in the survey, because their answer is a ranking and so is the truth.
+#
+# One measure for all ten, so they are comparable: eta, the share of the
+# variance in support that lies between the groups of a factor rather than
+# within them. It assumes no ordering, which race and awareness do not have,
+# and it catches a relationship that is not a straight line, which age and
+# ideology need. A correlation would have to be swapped for something else on
+# half of them.
+#
+# Bias-corrected, because eta rises with the number of groups by chance alone
+# and the factors here range from two groups to eleven. omega squared removes
+# that; a factor with no real relationship lands at zero rather than at
+# whatever its category count buys it.
+correlates <- read_csv(sme_correlates, show_col_types = FALSE)
+
+missing_cols <- correlates |> filter(!public_column %in% names(public))
+if (nrow(missing_cols) > 0) {
+  print(missing_cols |> select(sme_item, public_column))
+  stop("Public columns above are named in sme_correlates.csv but not in the ",
+       "public data.")
+}
+unmapped <- setdiff(
+  reference$variable[reference$battery == "fusion_sup_cor" &
+                     reference$question_type == "checkbox_item"],
+  correlates$sme_item)
+if (length(unmapped) > 0) {
+  print(unmapped)
+  stop("Factors above are offered to experts but have no public measure in ",
+       "sme_correlates.csv - they would silently drop out of the ranking.")
+}
+
+# The vendor's columns carry their labels; a survey item carries codes, and
+# "7 over 1" tells a reader nothing. Translated from the public sheet where
+# there is a row to translate from.
+code_labels <- function(column) {
+  row <- public_reference |>
+    filter(column_fu25 == column | column_fu26 == column)
+  if (nrow(row) != 1 || is.na(row$response_options[1])) return(NULL)
+  opts <- parse_options(row$response_options[1])
+  set_names(opts$label, opts$value)
+}
+
+# Weighted one-way variance decomposition of support across a factor's groups.
+eta_for <- function(column, waves_used) {
+  frame <- public |>
+    filter(!is.na(new_fusion), !is.na(.data[[column]])) |>
+    transmute(w = weight, y = as.numeric(new_fusion),
+              g = as.character(.data[[column]]))
+  if (waves_used == "fu26") {
+    frame <- public |>
+      filter(survey_year == "2026", !is.na(new_fusion), !is.na(.data[[column]])) |>
+      transmute(w = weight, y = as.numeric(new_fusion),
+                g = as.character(.data[[column]]))
+  }
+  W <- sum(frame$w)
+  grand <- sum(frame$w * frame$y) / W
+  by_group <- frame |>
+    summarise(Wg = sum(w), mg = sum(w * y) / sum(w), n = n(), .by = g)
+  ss_between <- sum(by_group$Wg * (by_group$mg - grand)^2)
+  ss_total <- sum(frame$w * (frame$y - grand)^2)
+  k <- nrow(by_group)
+  n_eff <- nrow(frame)
+  ms_within <- (ss_total - ss_between) / (n_eff - k)
+  omega_sq <- (ss_between - (k - 1) * ms_within) / (ss_total + ms_within)
+  labels <- code_labels(column)
+  name_of <- function(code) {
+    if (is.null(labels) || is.na(labels[code])) code else unname(labels[code])
+  }
+  tibble(
+    eta = sqrt(max(0, ss_between / ss_total)),
+    eta_adj = sqrt(max(0, omega_sq)),
+    groups = k, n = n_eff,
+    spread = max(by_group$mg) - min(by_group$mg),
+    top = name_of(by_group$g[which.max(by_group$mg)]),
+    top_mean = max(by_group$mg),
+    bottom = name_of(by_group$g[which.min(by_group$mg)]),
+    bottom_mean = min(by_group$mg)
+  )
+}
+
+# Where the expert's factor could reasonably be measured more than one way,
+# the alternative is declared beside it and computed too. Partisanship scores
+# 0.05 on party identification and 0.15 on ideology; environmental concern
+# scores 0 on the concern item and 0.10 on perceived climate risk. Neither
+# choice moves a factor across the table, but a reader who cannot see the
+# second number has to take the first on trust.
+actual <- correlates |>
+  mutate(stat = pmap(list(public_column, waves), function(col, wv)
+           eta_for(col, wv)),
+         alt = map2(alternative_column, waves, function(col, wv)
+           if (is.na(col) || !nzchar(col)) tibble(eta_alt = NA_real_)
+           else eta_for(col, wv) |> transmute(eta_alt = eta_adj))) |>
+  unnest(c(stat, alt)) |>
+  arrange(desc(eta_adj)) |>
+  mutate(actual_rank = row_number())
+
+# What the experts picked: the share naming each factor in their top three.
+expert_pick <- multi_distribution(d, "All", correlates$sme_item) |>
+  transmute(sme_item = resp, picked = p) |>
+  arrange(desc(picked)) |>
+  mutate(expert_rank = row_number())
+
+calibration <- actual |>
+  left_join(expert_pick, by = "sme_item") |>
+  arrange(actual_rank)
+
+message("Correlates of public support, strongest first:")
+calibration |>
+  transmute(label = str_trunc(label, 38), n, groups,
+            eta = round(eta_adj, 3), alt = round(eta_alt, 3),
+            spread = round(spread, 2),
+            actual_rank, expert_rank, picked = round(picked)) |>
+  print(n = Inf)
+
+add_comparison("cmp_correlates",
+  "Which factors actually go with public support for fusion energy?",
+  paste0("Experts picked up to three factors they thought were the strongest ",
+         "correlates of public support. Both rankings are shown as places, ",
+         "so a shorter bar is a stronger factor. Strength is measured as the ",
+         "share of the variation in support that lies between a factor\u2019s ",
+         "groups rather than within them, corrected for the fact that a ",
+         "factor with more categories scores higher by chance. Two caveats ",
+         "carried from the mapping: views on nuclear power were asked in 2026 ",
+         "only, so that one rests on half the sample; and trust is trust in ",
+         "scientists as a source of information about fusion, which is partly ",
+         "downstream of fusion attitudes rather than independent of them."),
+  bind_rows(
+    calibration |> transmute(group = "Experts\u2019 ranking", category = label,
+                             p = expert_rank, p_low = NA_real_, p_upp = NA_real_),
+    calibration |> transmute(group = "Actual ranking", category = label,
+                             p = actual_rank, p_low = NA_real_, p_upp = NA_real_)),
+  calibration$label,
+  value_kind = "mean_rank", axis = "Place (1 = strongest)",
+  table = list(
+    columns = as.list(c("Factor", "Experts naming it", "Experts' place",
+                        "Actual place", "Strength", "Alternative measure",
+                        "Gap in mean support")),
+    rows = pmap(list(calibration$label, calibration$picked,
+                     calibration$expert_rank, calibration$actual_rank,
+                     calibration$eta_adj, calibration$eta_alt,
+                     calibration$spread, calibration$top,
+                     calibration$bottom, calibration$alternative_column),
+      function(label, picked, er, ar, eta, eta_alt, spread, top, bottom, altcol)
+        as.list(c(label, paste0(round(picked), "%"), er, ar,
+                  format(round(eta, 2), nsmall = 2),
+                  if (is.na(eta_alt)) "—" else
+                    paste0(format(round(eta_alt, 2), nsmall = 2),
+                           " on ", altcol),
+                  paste0(format(round(spread, 1), nsmall = 1),
+                         " pts, ", top, " over ", bottom))))))
 
 wjson(comparisons, "comparisons.json", pretty = TRUE)
 wjson(list(

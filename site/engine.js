@@ -1569,8 +1569,11 @@ components.comparison = async function (page, container) {
       group: r.group,
       category: wrapTickLabel(r.category),
       value: r.p,
-      label: cmp.value_kind === "mean_rank" ? r.p.toFixed(1)
-                                            : Math.round(r.p) + "%",
+      // A mean placing wants a decimal; a rank is a whole number and "9.0"
+      // reads as a measurement rather than a position.
+      label: cmp.value_kind === "mean_rank"
+               ? (Number.isInteger(r.p) ? String(r.p) : r.p.toFixed(1))
+               : Math.round(r.p) + "%",
       low: r.p_low, upp: r.p_upp
     }));
     const categoryOrder = (cmp.categories || []).map(wrapTickLabel);
@@ -1591,6 +1594,26 @@ components.comparison = async function (page, container) {
       card.append(el("p", { class: "fu-compare-benchmark" },
         `${b.label}: `, el("strong", {}, String(b.value)),
         b.category ? ` — which falls in “${b.category}”.` : "."));
+    }
+
+    // Some comparisons carry the numbers behind the bars. A plain table, not
+    // dataTable: ten rows need no search box, and the filter row would imply
+    // there is something here to filter.
+    if (cmp.table && Array.isArray(cmp.table.columns)) {
+      const scroll = el("div", { class: "table-scroll" });
+      const t = el("table", { class: "data fu-compare-table" });
+      const head = el("tr");
+      for (const c of cmp.table.columns) head.append(el("th", {}, c));
+      t.append(el("thead", {}, head));
+      const body = el("tbody");
+      for (const r of cmp.table.rows || []) {
+        const tr = el("tr");
+        for (const cell of r) tr.append(el("td", {}, String(cell)));
+        body.append(tr);
+      }
+      t.append(body);
+      scroll.append(t);
+      card.append(scroll);
     }
 
     content.append(card);
