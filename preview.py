@@ -23,7 +23,7 @@ import socketserver
 import sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                    "outputs", "04_site")
+                    "outputs", "05_site")
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):

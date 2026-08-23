@@ -13,6 +13,13 @@ site_src <- file.path(project_root, "site")
 outputs <- file.path(project_root, "outputs")
 
 variable_reference <- file.path(reference_dir, "variable_reference.csv")
+# The expert survey is a different survey, not another wave, so it gets its own
+# sheet rather than a third wave column. Its questions are different, its
+# sample is purposive and unweighted, and 26 of its columns share a name with a
+# public variable while only five ask the same question - one sheet would put
+# those in the same row and invite exactly the comparison that is wrong.
+sme_reference <- file.path(reference_dir, "sme_variable_reference.csv")
+sme_data <- file.path(data_dir, "FU26_SME_data.csv")
 arms_reference <- file.path(reference_dir, "arms.csv")
 word_stoplist <- file.path(reference_dir, "word_stoplist.csv")
 themes_reference <- file.path(reference_dir, "themes.csv")
@@ -73,8 +80,9 @@ why_item_kept <- function(item, new_fusion, fusion_host) {
   is.na(routed) | routed == item
 }
 
-absent <- c(variable_reference, arms_reference, word_stoplist, themes_reference,
-            theme_labels, verbatim_review, verbatim_withheld, waves$data)
+absent <- c(variable_reference, sme_reference, sme_data, arms_reference,
+            word_stoplist, themes_reference, theme_labels, verbatim_review,
+            verbatim_withheld, waves$data)
 absent <- absent[!file.exists(absent)]
 
 if (length(absent) > 0) {

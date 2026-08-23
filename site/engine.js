@@ -73,9 +73,10 @@ function el(tag, attrs = {}, ...children) {
 const naLabel = (v) => (v == null ? "NA" : v);
 
 // Optional deep-link: ?grouping=Gender preselects the demographic grouping.
-const urlGrouping = () => {
+const urlGrouping = (roster) => {
   const g = new URLSearchParams(location.search).get("grouping");
-  return g && CONFIG.groupings.some(x => x.id === g) ? g : null;
+  const list = roster || CONFIG.groupings;
+  return g && list.some(x => x.id === g) ? g : null;
 };
 
 // "Snow\nIce" → ["Snow", "Ice"] for multi-line Chart.js tick labels.
@@ -436,14 +437,18 @@ function setParams(obj) {
 
 /* ------------------------------------------------------ shared widgets -- */
 
-function groupingSelect(onChange, initial, labelText = "Select a grouping") {
+function groupingSelect(onChange, initial, labelText = "Select a grouping",
+                       roster = null) {
+  // The roster comes from the page where it has one: the expert survey splits
+  // by years in fusion work, which is nothing the public page offers.
+  roster = roster || CONFIG.groupings;
   const wrap = el("div");
   wrap.append(el("label", { class: "field-label", for: "grouping-sel" }, labelText));
   const sel = el("select", { class: "grouping", id: "grouping-sel", onchange: () => onChange(sel.value) });
-  for (const g of CONFIG.groupings) {
+  for (const g of roster) {
     sel.append(el("option", { value: g.id }, g.label));
   }
-  sel.value = initial || CONFIG.groupings[0].id;
+  sel.value = initial || roster[0].id;
   wrap.append(sel);
   return wrap;
 }
@@ -612,7 +617,7 @@ function dataTable({ columns, rows, pageSize = 25, pageSizeOptions = null, colum
    data (which preserves R's factor-level ordering from the compiler), unless
    an explicit categoryOrder is supplied by config. */
 let activeChart = null;
-function groupedBarChart(canvas, rows, { title = "", xLabel = "", yLabel = "", categoryOrder = null, showCI = false, horizontal = false, colors = null, legend = true }) {
+function groupedBarChart(canvas, rows, { title = "", xLabel = "", yLabel = "", categoryOrder = null, showCI = false, horizontal = false, colors = null, legend = true, multi = false }) {
   const groupsSeen = [], catsSeen = [];
   for (const r of rows) {
     const g = naLabel(r.group), c = naLabel(r.category);
@@ -647,8 +652,12 @@ function groupedBarChart(canvas, rows, { title = "", xLabel = "", yLabel = "", c
     } : {})
   }));
 
-  if (activeChart) { activeChart.destroy(); activeChart = null; }
-  activeChart = new Chart(canvas, {
+  // One chart per page is the norm here, and the singleton keeps the explore
+  // page from leaking a Chart on every redraw. A page that draws several at
+  // once - the expert-against-public comparison - opts out, or each new chart
+  // would destroy the one before it and only the last would survive.
+  if (!multi && activeChart) { activeChart.destroy(); activeChart = null; }
+  const chart = new Chart(canvas, {
     type: "bar",
     data: { labels: cats.map(tickLines), datasets },
     options: {
@@ -700,7 +709,9 @@ function groupedBarChart(canvas, rows, { title = "", xLabel = "", yLabel = "", c
     },
     plugins: [ChartDataLabels, ErrorBarsPlugin]   // ErrorBarsPlugin no-ops without errorLow
   });
-  return activeChart;
+  // Tracked either way, so navigating away destroys it.
+  if (multi) trackChart(chart); else activeChart = chart;
+  return chart;
 }
 
 /* ------------------------------------------------------------ components -- */
@@ -737,7 +748,15 @@ function wrapTickLabel(text, width = 48) {
 
 components.explore = async function (page, container) {
   const questions = await fetchJSON(page.questions.replace(/^data\//, "data/"));
-  let grouping = urlGrouping() || page.default_grouping || "All";
+  // A page may bring its own split roster, caption templates and question
+  // directory. The expert survey does all three: different splits, unweighted
+  // counts rather than population estimates, and its own data directory so a
+  // ?q= link cannot cross between the two surveys.
+  const GROUPINGS = Array.isArray(page.groupings) && page.groupings.length
+    ? page.groupings : CONFIG.groupings;
+  const CAPTION = page.caption || CONFIG.explore_caption;
+  const QDIR = page.question_dir || "data/q";
+  let grouping = urlGrouping(GROUPINGS) || page.default_grouping || "All";
   let showCI = getParam("ci") === "1";   // ?ci=1 deep-links the CI view
   let currentArm = getParam("arm");      // ?arm= deep-links a split-sample arm
   let scheme = urlScheme();              // ?scheme= deep-links a color scheme
@@ -753,7 +772,11 @@ components.explore = async function (page, container) {
     ? urlQ : (questions[0] && keyOf(questions[0]));
 
   const chartCard = el("div", { class: "card" });
-  const weightedTip = explain("weighted_pct");
+  // The page may replace this: on the expert survey "weighted so results
+  // represent US adults" is flatly wrong, and a tooltip nobody wrote for the
+  // page it is on is worse than none.
+  const weightedTip = typeof page.value_tip === "string" ? page.value_tip
+                    : page.value_tip === false ? "" : explain("weighted_pct");
   const wrap = el("div", { class: "chart-wrap" });
   const canvas = el("canvas");
   wrap.append(canvas);
@@ -828,18 +851,24 @@ components.explore = async function (page, container) {
   // percentages are weighted, the smallest group, and the provenance carrying
   // the variable code. Templates are authored in 03_build_dashboard.R so the
   // engine stays generic; every number in them comes from the question file.
-  function renderCaption(v, g, summaries, armLabel) {
-    const tpl = CONFIG.explore_caption;
+  function renderCaption(v, g, summaries, armLabel, kind) {
+    const tpl = CAPTION;
     const s = summaries && summaries[g];
     caption.textContent = "";
     if (!s) return;
     const waves = /[-,]/.test(s.years)
       ? fillTpl(tpl.waves_many, { years: s.years.replace("-", " and ") })
       : fillTpl(tpl.waves_one, { years: s.years });
-    const gcfg = CONFIG.groupings.find(x => x.id === g);
+    const gcfg = GROUPINGS.find(x => x.id === g);
     const splitClause = g === "All" ? ""
       : fillTpl(tpl.split_clause, { group_phrase: (gcfg && gcfg.phrase) || "group" });
-    let text = fillTpl(tpl.answered, {
+    // A mean placing is not a percentage and a mean allocation is not a share
+    // of respondents. The template carries a sentence for each, and the
+    // question file says which applies.
+    const answered = (kind === "mean_rank" && tpl.answered_rank)
+                   || (kind === "mean_pct" && tpl.answered_mean_pct)
+                   || tpl.answered;
+    let text = fillTpl(answered, {
       n: Number(s.n).toLocaleString(), waves, split_clause: splitClause });
     if (g !== "All") text += fillTpl(tpl.smallest, {
       smallest: s.smallest, smallest_n: Number(s.smallest_n).toLocaleString() });
@@ -853,6 +882,7 @@ components.explore = async function (page, container) {
     // same people — so they do not sum to 100. Said before the reader works it
     // out from bars that look too small.
     if (v.multi_response) text += " " + tpl.multi_response;
+    if (kind === "mean_rank" && tpl.rank_note) text += " " + tpl.rank_note;
     caption.append(el("p", {}, text));
     // Which version this is, in the caption as well as the menu: the PDF's
     // notes are read off the caption, so a download that omitted it would not
@@ -867,7 +897,7 @@ components.explore = async function (page, container) {
 
   async function draw() {
     if (!currentKey) return;
-    const v = await fetchJSON(`data/q/${currentKey}.json`);
+    const v = await fetchJSON(`${QDIR}/${currentKey}.json`);
     // Split-sample questions carry one set of splits per arm; everything else
     // carries a single set under "all". Reading through the arm either way
     // keeps one code path. An arm from the URL that this question does not
@@ -914,13 +944,19 @@ components.explore = async function (page, container) {
       qFlags.append(el("span", { class: "fu-flag" }, "Split-sample item"));
       if (note) qFlags.append(" ", infoTip(note));
     }
-    renderCaption(v, g, SUMMARIES, armLabel);
+    const kind = v.value_kind || "share";
+    renderCaption(v, g, SUMMARIES, armLabel, kind);
     lastCodeArgs = v.has_r_code ? [v, g, armKey] : null;
     if (rcodeBtn) rcodeBtn.style.display = v.has_r_code ? "" : "none";
     currentArmLabel = armLabel;
+    // A drag-to-rank item's bar is a mean placing, and a typed allocation's is
+    // a mean percentage. Neither is a share of respondents, so neither gets a
+    // "%" stuck on it by default and the value axis says which it is.
+    const fmt = kind === "mean_rank" ? (x => x.toFixed(1))
+                                     : (x => Math.round(x) + "%");
     const rows = (SPLITS[g] || []).map(r => ({
       group: r.group, category: wrapTickLabel(labelFor(r.resp)),
-      value: r.p, label: Math.round(r.p) + "%", low: r.p_low, upp: r.p_upp
+      value: r.p, label: fmt(r.p), low: r.p_low, upp: r.p_upp
     }));
     // Declared, not inferred. The chart otherwise orders categories by first
     // appearance, and a response nobody in the first group gave then lands at
@@ -949,7 +985,10 @@ components.explore = async function (page, container) {
     wrap.style.height = Math.max(340, chrome + catHeight) + "px";
     groupedBarChart(canvas, rows, {
       title: "",
-      xLabel: page.chart.x_label, yLabel: page.chart.y_label,
+      xLabel: page.chart.x_label,
+      yLabel: kind === "mean_rank" ? "Mean placing (1 = highest)"
+            : kind === "mean_pct" ? "Mean percentage given"
+            : page.chart.y_label,
       showCI,
       horizontal: true,
       categoryOrder,
@@ -1001,7 +1040,8 @@ components.explore = async function (page, container) {
   const intro = el("p", { class: "fu-explore-intro" }, page.intro ||
     "Click a survey question in the table below to see the weighted distribution of responses, split by the group you choose.");
   const bar = el("div", { class: "card fu-toolbar" });
-  const gWrap = groupingSelect(g => { grouping = g; draw(); }, grouping, "Split responses by");
+  const gWrap = groupingSelect(g => { grouping = g; draw(); }, grouping,
+                               "Split responses by", GROUPINGS);
   groupingSel = gWrap.querySelector("select");
   bar.append(gWrap);
   bar.append(schemeSelect(scheme, (sc) => {
@@ -1027,7 +1067,7 @@ components.explore = async function (page, container) {
       currentSurveyLabel,
       currentArmLabel,
       grouping === "All" ? "All respondents"
-        : "Split by " + ((CONFIG.groupings.find(x => x.id === grouping) || {}).label || grouping),
+        : "Split by " + ((GROUPINGS.find(x => x.id === grouping) || {}).label || grouping),
       showCI ? "95% confidence intervals shown" : null
     ].filter(Boolean).join("  ·  "),
     canvas: chartSnapshot(canvas),
@@ -1492,6 +1532,80 @@ components.open_responses = async function (page, container) {
   }
 
   await render();
+};
+
+/* Experts against the public.
+ *
+ * Half the expert survey asked what experts thought the public would say. Each
+ * card puts that guess beside what the public actually said, on one pair of
+ * bars per category.
+ *
+ * Every number here is 04's, including the public side - which 04 computes
+ * from the same files 02 reads and then checks against what 02 published, so a
+ * comparison cannot quietly disagree with the public page.
+ *
+ * Two shapes. Where the two surveys asked answerable-in-common questions the
+ * card carries two series. Where they do not - the public answered yes or no
+ * and experts picked a band - the card carries the expert distribution and a
+ * single benchmark line for the actual, because inventing a second series
+ * would imply an alignment that is not there. */
+components.comparison = async function (page, container) {
+  const data = await fetchJSON(page.source);
+  const content = el("div", { class: "content" });
+  content.append(el("p", { class: "fu-explore-intro" }, page.intro || ""));
+  const pending = [];
+
+  for (const cmp of data) {
+    const card = el("div", { class: "card" });
+    card.append(el("h3", { class: "fu-question-head" }, cmp.title));
+    card.append(el("p", { class: "fu-caption" }, cmp.note || ""));
+
+    const wrap = el("div", { class: "chart-wrap" });
+    const canvas = el("canvas");
+    wrap.append(canvas);
+    card.append(wrap);
+
+    const rows = (cmp.rows || []).map(r => ({
+      group: r.group,
+      category: wrapTickLabel(r.category),
+      value: r.p,
+      label: cmp.value_kind === "mean_rank" ? r.p.toFixed(1)
+                                            : Math.round(r.p) + "%",
+      low: r.p_low, upp: r.p_upp
+    }));
+    const categoryOrder = (cmp.categories || []).map(wrapTickLabel);
+    const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
+    // Sized from the labels, like the explore charts: a category label runs to
+    // several lines and a capped height would truncate it by another route.
+    const LINE = 17, LABEL_PAD = 16, BAR_PAD = 12;
+    const catHeight = categoryOrder.reduce((total, label) =>
+      total + Math.max(tickLines(label).length * LINE + LABEL_PAD,
+                       nGroups * 18 + BAR_PAD), 0);
+    wrap.style.height = Math.max(300, 100 + (nGroups > 1 ? 40 : 0) + catHeight) + "px";
+
+    // The benchmark, where the public side is one number rather than a series.
+    // Stated in words as well as drawn, because a reader who skips the caption
+    // should still not read the expert bars as the answer.
+    if (cmp.benchmark && typeof cmp.benchmark === "object") {
+      const b = cmp.benchmark;
+      card.append(el("p", { class: "fu-compare-benchmark" },
+        `${b.label}: `, el("strong", {}, String(b.value)),
+        b.category ? ` — which falls in “${b.category}”.` : "."));
+    }
+
+    content.append(card);
+    // Drawn after the page is in the document, not here: Chart.js sizes itself
+    // from the canvas's laid-out box, and a canvas in a detached fragment has
+    // none, so the chart comes out blank.
+    pending.push(() => groupedBarChart(canvas, rows, {
+      title: "", xLabel: "", yLabel: cmp.axis || "Share (%)",
+      horizontal: true, categoryOrder, legend: nGroups > 1, multi: true,
+      colors: schemeSeriesColors(DEFAULT_SCHEME, nGroups)
+    }));
+  }
+
+  container.append(el("div", { class: "page" }, content));
+  for (const draw of pending) draw();
 };
 
 /* A page whose data is not collected or wired up yet. It says what will go

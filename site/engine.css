@@ -1102,3 +1102,12 @@ table.data th select {
   flex-wrap: wrap;
 }
 .fu-toolbar-actions .fu-pdf-btn { margin-left: 0; }
+
+/* The single actual value on a comparison card whose public side is one number
+   rather than a series. Stated as well as drawn: a reader who skips the
+   caption must not read the expert bars as the answer. */
+.fu-compare-benchmark {
+  margin: 8px 0 0; font-size: 13.5px; padding: 8px 12px;
+  border-left: 3px solid var(--accent); background: var(--row-hover);
+  border-radius: 0 4px 4px 0;
+}

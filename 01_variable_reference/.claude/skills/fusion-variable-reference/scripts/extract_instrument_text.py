@@ -73,6 +73,23 @@ def document_lines(path):
     return [" ".join(line.split()) for line in lines]
 
 
+def instrument_prefix(name):
+    """FU26 Survey Instrument.docx -> FU26; FU26 SME Survey Instrument.docx ->
+    FU26_SME.
+
+    The first word alone is not enough: the public and SME instruments for one
+    wave share it, and the second extraction silently overwrote the first.
+    Everything before "Survey Instrument" identifies the document.
+    """
+    stem = os.path.splitext(name)[0]
+    words = stem.split()
+    for cut in range(len(words)):
+        if words[cut:cut + 2] == ["Survey", "Instrument"]:
+            words = words[:cut]
+            break
+    return "_".join(words) or stem
+
+
 def main():
     if len(sys.argv) != 3:
         sys.exit(__doc__)
@@ -84,9 +101,15 @@ def main():
     if not names:
         sys.exit("No .docx files in " + instrument_dir)
 
+    seen = {}
     for name in names:
         lines = document_lines(os.path.join(instrument_dir, name))
-        prefix = name.split()[0]
+        prefix = instrument_prefix(name)
+        if prefix in seen:
+            sys.exit("%s and %s both map to %s.txt - one would overwrite the "
+                     "other. Rename one, or extend instrument_prefix()."
+                     % (seen[prefix], name, prefix))
+        seen[prefix] = name
         destination = os.path.join(output_dir, prefix + ".txt")
         with open(destination, "w") as handle:
             for index, line in enumerate(lines):

@@ -17,13 +17,13 @@ source(here::here("00_paths.R"))
 # front end fills at render time.
 #
 # Run after 02, from anywhere:
-#   Rscript 04_build_dashboard.R
+#   Rscript 05_build_dashboard.R
 #
-# Writes outputs/04_site/ — plain static files, fully self-contained. Preview:
+# Writes outputs/05_site/ — plain static files, fully self-contained. Preview:
 #   python3 preview.py
 
 data_in <- file.path(outputs, "02_question_data")
-out <- file.path(outputs, "04_site")
+out <- file.path(outputs, "05_site")
 
 needed <- file.path(data_in, c("questions.json", "splits.json", "meta.json"))
 if (!all(file.exists(needed))) {
@@ -76,6 +76,25 @@ invisible(file.copy(file.path(data_in, "questions.json"),
                     file.path(out, "data", "questions.json")))
 invisible(file.copy(file.path(data_in, "meta.json"),
                     file.path(out, "data", "meta.json")))
+
+# SME Data ---------------------------------------------------------------------
+# The expert survey, carried through the same way and kept in its own directory.
+# It is a different survey, not another wave: unweighted, 153 purposive
+# respondents, its own question sheet. Mixing it into data/q would let a ?q=
+# link cross between them.
+sme_in <- file.path(outputs, "04_sme_data")
+if (!file.exists(file.path(sme_in, "questions.json"))) {
+  stop("No SME data - run 04_create_sme_data.R first.")
+}
+dir.create(file.path(out, "data", "sme", "q"), recursive = TRUE)
+invisible(file.copy(list.files(file.path(sme_in, "q"), full.names = TRUE),
+                    file.path(out, "data", "sme", "q")))
+invisible(file.copy(
+  list.files(sme_in, pattern = "\\.json$", full.names = TRUE),
+  file.path(out, "data", "sme")))
+sme_catalog <- read_json(file.path(sme_in, "questions.json"),
+                         simplifyVector = TRUE)
+sme_meta <- read_json(file.path(sme_in, "meta.json"), simplifyVector = TRUE)
 
 catalog <- read_json(file.path(data_in, "questions.json"), simplifyVector = TRUE)
 splits <- read_json(file.path(data_in, "splits.json"), simplifyVector = TRUE)
@@ -152,6 +171,46 @@ about_html <- paste0(
   "tidyverse and srvyr.</p>",
   "<p><strong>Contact.</strong> ",
   "<a href=\"mailto:jtr@ou.edu\">Joe Ripberger</a> at OU IPPRA.</p>")
+
+# The expert page's splits and caption. Separate from the public roster because
+# the numbers mean something different: a share of 153 experts who answered,
+# with no weighting, and a caption that says so instead of saying "weighted".
+sme_groupings <- list(
+  list(id = "All", label = "Everyone", phrase = NA_character_),
+  list(id = "EXP_GROUP", label = "Years in fusion work",
+       phrase = "experience group")
+)
+sme_caption <- list(
+  answered = paste0("{n} experts answered this question {waves}. Bars show ",
+                    "the plain percentage{split_clause} giving each answer - ",
+                    "these are counts of the experts who answered, not ",
+                    "weighted estimates of any wider population."),
+  waves_one = "in {years}",
+  waves_many = "in {years}",
+  split_clause = " of each {group_phrase}",
+  smallest = " The smallest group, {smallest}, has {smallest_n} experts.",
+  dropped = paste0(" A further {dropped} answered but gave no {group_phrase}, ",
+                   "and are not in the bars above."),
+  multi_response = paste0("Experts could pick more than one answer, so each ",
+                          "bar is the share who chose that option and the ",
+                          "bars do not add up to 100%."),
+  answered_rank = paste0("{n} experts ranked these {waves}. Bars show the mean ",
+                         "placing{split_clause} - a LOWER number is a higher ",
+                         "placing, not a percentage."),
+  answered_mean_pct = paste0("{n} experts answered {waves}. The bar is the ",
+                             "mean percentage they gave{split_clause}, not a ",
+                             "share of the experts."),
+  rank_note = paste0("Experts who did not reach this question are left out ",
+                     "rather than counted as unranked."),
+  asked_if = "Not everyone was asked: {condition}",
+  arm = "",
+  provenance = paste0("From the IPPRA Fusion Energy expert survey, run by ",
+                      INSTITUTE_LINK, ". The sample is people identified as ",
+                      "having relevant expertise, so it carries no weights ",
+                      "and describes those experts rather than any wider ",
+                      "group. This question is stored as <code>{variable}",
+                      "</code>.")
+)
 
 config <- list(
   schema_version = 1,
@@ -245,20 +304,54 @@ config <- list(
                         "a guessed one."),
          blurb = paste0("Word associations, why people support or oppose ",
                         "fusion, and what they would ask an expert.")),
-    list(id = "sme-survey", component = "placeholder",
+    # The expert survey reuses the explore component - the question files have
+    # the same shape - but reads its own directory and its own caption
+    # templates, because 153 unweighted experts are not a population estimate
+    # and the caption must not say they are.
+    list(id = "sme-survey", component = "explore",
          nav_group = "SMEs",
          label = "Explore Survey Data",
-         intro = paste0("Survey responses from subject matter experts - ",
-                        "people working on fusion energy and its regulation."),
-         note = "This survey has not been fielded yet.",
-         blurb = "Survey responses from subject matter experts."),
+         questions = "data/sme/questions.json",
+         question_dir = "data/sme/q",
+         groupings = sme_groupings,
+         caption = sme_caption,
+         default_grouping = "All",
+         intro = paste0("Click a question below to see how the ", 
+                        sme_meta$respondents, " experts answered. These are ",
+                        "plain counts, not weighted estimates: the sample is ",
+                        "people identified as having relevant expertise, not ",
+                        "a sample of any wider population."),
+         chart = list(x_label = "Response", y_label = "Experts (%)"),
+         value_tip = paste0("Percentages are plain counts of the experts who ",
+                            "answered - this sample is not weighted, because ",
+                            "it is people identified as having relevant ",
+                            "expertise rather than a sample of a wider ",
+                            "population. Intervals are 95% confidence ",
+                            "intervals."),
+         blurb = paste0("What ", sme_meta$respondents, " fusion experts think ",
+                        "about timelines, barriers, risks and benefits.")),
+    list(id = "sme-compare", component = "comparison",
+         nav_group = "SMEs",
+         label = "Experts vs the Public",
+         source = "data/sme/comparisons.json",
+         intro = paste0("Half of the expert survey asked what experts thought ",
+                        "the public would say. Each chart below puts that ",
+                        "guess beside what the public actually said. Expert ",
+                        "bars are unweighted counts of ", sme_meta$respondents,
+                        " people; public bars are weighted to the population."),
+         blurb = paste0("Where expert expectations about public opinion match ",
+                        "the survey, and where they miss.")),
     list(id = "sme-qual", component = "placeholder",
          nav_group = "SMEs",
          label = "Explore Qualitative Data",
-         intro = paste0("Interviews and open responses from subject matter ",
-                        "experts."),
-         note = "These have not been collected yet.",
-         blurb = "Interviews and open responses from subject matter experts."),
+         intro = paste0("What experts said in their own words: what they ",
+                        "think non-experts most misunderstand about fusion, ",
+                        "and what they would change about how it is ",
+                        "discussed."),
+         note = paste0("Both questions were answered - 122 and 115 responses ",
+                       "- but they have not yet been read for content or ",
+                       "coded, and nothing is published here until they are."),
+         blurb = "Open responses from subject matter experts."),
     list(id = "about", component = "static_page", label = "About",
          html = about_html)
   ),
@@ -279,7 +372,9 @@ config <- list(
 known_tokens <- c("n", "waves", "split_clause", "years", "group_phrase",
                   "smallest", "smallest_n", "dropped", "condition", "variable",
                   "multi_response", "prompt", "label")
-used <- unlist(config$explore_caption) |>
+# Both caption sets, not just the public one: the expert page brings its own,
+# and a token the front end does not fill would print as "{total}" on screen.
+used <- unlist(c(config$explore_caption, sme_caption)) |>
   str_extract_all("\\{(\\w+)\\}") |>
   unlist() |>
   str_remove_all("[{}]") |>

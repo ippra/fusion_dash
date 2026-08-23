@@ -14,9 +14,10 @@ reason rather than the history. The full guide is `~/.claude/ippra-r-style.md`.
 ## Commands
 
 ```sh
-Rscript 02_create_question_data.R          # srvyr statistics; seconds
+Rscript 02_create_question_data.R          # public srvyr statistics; ~90s
 Rscript 03_create_open_response_data.R     # words + verbatims; seconds
-Rscript 04_build_dashboard.R               # assemble the site; seconds
+Rscript 04_create_sme_data.R               # expert survey + comparisons; seconds
+Rscript 05_build_dashboard.R               # assemble the site; seconds
 python3 preview.py                         # http://localhost:8901
 ```
 
@@ -112,9 +113,9 @@ Watch the option separator: it is ` | `, so a pipe inside an option label makes
 (`0 = No trust | 1 | 2 | … | 10 = Complete trust`), and `02` turns those into
 `"0 - No trust"`, `"1"`, … so a partly-labelled scale still reads as a scale.
 
-## Statistics live in 02, presentation in 03
+## Statistics live in 02 and 04, presentation in 05
 
-`03_build_dashboard.R` computes **nothing**: every percentage and interval is
+`05_build_dashboard.R` computes **nothing**: every percentage and interval is
 `02`'s output carried over verbatim, so the published site cannot disagree with
 what was computed. A calculation added to the builder gives that up. If you
 need a new number, it belongs in `02`.
@@ -492,6 +493,57 @@ menu lights the bar. `dataTable` gained `setFilter` / `getFilter` and an
 `onFilterChange` hook for this, which is the third thing on it that is not
 upstream in wxdash.
 
+## The expert survey
+
+`data/FU26_SME_data.csv` — 153 people identified as having relevant expertise,
+fielded once in 2026. It is a **different survey, not a third wave**, and three
+things follow:
+
+- **It has no weights and no `weight` column.** A purposive sample of experts
+  is not a sample of a population. Every percentage on the expert page is a
+  plain count of the experts who answered. `04` builds the design with weights
+  of 1 so the interval and the file shape match the public side — which is what
+  lets one `explore` component draw both — but that is convenience, not a claim
+  that the numbers generalise. The page's caption and tooltip say so, and they
+  are page-level overrides precisely because the global ones say "weighted to
+  represent US adults", which would be a lie here.
+- **It gets its own sheet**, `sme_variable_reference.csv`, with its own
+  `SME_NOTES.md`. Not a `column_sme` on the public sheet: **26 SME columns
+  share a name with a public variable and only five ask the same question.**
+  The three risk/cost/benefit batteries reuse the public item names for a
+  different stem — the public was asked which *they* would most want to
+  understand, experts which *non-experts* most need to understand. One sheet
+  would put those in one row and invite exactly the comparison that is wrong.
+- **The comparisons are declared, never matched on name.** `compare_to` and
+  `compare_kind` in the SME sheet name the five same-question pairs and the
+  twelve prediction pairs. `04` computes the public side of each from the same
+  files `02` reads and then **checks it against what `02` published**, halting
+  on a mismatch — a comparison that disagreed with the public page would be
+  worse than none.
+
+Three response types the public pipeline never had, and the question file
+carries `value_kind` so the front end labels the axis rather than assuming a
+percentage:
+
+| `value_kind` | what the bar is | where |
+|---|---|---|
+| `share` | share of experts who gave that answer | most items |
+| `mean_rank` | mean placing, **lower is higher** | the three drag-to-rank blocks |
+| `mean_pct` | mean of the percentage they typed | the two allocations that sum to 100 |
+
+Splits are Everyone and years in fusion work, and that is the whole roster.
+Every other professional characteristic — sector, field, role, audiences — is
+select-all, so one person is both Academia and National laboratory and cannot
+be a group in a bar chart without inventing a rule for which one wins. The six
+experience bands collapse to three because 153 respondents do not support six.
+
+`groupedBarChart` keeps a single `activeChart` so the explore page cannot leak
+one per redraw. The comparison page draws ten at once and passes `multi: true`
+to opt out; without it each chart destroys the one before and only the last
+survives. Charts there are also drawn **after** the page is in the document,
+because Chart.js sizes itself from the canvas's laid-out box and a detached one
+has none.
+
 ## Pages
 
 Six, declared in `03`'s `config$pages`:
@@ -501,7 +553,8 @@ Six, declared in `03`'s `config$pages`:
 | `home` | `fu_landing` | Home |
 | `explore` | `explore` | Public → Explore Survey Data |
 | `public-qual` | `open_responses` | Public → Explore Open Responses |
-| `sme-survey` | `placeholder` | SMEs → Explore Survey Data |
+| `sme-survey` | `explore` | SMEs → Explore Survey Data |
+| `sme-compare` | `comparison` | SMEs → Experts vs the Public |
 | `sme-qual` | `placeholder` | SMEs → Explore Qualitative Data |
 | `about` | `static_page` | About |
 
