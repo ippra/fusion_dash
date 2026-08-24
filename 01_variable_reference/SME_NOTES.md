@@ -127,13 +127,41 @@ the document says. Tick an item when it is resolved, and date the tick.
       fusion energy*, not general trust in science. Someone who already
       supports fusion has reason to trust the people who study it. A general
       trust-in-science item would settle it; neither wave has one.
-- [ ] `fusion_pub_word_1..3` asks experts to predict the public's most common
-      word associations. The public words are already counted on the public
-      qualitative page; nobody has compared the two lists.
-- [ ] `fusion_mis` (122 responses) and `fusion_change_dis` (115) are not
-      published. They need the same content read the public verbatims got —
-      see `NOTES.md` section 6 — before anything is shown, and they are not
-      themed.
+- [x] `fusion_pub_word_1..3` asks experts to predict the public's most common
+      word associations. *Done 2026-08-24.* Counted on the expert qualitative
+      page and set beside what the public actually said, which `05` reads out
+      of `03`'s output rather than recounting. Matching is exact after the
+      shared normalisation, so "clean" predicting "clean energy" is a miss;
+      88 of the 203 predicted words appear in the public list at all. The
+      misses worth looking at are "science fiction" (10.9% of experts against
+      0.6% of the public) and "sun" (10.9% against 1.4%).
+
+      Worth asking whether this belongs on the findings deck as a thirteenth
+      card. It is a prediction that can be scored, which is what part two is,
+      and the deck currently has no counterpart for it.
+- [x] `fusion_mis` (122 responses) and `fusion_change_dis` (115) are not
+      published. *Done 2026-08-24.* Both read end to end for content, themed
+      by reading in three passes, and published on `sme-qual`. Recorded in
+      `sme_verbatim_review.csv`, `sme_verbatim_withheld.csv`,
+      `sme_themes.csv` and `sme_theme_labels.csv`.
+
+      **One response is withheld**, from `fusion_change_dis`, and not for its
+      opinion: it names two fusion outreach events and identifies its author
+      as an organiser of them. In a purposive sample of 153 experts that
+      plausibly identifies the person; the same detail in a sample of 2,444
+      adults would not, which is why the public side's rule does not cover it.
+      Borderline, and recorded as such — the events are public and the
+      respondent volunteered the detail. Worth a second opinion.
+
+      **One borderline was kept**, recorded in the review file: a response
+      arguing that outreach should target women, who it says hold "unfounded
+      fears" about fusion. Condescending, but addressed to how fusion is
+      communicated rather than at the group, and the gender gap it asserts is
+      real in the public data.
+
+      The identifier screen caught nothing across either item or the 401 word
+      entries, which is a result rather than a broken pattern: it was the
+      content read, not the screen, that found the one withheld response.
 - [ ] Whether the experts who felt more confident about understanding public
       views (`fusion_pub_conf`) actually predicted better. The data supports
       the question; the dashboard does not ask it.

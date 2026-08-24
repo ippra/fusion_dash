@@ -21,8 +21,15 @@ configure.
 |---|---|
 | `01_variable_reference/` | the codebook: `variable_reference.csv`, 152 rows, one per variable, **read off the instruments by hand**, plus `NOTES.md` and the procedure that produced it |
 | `02_create_question_data.R` | the statistics: srvyr weighted distributions and 95% intervals for every question and split → `outputs/02_question_data/` |
-| `03_create_open_response_data.R` | the qualitative side: word associations with their valence, and the open-ended responses, screened for identifiers → `outputs/03_open_responses/` |
-| `04_build_dashboard.R` | the site: `config.json` plus the hand-edited front end in `site/` → `outputs/04_site/` |
+| `03_create_open_response_data.R` | the public qualitative side: word associations with their valence, and the open-ended responses, screened for identifiers → `outputs/03_open_responses/` |
+| `04_create_sme_data.R` | the expert survey: its own distributions, and the twelve comparisons behind the findings deck → `outputs/04_sme_data/` |
+| `05_create_sme_open_response_data.R` | the expert qualitative side: the words experts predicted the public would give, set against what the public said, and their two written answers → `outputs/05_sme_open_responses/` |
+| `06_build_dashboard.R` | the site: `config.json` plus the hand-edited front end in `site/` → `outputs/06_site/` |
+
+`00_paths.R` declares every path and `00_open_responses.R` the rules the two
+qualitative pages share - the identifier screen, the word normalisation, the
+theme distribution. Both surveys apply the same ones because a rule written
+twice drifts.
 
 ```
 data/FU25_data_wtd.csv          1,200 respondents, 117 columns
@@ -36,18 +43,25 @@ data/FU26_data_wtd.csv          1,244 respondents, 344 columns
         ▼
 outputs/02_question_data/       79 question files + catalog
         │
+        │   03_create_open_response_data.R   public words and verbatims
+        │   04_create_sme_data.R             expert survey and comparisons
+        │   05_create_sme_open_response_data.R   expert words and verbatims
+        │
         ▼                       ┌── site/ (front end source)
-04_build_dashboard.R  ◄─────────┘   no statistics
+06_build_dashboard.R  ◄─────────┘   no statistics
         │
         ▼
-outputs/04_site/                the deployable site, 2.2 MB
+outputs/06_site/                the deployable site
 ```
 
 ## Building and previewing
 
 ```sh
 Rscript 02_create_question_data.R          # after any data or reference change
-Rscript 04_build_dashboard.R               # always; seconds
+Rscript 03_create_open_response_data.R     # public open responses
+Rscript 04_create_sme_data.R               # expert survey and comparisons
+Rscript 05_create_sme_open_response_data.R # expert open responses
+Rscript 06_build_dashboard.R               # always; seconds
 python3 preview.py            # http://localhost:8901
 ```
 
@@ -184,7 +198,7 @@ difference this pipeline exists to avoid.
 ## The front end
 
 `site/` is hand-edited source: `engine.js`, `engine.css`, `index.html`, and
-vendored Chart.js and jsPDF. `04_build_dashboard.R` copies it, fills the
+vendored Chart.js and jsPDF. `06_build_dashboard.R` copies it, fills the
 `__BUILD__` cache-busting stamp, drops anything hidden, and refuses to publish
 a built site containing `.R`, `.csv` or `.docx` files. A run takes seconds, so
 iterating on the front end is cheap.
@@ -201,11 +215,11 @@ a download cannot say something the screen does not.
 
 ## Deploying
 
-`outputs/04_site/` is the rsync unit — plain static files, no server code, no
+`outputs/06_site/` is the rsync unit — plain static files, no server code, no
 third-party requests, every library vendored.
 
 ```sh
-rsync -av --delete outputs/04_site/ <host>:<docroot>/fusion/
+rsync -av --delete outputs/06_site/ <host>:<docroot>/fusion/
 ```
 
 Relative URLs and hash routing mean moving hosts needs no change to the site.

@@ -1,0 +1,26 @@
+item,theme,label,theme_order
+misunderstood,fission,The difference between fusion and fission,1
+misunderstood,difficulty,How hard the remaining science and engineering is,2
+misunderstood,timeline,How close it is to producing power,3
+misunderstood,supply,Fuel supply and the supply chain,4
+misunderstood,safety,The safety profile,5
+misunderstood,waste,That it still produces radioactive waste,6
+misunderstood,hype,Telling real progress from hype,7
+misunderstood,cost,What it will cost and whether it can compete,8
+misunderstood,investment,How much investment it needs and what under-investing risks,9
+misunderstood,benefits,"The benefits, which are underestimated",10
+misunderstood,approaches,"That there are several approaches, not one",11
+change,hype,Turn down the hype,1
+change,honesty,Be candid about risks and readiness,2
+change,timeline,Stop promising near-term power on the grid,3
+change,benefits,Say more about what it would deliver,4
+change,progress,Push back on the idea that it will never arrive,5
+change,fission,Explain how it relates to fission,6
+change,challenges,Talk about the technical work still to do,7
+change,education,Teach it and cover it better,8
+change,strategic,Treat it as a national imperative,9
+change,economics,Argue the economics honestly,10
+change,invest,Fund it at the scale it needs,11
+change,approaches,Cover the range of approaches,12
+change,engage,Bring the public into the conversation,13
+change,none,No answer given,14

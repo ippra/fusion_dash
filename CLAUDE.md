@@ -15,11 +15,17 @@ reason rather than the history. The full guide is `~/.claude/ippra-r-style.md`.
 
 ```sh
 Rscript 02_create_question_data.R          # public srvyr statistics; ~90s
-Rscript 03_create_open_response_data.R     # words + verbatims; seconds
+Rscript 03_create_open_response_data.R     # public words + verbatims; seconds
 Rscript 04_create_sme_data.R               # expert survey + comparisons; seconds
-Rscript 05_build_dashboard.R               # assemble the site; seconds
+Rscript 05_create_sme_open_response_data.R # expert words + verbatims; seconds
+Rscript 06_build_dashboard.R               # assemble the site; seconds
 python3 preview.py                         # http://localhost:8901
 ```
+
+`05` reads `03`'s output rather than recounting the public's words, and `06`
+reads everything: the numbering is the run order, and each script does one
+survey's one job. `00_open_responses.R` holds the rules the two qualitative
+pages share.
 
 There is no `01` script — `01_variable_reference/` is a directory holding the
 codebook, the instruments and the procedure that produced it. Nothing generates
@@ -115,7 +121,7 @@ Watch the option separator: it is ` | `, so a pipe inside an option label makes
 
 ## Statistics live in 02 and 04, presentation in 05
 
-`05_build_dashboard.R` computes **nothing**: every percentage and interval is
+`06_build_dashboard.R` computes **nothing**: every percentage and interval is
 `02`'s output carried over verbatim, so the published site cannot disagree with
 what was computed. A calculation added to the builder gives that up. If you
 need a new number, it belongs in `02`.
@@ -676,9 +682,89 @@ survives. Charts there are also drawn **after** the page is in the document,
 because Chart.js sizes itself from the canvas's laid-out box and a detached one
 has none.
 
+## The expert qualitative page
+
+`05_create_sme_open_response_data.R` builds it, and it is the **same
+`open_responses` component the public page uses**, pointed at different files.
+One code path, not two: what differs between the surveys is carried in the
+data, which is what forced three things out of the engine and into the scripts.
+
+- **The captions are written by the script that did the counting.** Both
+  surveys have a words question and they are not the same question — the
+  public gave associations and rated how each felt, experts predicted what the
+  public would say and rated nothing. A sentence assembled in the engine would
+  have to know which survey it was describing. `words.json` carries `title`,
+  `caption` and optional `col_labels`; each verbatim file carries
+  `theme_caption`. The public file's version ends by naming the one bar list
+  on that page which is not a population estimate; on the expert page that
+  sentence would be false, because nothing there is weighted.
+- **No `scale` means no valence.** The ramp, its legend and the feeling column
+  appear only where the words carry one. A grey bar is the honest bar.
+- **The Survey column appears only where there is more than one fielding.** A
+  column whose every cell reads 2026 is a filter that can only filter to
+  everything. That also drops it from the public `ask` item, which is FU26
+  only.
+
+`00_open_responses.R` holds what the two pages must do identically — the
+identifier screen, `normalise_word()`, `theme_distribution()`, `MIN_GROUP`,
+and the two caution builders. `review_caution()` takes the withholding reason
+as a `one`/`many` pair because the two surveys withheld for different reasons
+and the clause has to agree with the count.
+
+**Three items, 122 + 114 + 401.** `misunderstood` (`fusion_mis`) and `change`
+(`fusion_change_dis`) are themed; `words` is `fusion_pub_word_1..3`.
+
+**The predicted words are set against what the public actually said**, which
+is what makes the item worth publishing rather than listing — it is a
+prediction that can be scored, and it was the one prediction the findings deck
+had no counterpart for. `05` reads the public column out of `03`'s
+`words.json` rather than recounting it: two counts of one corpus drift, and
+the point of the column is that it is the same list the public page draws.
+Matching is exact after the shared normalisation and nothing is merged, so
+"clean" predicting "clean energy" is a miss — the same judgment `03` refuses
+to make when it keeps the two apart. 88 of the 203 predicted words appear in
+the public list at all. Experts put "science fiction" at 10.9% against the
+public's 0.6%, and "sun" at 10.9% against 1.4%.
+
+**Splits are Everyone and years in fusion work**, the same three-band collapse
+`04` uses and for the same reason. `change`'s middle band has 28 responses, so
+`MIN_GROUP` drops it and the caption names it with its size.
+
+**Themes were coded by reading, in the three passes the skill sets out.** The
+third pass moved two responses out of *Turn down the hype* into *Stop
+promising near-term power on the grid*: both name a timeline promise as the
+thing to stop, and "hype" is only the word they reached for. That boundary is
+the one to watch on this item — `hype` is about the volume of claims,
+`honesty` about disclosing the downsides, and several responses are both.
+
+`sme_themes.csv`, `sme_theme_labels.csv`, `sme_verbatim_review.csv` and
+`sme_verbatim_withheld.csv` are the expert survey's own, for the same reason
+it has its own sheet. One file holding both surveys would let a public item id
+and an expert one collide with nothing to catch it.
+
+**All 237 verbatims and 401 word entries were read on 2026-08-24. One was
+withheld**, from `change`, and the reason is not the public side's: it names
+two fusion outreach events and identifies its author as an organiser of them.
+In a purposive sample of 153 experts an organising role in a named annual
+event plausibly identifies the person, where the same detail in a sample of
+2,444 adults would not. It is a borderline call, recorded as such, and it is
+withheld for the identifying detail rather than for the opinion — which is an
+ordinary and constructive one about communicating at a lay level. There is no
+redaction anywhere in this pipeline, so the choice is the whole response or
+none of it.
+
+One borderline was **kept** and is recorded in `sme_verbatim_review.csv`: a
+response arguing outreach should target women, who it says hold "unfounded
+fears", and suggesting makeup artists and yoga retreats as vehicles. It is a
+condescending generalisation, but it is addressed to how fusion is
+communicated rather than at the group, and the gender gap it asserts is real
+in the public data — gender is the third strongest correlate of support.
+Withholding it would misrepresent what experts said about their own audience,
+which is the same failure as a keyword coding frame.
+
 ## Pages
 
-Six, declared in `03`'s `config$pages`:
+Seven, declared in `06`'s `config$pages`:
 
 | id | component | nav |
 |---|---|---|
@@ -687,7 +773,7 @@ Six, declared in `03`'s `config$pages`:
 | `public-qual` | `open_responses` | Public → Explore Open Responses |
 | `sme-survey` | `explore` | SMEs → Explore Survey Data |
 | `sme-compare` | `comparison` | SMEs → Experts vs the Public |
-| `sme-qual` | `placeholder` | SMEs → Explore Qualitative Data |
+| `sme-qual` | `open_responses` | SMEs → Explore Qualitative Data |
 | `about` | `static_page` | About |
 
 A page carrying `nav_group` folds into a dropdown at the position of its
@@ -695,13 +781,11 @@ group's first member; that machinery came from the fork untouched. The survey
 page keeps the id `explore` rather than taking a name matching its new label,
 because `#explore?q=…` links are already in circulation.
 
-`placeholder` pages say what will go there and what is missing. Filling one in
-means writing its component and swapping `component` in `03` — the page, its
-nav position and its landing-page blurb are already in place. Note that the
-public qualitative data **exists**: the verbatims (`fusion_oppose_why`,
-`fusion_support_why`, `fusion_question`, `comments`) are in the reference and
-in the data, and are excluded from `02` only because they carry no response
-distribution. Nothing is coded or summarised yet, which is what that page says.
+There are no `placeholder` pages left. The component says what will go there
+and what is missing, and filling one in means writing its component and
+swapping `component` in `06` — the page, its nav position and its landing-page
+blurb stay put. `sme-qual` was the last one; it is now the `open_responses`
+component pointed at the expert survey's files.
 
 `fu_landing` is adapted from wxdash's `wx_landing`: same hero, live flagship
 chart and directory, with the map alternative link gone and the meta line

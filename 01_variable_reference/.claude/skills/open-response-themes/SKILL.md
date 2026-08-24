@@ -205,7 +205,7 @@ the published count.
 
 ### 8. Build
 
-`Rscript 03_create_open_response_data.R && Rscript 04_build_dashboard.R`.
+`Rscript 03_create_open_response_data.R && Rscript 06_build_dashboard.R`.
 
 ## Rules that matter
 

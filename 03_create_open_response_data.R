@@ -2,6 +2,7 @@ library(tidyverse)
 library(jsonlite)
 
 source(here::here("00_paths.R"))
+source(here::here("00_open_responses.R"))
 
 # Open Responses ---------------------------------------------------------------
 # The qualitative half of the public survey, in three parts:
@@ -122,39 +123,7 @@ if (any(doubled > 0)) {
        ". They are alternatives - one person cannot have been asked two.")
 }
 
-# Screening --------------------------------------------------------------------
-# Respondents were promised their answers would be de-identified. Free text can
-# carry an identifier whatever the respondent intended, so anything matching one
-# of these shapes is held back rather than published, and counted in the report
-# at the end.
-#
-# This is a net, not a review. It catches the mechanical shapes; it cannot catch
-# "my brother works at the plant in <town>". The reading that catches meaning
-# is the content review above; this runs alongside it, not instead of it.
-IDENTIFIER_PATTERNS <- c(
-  email = "[[:alnum:]._%+-]+@[[:alnum:].-]+\\.[[:alpha:]]{2,}",
-  url = "(?i)(https?://|www\\.)[[:graph:]]+",
-  phone = "(\\+?1[ .-]?)?\\(?[0-9]{3}\\)?[ .-][0-9]{3}[ .-][0-9]{4}",
-  long_number = "[0-9]{7,}",
-  handle = "(^|[[:space:]])@[[:alnum:]_]{3,}"
-)
-
-screen <- function(text) {
-  hits <- map(IDENTIFIER_PATTERNS, ~str_detect(text, .x))
-  reduce(hits, `|`)
-}
-
 # Words ------------------------------------------------------------------------
-# Normalised only for case, surrounding whitespace and trailing punctuation.
-# Deliberately not lemmatised or merged: "clean" and "clean energy" stay
-# separate entries because deciding they are the same word is coding.
-normalise_word <- function(x) {
-  x |>
-    str_squish() |>
-    str_to_lower() |>
-    str_remove_all("^[[:punct:]]+|[[:punct:]]+$")
-}
-
 word_rows <- map2(waves_data$raw, waves_data$year, function(d, year) {
   map(1:3, function(slot) {
     wcol <- column_for(paste0("word_", slot), "column_fu26")
@@ -199,6 +168,10 @@ words <- word_rows |>
   ) |>
   arrange(desc(respondents), word)
 
+# The caption is written here rather than in the front end because the expert
+# survey has a words question too and it is not this question - experts
+# predicted what the public would say and rated nothing. A sentence assembled
+# in the engine would have to know which survey it was describing.
 wjson(list(
   words = words,
   entries = entries_total,
@@ -206,7 +179,19 @@ wjson(list(
   respondents = word_rows |> distinct(year, respondent) |> nrow(),
   scale = list(min = 1, max = 5, min_label = "Very negative",
                mid_label = "Neither positive nor negative",
-               max_label = "Very positive")
+               max_label = "Very positive"),
+  caption = paste0(
+    "Everyone was asked for the first three words or phrases they think of ",
+    "when they hear \"fusion energy\", and how they feel about each one. ",
+    format(entries_total, big.mark = ","), " words from ",
+    format(word_rows |> distinct(year, respondent) |> nrow(), big.mark = ","),
+    " people, ", format(nrow(words), big.mark = ","), " of them distinct. ",
+    "Bars are the weighted share of people who used the word; colour is how ",
+    "they felt about it, from very negative to very positive. Words are ",
+    "counted as typed and nothing is merged, so \"clean\" and \"clean ",
+    "energy\" are separate. ", format(excluded_nonanswer, big.mark = ","),
+    " answers that only said so much as \"none\" or \"not sure\" are left out."
+  )
 ), "words.json")
 
 message("Words: ", nrow(words), " distinct across ", entries_total,
@@ -253,58 +238,6 @@ GATE_CONTEXTS <- tribble(
   "fusion_host", "A facility nearby"
 )
 
-# Theme distribution -----------------------------------------------------------
-# The share of each item's responses carrying each theme, for the page to draw
-# above the verbatims. Computed here on the rows that are actually published -
-# after the routing restriction, the content withhold and the identifier screen
-# - so the bars and the table beneath them cannot disagree. Computing them in
-# the front end from the rows would give the same answer today and quietly stop
-# doing so the first time a row is held back.
-#
-# Unweighted: these are counts of texts that were read and coded, and the
-# percentage is that count over its group. Deliberately not weighted, which
-# makes this the one bar list on the site that is not a population estimate -
-# the word associations directly above it are weighted, and so is every
-# percentage on the explore page. That difference is stated in the caption
-# rather than left for a reader to trip over, because two bar lists on one
-# page meaning different things is exactly the kind of silence this project
-# guards against. It changes little either way: weighting moved nothing here
-# by more than 1.4 points on the two large items.
-#
-# The count rides on every bar regardless, because a theme with two members
-# must not read as a rate.
-#
-# Percentages are within a group and across themes, so each group sums to 100.
-# One theme per response is what makes that true; a multi-response item could
-# not be drawn this way.
-theme_distribution <- function(rows, theme_order, splits) {
-  values <- map(splits, function(sp) {
-    key <- sp$key
-    d <- rows |>
-      # Only the groups this split actually draws. A group dropped for size
-      # would otherwise survive summarise() and land in the file with a null
-      # name, which the front end ignores and a reader of the JSON would not.
-      filter(.data[[key]] %in% sp$groups) |>
-      summarise(n = n(), .by = all_of(c("theme", key))) |>
-      rename(group = all_of(key)) |>
-      # Complete the grid so a theme absent from a group draws an empty bar
-      # rather than closing the gap and misaligning the row.
-      complete(theme = theme_order, group = sp$groups, fill = list(n = 0L)) |>
-      mutate(pct = round(100 * n / sum(n), 1), .by = group) |>
-      mutate(theme = factor(theme, levels = theme_order),
-             group = factor(group, levels = sp$groups)) |>
-      arrange(theme, group)
-    pmap(list(as.character(d$theme), as.character(d$group), d$pct, d$n),
-         function(theme, group, pct, n)
-           list(theme = theme, group = group, pct = pct, n = n))
-  })
-  names(values) <- map_chr(splits, "id")
-  list(
-    splits = map(splits, function(sp)
-      list(id = sp$id, label = sp$label, groups = as.list(sp$groups))),
-    values = values
-  )
-}
 #
 # `caution` is shown with the responses. The three why-items are gated on two
 # questions, and one of them - fusion_host - randomized the distance to 10 or
@@ -324,34 +257,6 @@ SITING_CAUTION <- paste0(
 # Reported, never silent, and the same rule as the identifier screen: a
 # response withheld from the page is one the reader will never know existed
 # unless the number is here.
-review_caution <- function(reviewed, n_held, reviewed_on) {
-  paste0(
-    "Every one of these ", format(reviewed, big.mark = ","), " responses was ",
-    "read before publication, on ", format(reviewed_on, "%d %B %Y"), ". ",
-    if (n_held == 0) {
-      "None was withheld."
-    } else if (n_held == 1) {
-      paste0("One was withheld, for content directed at a group of people ",
-             "rather than at fusion energy.")
-    } else {
-      paste0(n_held, " were withheld, for content directed at groups of ",
-             "people rather than at fusion energy.")
-    }
-  )
-}
-
-small_group_caution <- function(dropped) {
-  if (nrow(dropped) == 0) return(NULL)
-  paste0(
-    "One split leaves a group out: ",
-    paste0(dropped$split, " - ", dropped$g, ", ", dropped$n,
-           if (nrow(dropped) == 1) " responses" else " responses",
-           collapse = "; "),
-    ". Too few to draw as a share without inviting a comparison the number ",
-    "cannot support. Those responses are still in the table below."
-  )
-}
-
 routing_caution <- function(withheld) {
   n <- sum(withheld)
   if (n == 0) return(NULL)
@@ -363,6 +268,15 @@ routing_caution <- function(withheld) {
   )
 }
 #
+# What the two withheld responses were withheld for, in a clause the caption
+# can finish. Both were held back for content aimed at groups of people rather
+# than at fusion energy; the expert survey withheld for a different reason, so
+# the clause belongs to the script rather than to review_caution().
+HELD_WHY <- c(
+  one = "for content directed at a group of people rather than at fusion energy",
+  many = "for content directed at groups of people rather than at fusion energy"
+)
+
 # Many people asked several questions at once - one wrote five, numbered. The
 # coding records the one they lead with, so a reader ranking the themes is
 # reading how many people led with a subject, not how many times it was asked.
@@ -495,7 +409,6 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   # item are a real eight people, but "12.5%" beside a group of 1,300 invites
   # a comparison of rates that the smaller number cannot support. Dropped
   # groups are named with their size in the caption rather than vanishing.
-  MIN_GROUP <- 30L
   small <- list()
   splits <- candidate_splits |>
     map(function(sp) {
@@ -528,13 +441,25 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
       as.list(theme_roster |> filter(item == id) |> arrange(theme_order) |>
                 pull(label)),
     theme_noun = theme_noun,
+    # The last sentence is why this is written here: it names the one bar list
+    # on the public site that is not a population estimate. On the expert page
+    # nothing is weighted, so the same sentence would be false.
+    theme_caption = paste0(
+      "Each response carries one theme - the ", theme_noun, " it leads with ",
+      "or dwells on, where it raises more than one. Themes were drafted by ",
+      "reading the whole set, assigned by reading each response, and checked ",
+      "by reading each theme's responses together. Click a theme below to ",
+      "filter the responses to it. Bars are the plain share of responses, ",
+      "unweighted - unlike the word associations and the survey questions ",
+      "elsewhere on this site, which are weighted to the population."
+    ),
     theme_dist = theme_dist,
     # A list so an item can carry more than one caveat, each its own
     # paragraph. auto_unbox would collapse a single one to a bare string.
     cautions = as.list(c(caution, routing_caution(withheld),
                          small_group_caution(dropped_groups),
                          review_caution(seen$reviewed, nrow(held_content),
-                                        seen$reviewed_on))) |>
+                                        seen$reviewed_on, HELD_WHY))) |>
       discard(is.na),
     n = nrow(rows),
     rows = rows

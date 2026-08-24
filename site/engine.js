@@ -1291,20 +1291,18 @@ components.open_responses = async function (page, container) {
 
   async function renderWords(host) {
     const data = await fetchJSON(page.words);
-    const card = el("div", { class: "card" });
-    card.append(el("h3", {}, "The first words that come to mind"));
-    card.append(el("p", { class: "fu-caption" },
-      `Everyone was asked for the first three words or phrases they think of ` +
-      `when they hear "fusion energy", and how they feel about each one. ` +
-      `${data.entries.toLocaleString()} words from ` +
-      `${data.respondents.toLocaleString()} people, ` +
-      `${data.words.length.toLocaleString()} of them distinct. Bars are the ` +
-      `weighted share of people who used the word; colour is how they felt ` +
-      `about it, from ${data.scale.min_label.toLowerCase()} to ` +
-      `${data.scale.max_label.toLowerCase()}. Words are counted as typed and ` +
-      `nothing is merged, so "clean" and "clean energy" are separate. ` +
-      `${data.excluded_nonanswer.toLocaleString()} answers that only said so ` +
-      `much as "none" or "not sure" are left out.`));
+    // Two share columns rather than a share and a colour, so the row grid has
+    // to leave room for both numbers and for the labels above them.
+    const twoUp = Array.isArray(data.col_labels) && data.col_labels.length > 1;
+    const card = el("div", { class: "card" + (twoUp ? " fu-wordlist-2" : "") });
+    // Two surveys asked a words question and they are not the same question:
+    // the public gave associations and rated how each one felt, the experts
+    // predicted what the public would say and rated nothing. The caption is
+    // written by the script that counted the words, for the same reason the
+    // findings deck's headlines are - a sentence assembled here would have to
+    // know which survey it was describing.
+    card.append(el("h3", {}, data.title || "The first words that come to mind"));
+    card.append(el("p", { class: "fu-caption" }, data.caption || ""));
 
     const tools = el("div", { class: "table-tools" });
     const search = el("input", { type: "search", placeholder: "Find a word…",
@@ -1317,16 +1315,34 @@ components.open_responses = async function (page, container) {
     tools.append(search, el("label", { class: "pagesize" },
       "Show top ", sizeSel), count);
 
-    const legend = el("div", { class: "fu-valence-legend" });
-    legend.append(el("span", {}, data.scale.min_label));
-    const strip = el("span", { class: "fu-valence-strip" });
-    const stops = dataStops(RDBU_STOPS);
-    strip.style.background = "linear-gradient(to right, " +
-      [0,.2,.4,.6,.8,1].map(t => rampColor(stops, t)).join(",") + ")";
-    legend.append(strip, el("span", {}, data.scale.max_label));
-
+    // No scale means the words carry no valence - the expert survey asked for
+    // predictions, not feelings - so the ramp and its legend have nothing to
+    // show and a grey bar is the honest bar.
+    const scale = data.scale || null;
     const list = el("div", { class: "fu-wordlist" });
-    card.append(tools, legend, list);
+    card.append(tools);
+    // A header only where the data asks for one. The public list has a single
+    // share plus a colour the legend explains; the expert list has two shares
+    // and nothing on screen would say which is which.
+    if (Array.isArray(data.col_labels) && data.col_labels.length) {
+      const head = el("div", { class: "fu-word-row fu-word-head" });
+      head.append(el("span", { class: "fu-word-name" }, ""),
+                  el("span", { class: "fu-word-track" }, ""));
+      for (const lab of data.col_labels)
+        head.append(el("span", { class: "fu-word-val" }, lab));
+      card.append(head);
+    }
+    if (scale) {
+      const legend = el("div", { class: "fu-valence-legend" });
+      legend.append(el("span", {}, scale.min_label));
+      const strip = el("span", { class: "fu-valence-strip" });
+      const stops = dataStops(RDBU_STOPS);
+      strip.style.background = "linear-gradient(to right, " +
+        [0,.2,.4,.6,.8,1].map(t => rampColor(stops, t)).join(",") + ")";
+      legend.append(strip, el("span", {}, scale.max_label));
+      card.append(legend);
+    }
+    card.append(list);
     host.append(card);
 
     function draw() {
@@ -1342,16 +1358,27 @@ components.open_responses = async function (page, container) {
         const fill = el("span", { class: "fu-word-fill" });
         fill.style.width = Math.max(1, 100 * w.pct / top) + "%";
         // Valence is a 1-5 mean; map it onto the ramp's 0-1.
-        fill.style.background = w.valence == null ? "var(--text-muted)"
-          : rampColor(dataStops(RDBU_STOPS), (w.valence - data.scale.min) /
-                      (data.scale.max - data.scale.min));
+        fill.style.background = (!scale || w.valence == null)
+          ? "var(--text-muted)"
+          : rampColor(dataStops(RDBU_STOPS),
+                      (w.valence - scale.min) / (scale.max - scale.min));
         track.append(fill);
         row.append(track);
         row.append(el("span", { class: "fu-word-pct" }, w.pct.toFixed(1) + "%"));
-        row.append(el("span", { class: "fu-word-val", title:
-          `mean feeling ${w.valence == null ? "n/a" : w.valence} of 5, ` +
-          `${w.respondents} ${w.respondents === 1 ? "person" : "people"}` },
-          w.valence == null ? "—" : w.valence.toFixed(1)));
+        if (scale)
+          row.append(el("span", { class: "fu-word-val", title:
+            `mean feeling ${w.valence == null ? "n/a" : w.valence} of 5, ` +
+            `${w.respondents} ${w.respondents === 1 ? "person" : "people"}` },
+            w.valence == null ? "—" : w.valence.toFixed(1)));
+        // A predicted word set against what the public actually said. An
+        // em dash is a word the public never used, which is the finding for
+        // that row rather than a missing value.
+        if ("public_pct" in w)
+          row.append(el("span", { class: "fu-word-val fu-word-actual", title:
+            w.public_pct == null ? "no member of the public used this word"
+              : `${w.public_pct}% of the public used it, ranked ` +
+                `${w.public_rank} of the words they gave` },
+            w.public_pct == null ? "—" : w.public_pct.toFixed(1) + "%"));
         list.append(row);
       }
       count.textContent = `${shown.length.toLocaleString()} of ` +
@@ -1371,17 +1398,12 @@ components.open_responses = async function (page, container) {
                 el("p", { class: "fu-caption" }, note));
     const ctx = Array.isArray(v.contexts) ? v.contexts : [];
     const themed = Array.isArray(v.themes) && v.themes.length;
-    // A why-item's theme names a concern; a question item's names a question.
-    // 03 supplies the noun so the sentence reads right for either.
-    const unit = typeof v.theme_noun === "string" ? v.theme_noun : "concern";
-    if (themed) card.append(el("p", { class: "fu-caption" },
-      `Each response carries one theme — the ${unit} it leads with or dwells ` +
-      `on, where it raises more than one. Themes were drafted by reading the ` +
-      `whole set, assigned by reading each response, and checked by reading ` +
-      `each theme's responses together. Click a theme below to filter the ` +
-      `responses to it. Bars are the plain share of responses, unweighted — ` +
-      `unlike the word associations and the survey questions elsewhere on ` +
-      `this site, which are weighted to the population.`));
+    // Written by the script that coded the responses: the sentence has to name
+    // the item's own unit ("the concern it leads with" against "the question")
+    // and say whether anything on the page is weighted, and only the script
+    // knows which survey it is describing.
+    if (themed && v.theme_caption)
+      card.append(el("p", { class: "fu-caption" }, v.theme_caption));
     // A list, one paragraph each: an item can rest on more than one caveat.
     (Array.isArray(v.cautions) ? v.cautions : [])
       .filter(c => typeof c === "string" && c)
@@ -1411,8 +1433,13 @@ components.open_responses = async function (page, container) {
       columns.push({ id: c.key, label: c.label, width: "14%",
                      filter: "select", filterAll: "Any",
                      filterOrder: v.context_order });
-    columns.push({ id: "year", label: "Survey", filter: "select",
-                   filterAll: "Both" });
+    // One fielding, no column: the expert survey ran once, and a column whose
+    // every cell reads 2026 is a filter that can only ever filter to
+    // everything.
+    const years = [...new Set(v.rows.map(r => r.year))].filter(y => y != null);
+    if (years.length > 1)
+      columns.push({ id: "year", label: "Survey", filter: "select",
+                     filterAll: "Both" });
     const table = dataTable({
       columns, rows: v.rows, pageSize: 25,
       pageSizeOptions: [25, 50, 100, 250],

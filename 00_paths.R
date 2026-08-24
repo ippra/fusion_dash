@@ -31,6 +31,14 @@ themes_reference <- file.path(reference_dir, "themes.csv")
 theme_labels <- file.path(reference_dir, "theme_labels.csv")
 verbatim_review <- file.path(reference_dir, "verbatim_review.csv")
 verbatim_withheld <- file.path(reference_dir, "verbatim_withheld.csv")
+# The expert survey's qualitative items keep their own coding and review files
+# for the same reason the survey keeps its own sheet: it is a different survey,
+# read and coded separately, and one file holding both would let a public item
+# id and an expert one collide without either script noticing.
+sme_themes <- file.path(reference_dir, "sme_themes.csv")
+sme_theme_labels <- file.path(reference_dir, "sme_theme_labels.csv")
+sme_verbatim_review <- file.path(reference_dir, "sme_verbatim_review.csv")
+sme_verbatim_withheld <- file.path(reference_dir, "sme_verbatim_withheld.csv")
 
 # The waves the dashboard covers. Adding one is a row here plus a column_fu27
 # in the variable reference; every script iterates this table rather than
@@ -87,7 +95,8 @@ why_item_kept <- function(item, new_fusion, fusion_host) {
 
 absent <- c(variable_reference, sme_reference, sme_data, sme_correlates,
             arms_reference, word_stoplist, themes_reference, theme_labels,
-            verbatim_review, verbatim_withheld, waves$data)
+            verbatim_review, verbatim_withheld, sme_themes, sme_theme_labels,
+            sme_verbatim_review, sme_verbatim_withheld, waves$data)
 absent <- absent[!file.exists(absent)]
 
 if (length(absent) > 0) {

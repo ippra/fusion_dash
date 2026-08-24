@@ -16,14 +16,14 @@ source(here::here("00_paths.R"))
 # caption phrases, the popover texts, and the caption {token} templates the
 # front end fills at render time.
 #
-# Run after 02, from anywhere:
-#   Rscript 05_build_dashboard.R
+# Run last, after 02, 03, 04 and 05:
+#   Rscript 06_build_dashboard.R
 #
-# Writes outputs/05_site/ — plain static files, fully self-contained. Preview:
+# Writes outputs/06_site/ — plain static files, fully self-contained. Preview:
 #   python3 preview.py
 
 data_in <- file.path(outputs, "02_question_data")
-out <- file.path(outputs, "05_site")
+out <- file.path(outputs, "06_site")
 
 needed <- file.path(data_in, c("questions.json", "splits.json", "meta.json"))
 if (!all(file.exists(needed))) {
@@ -58,6 +58,21 @@ invisible(file.copy(list.files(open_in, pattern = "\\.json$", full.names = TRUE)
 invisible(file.copy(
   list.files(file.path(open_in, "verbatims"), full.names = TRUE),
   file.path(out, "data", "open", "verbatims")))
+
+# The expert survey's own qualitative output, carried the same way. 05 counts,
+# screens and applies the content review; this script only moves the result.
+sme_open_in <- file.path(outputs, "05_sme_open_responses")
+if (!file.exists(file.path(sme_open_in, "index.json"))) {
+  stop("No expert open-response data - run ",
+       "05_create_sme_open_response_data.R first.")
+}
+dir.create(file.path(out, "data", "sme-open", "verbatims"), recursive = TRUE)
+invisible(file.copy(
+  list.files(sme_open_in, pattern = "\\.json$", full.names = TRUE),
+  file.path(out, "data", "sme-open")))
+invisible(file.copy(
+  list.files(file.path(sme_open_in, "verbatims"), full.names = TRUE),
+  file.path(out, "data", "sme-open", "verbatims")))
 
 # Question Data ----------------------------------------------------------------
 # Copied through unchanged - these ARE the statistics, and they stay 02's.
@@ -350,17 +365,27 @@ config <- list(
                         "population."),
          blurb = paste0("Where expert expectations about public opinion match ",
                         "the survey, and where they miss.")),
-    list(id = "sme-qual", component = "placeholder",
+    # The same component the public page uses, pointed at the expert survey's
+    # files. One code path rather than two: what differs between the surveys -
+    # whether there is a valence scale, whether anything is weighted, whether
+    # there is more than one fielding - is carried in the data, not in a second
+    # copy of the component.
+    list(id = "sme-qual", component = "open_responses",
          nav_group = "SMEs",
          label = "Explore Qualitative Data",
+         index = "data/sme-open/index.json",
+         words = "data/sme-open/words.json",
+         verbatims = "data/sme-open/verbatims/{id}.json",
          intro = paste0("What experts said in their own words: what they ",
                         "think non-experts most misunderstand about fusion, ",
-                        "and what they would change about how it is ",
-                        "discussed."),
-         note = paste0("Both questions were answered - 122 and 115 responses ",
-                       "- but they have not yet been read for content or ",
-                       "coded, and nothing is published here until they are."),
-         blurb = "Open responses from subject matter experts."),
+                        "what they would change about how it is discussed, ",
+                        "and the words they expected the public to reach for. ",
+                        "Every response was read before publication. Nothing ",
+                        "here is weighted: these are counts of the ",
+                        sme_meta$respondents, " experts who answered, not ",
+                        "estimates for any population."),
+         blurb = paste0("What experts think the public misunderstands, and ",
+                        "what they would change about the conversation.")),
     list(id = "about", component = "static_page", label = "About",
          html = about_html)
   ),

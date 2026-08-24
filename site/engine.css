@@ -1003,6 +1003,22 @@ table.data th select {
    and searches, not a plot, and the bar is there for comparison rather than
    for reading a value off an axis. */
 .fu-wordlist { display: flex; flex-direction: column; gap: 3px; margin-top: 10px; }
+/* The word list's header, where the data labels its columns. Same grid as a
+   row so the labels sit over the numbers they name. */
+.fu-word-head {
+  font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--text-muted); padding-bottom: 4px;
+  border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+.fu-word-head .fu-word-val { font-family: inherit; line-height: 1.2; }
+/* The header's spacer sits in the bar column and must not draw a bar. */
+.fu-word-head .fu-word-track { background: none; }
+/* Two share columns instead of a share and a valence: both hold a percentage,
+   and the header above them holds a word. */
+.fu-wordlist-2 .fu-word-row {
+  grid-template-columns: minmax(120px, 22ch) 1fr 6ch 7ch;
+}
+.fu-wordlist-2 .fu-word-head { align-items: end; }
 .fu-word-row {
   display: grid; grid-template-columns: minmax(120px, 22ch) 1fr 5ch 4ch;
   align-items: center; gap: 10px; font-size: 13.5px;
