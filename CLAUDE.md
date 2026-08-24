@@ -542,14 +542,31 @@ things follow:
 
 ## The findings deck
 
-`sme-compare` is not a stack of charts. It is nine cards you slide left and
-right, each one stating a single finding in a sentence, showing the two or
-three numbers behind it at a size you can read from across the room, and
-linking to the explore pages where the underlying distributions live. Someone
-who wants the finding gets it without deriving it; someone who wants the data
-is one click away.
+`sme-compare` is not a stack of charts — it has none. It is eleven cards you
+slide left and right: a headline, the numbers, a paragraph saying what they
+mean, and links to the explore pages. Nine small bar charts were what made an
+earlier version read like a dataset rather than like findings.
 
-- **`04` writes the headlines**, from the same values the chart draws. A
+**Two parts, and the distinction is the point.** Running them together is what
+made the page hard to follow:
+
+| | what was asked | what a gap means |
+|---|---|---|
+| Part one | both groups answered the same question, in the same words | a difference of view — nobody is wrong |
+| Part two | experts were asked to predict what the public said | a mistake, and the public column is the answer |
+
+Each part opens with a divider card that says so, every card is banded and
+tinted by part (blue for one, amber for two) and tagged in its kicker, because
+a reader landing mid-deck needs to know which kind of card they are on.
+
+Figures sit in a three-column grid rather than a chart or a `<table>`: the row
+label wraps freely while the number columns stay locked, and the larger of each
+pair is marked so the shape of a comparison is legible without reading every
+figure. `fu-compare-1` drops the second column for the two cards that carry one
+series, so an empty slot never reads as a missing number.
+
+- **`04` writes the headlines and the paragraphs**, from the same values the
+  figures show. A
   sentence assembled in the front end, or typed into the builder, would go
   stale the first time the data moved — "by 12 points" is computed, not
   written. `scales::ordinal` turns a rank into "3rd" so even that follows the
@@ -566,9 +583,7 @@ is one click away.
   and the arrow keys all just scroll the strip, so a touch swipe and a
   trackpad work without three code paths. The strip sets `align-items:
   flex-start` — a flex row otherwise makes every card as tall as the tallest,
-  and the full-ranking card would leave the other eight with a screen of empty
-  space beneath them. Cards cap at `min(78vh, 820px)` and scroll inside, so
-  the deck's own controls never end up a screen below the card being read.
+  which left the short ones with a screen of empty space beneath them.
 - **Links use `?q=<variable>#<page>`**, which is the app's own deep-link form:
   the router reads the hash and `getParam` reads the query string.
 

@@ -1536,25 +1536,33 @@ components.open_responses = async function (page, container) {
 
 /* Experts against the public: findings, one card at a time.
  *
- * A deck you slide rather than a page you scroll. Each card carries one
- * finding - a headline, the two or three numbers behind it, a chart, and links
- * to the pages where the underlying distributions live. Someone who wants the
- * finding gets it in a sentence; someone who wants the data is one click away.
+ * A deck you slide rather than a page you scroll, in two parts, because the
+ * survey asks two different kinds of question and running them together is
+ * what made an earlier version of this page hard to follow:
  *
- * Every number and every headline sentence is 04's, built from the same values
- * the chart draws, so a headline cannot drift away from its own bars. The
- * public side of each is checked against what 02 published before it is
- * written.
+ *   part 1  both groups answered the same question in the same words, so a
+ *           difference between them is a difference of view.
+ *   part 2  experts were asked to predict what the public said, so a
+ *           difference is a mistake, and can be right or wrong in a way a
+ *           difference of view cannot.
  *
- * Sliding is CSS scroll-snap, not a JS animation loop: the buttons and the
- * keyboard just scroll the strip, so a touch swipe, a trackpad and the arrow
- * keys all work without three separate code paths. */
+ * The two are marked by the band across the top of each card and by the label
+ * on it, and a divider card sits between them. No charts: each card is a
+ * headline, the numbers, a paragraph saying what they mean and links to the
+ * data. Nine small bar charts were what made this read like a dataset rather
+ * than like findings.
+ *
+ * Every number and every sentence is 04's, built from the same values, so a
+ * headline cannot drift from the figures under it. The public side of each is
+ * checked against what 02 published before it is written.
+ *
+ * Sliding is CSS scroll-snap, not a JS animation loop, so a swipe, a
+ * trackpad, the arrow keys and the buttons are one behaviour. */
 components.comparison = async function (page, container) {
   const data = await fetchJSON(page.source);
   const content = el("div", { class: "content" });
   content.append(el("p", { class: "fu-explore-intro" }, page.intro || ""));
 
-  const deck = el("div", { class: "fu-deck" });
   const strip = el("div", { class: "fu-deck-strip", tabindex: "0",
                             role: "region", "aria-label": "Findings" });
   const dots = el("div", { class: "fu-deck-dots" });
@@ -1563,17 +1571,46 @@ components.comparison = async function (page, container) {
                               onclick: () => step(-1) }, "‹");
   const next = el("button", { class: "fu-deck-nav", "aria-label": "Next finding",
                               onclick: () => step(1) }, "›");
-
-  const pending = [];
   const cards = [];
 
+  const PART = {
+    1: { label: "Part one", title: "What each group thinks",
+         blurb: "Both experts and the public were asked these questions, in " +
+                "the same words. A difference here is a difference of view — " +
+                "nobody is wrong." },
+    2: { label: "Part two", title: "What experts think the public thinks",
+         blurb: "Here experts were asked to predict what the public said. " +
+                "These answers can be right or wrong, and the public column " +
+                "is the answer." }
+  };
+
+  // A card that introduces each part, so the change of question is announced
+  // rather than left for the reader to infer from a kicker.
+  function dividerCard(part) {
+    const p = PART[part];
+    const card = el("section", { class: `fu-card fu-card-divider fu-part-${part}` });
+    card.append(el("p", { class: "fu-card-kicker" }, p.label));
+    card.append(el("h3", { class: "fu-card-headline" }, p.title));
+    card.append(el("p", { class: "fu-card-lede" }, p.blurb));
+    return card;
+  }
+
+  let seenPart = null;
   for (const f of data) {
-    const card = el("section", { class: "fu-card", "aria-roledescription": "finding" });
-    card.append(el("p", { class: "fu-card-kicker" }, f.kicker || ""));
+    if (f.part !== seenPart) {
+      seenPart = f.part;
+      const div = dividerCard(f.part);
+      strip.append(div);
+      cards.push(div);
+    }
+
+    const card = el("section", { class: `fu-card fu-part-${f.part}`,
+                                 "aria-roledescription": "finding" });
+    const p = PART[f.part] || { label: "" };
+    card.append(el("p", { class: "fu-card-kicker" },
+      el("span", { class: "fu-part-tag" }, p.label), " · ", f.kicker || ""));
     card.append(el("h3", { class: "fu-card-headline" }, f.headline || ""));
 
-    // The numbers the headline rests on, big enough to read from the finding
-    // rather than from the chart.
     if (Array.isArray(f.stats) && f.stats.length) {
       const row = el("div", { class: "fu-stat-row" });
       for (const st of f.stats) {
@@ -1587,27 +1624,36 @@ components.comparison = async function (page, container) {
       card.append(row);
     }
 
-    const wrap = el("div", { class: "chart-wrap fu-card-chart" });
-    const canvas = el("canvas");
-    wrap.append(canvas);
-    card.append(wrap);
+    if (f.lede) card.append(el("p", { class: "fu-card-lede" }, f.lede));
 
-    if (f.benchmark && typeof f.benchmark === "object") {
-      const b = f.benchmark;
-      card.append(el("p", { class: "fu-compare-benchmark" },
-        `${b.label}: `, el("strong", {}, String(b.value)),
-        b.category ? ` — which falls in “${b.category}”.` : "."));
+    // The aligned figures that replace the chart. `lead` marks the larger of
+    // a pair so the shape of the comparison is legible without reading every
+    // number; -1 means neither, which is a tie or a single column.
+    if (f.compare && Array.isArray(f.compare.items)) {
+      // The grid reserves a column per figure, so a card showing one series
+      // does not leave an empty slot the eye reads as a missing number.
+      const nCols = f.compare.columns.length;
+      const tbl = el("div", { class: `fu-compare fu-compare-${nCols}` });
+      const head = el("div", { class: "fu-compare-row fu-compare-head" });
+      head.append(el("span", { class: "fu-compare-label" }, ""));
+      for (const c of f.compare.columns)
+        head.append(el("span", { class: "fu-compare-val" }, c));
+      tbl.append(head);
+      for (const it of f.compare.items) {
+        const r = el("div", { class: "fu-compare-row" });
+        r.append(el("span", { class: "fu-compare-label" }, it.label));
+        it.values.forEach((v, i) => r.append(el("span", {
+          class: "fu-compare-val" + (it.lead === i ? " lead" : "") }, v)));
+        tbl.append(r);
+      }
+      card.append(tbl);
     }
+
     if (f.note) card.append(el("p", { class: "fu-caption" }, f.note));
 
-    // One link per category, where the point of the card is that each row is
-    // worth looking at on its own. Replaces a table of coefficients: every one
-    // of these is a split on the public explore page now, so a reader can see
-    // the relationship rather than read a number for it.
     if (f.factor_links && Array.isArray(f.factor_links.items)) {
       const box = el("div", { class: "fu-factor-links" });
-      box.append(el("span", { class: "fu-factor-lead" },
-                    f.factor_links.label || ""));
+      box.append(el("span", { class: "fu-factor-lead" }, f.factor_links.label || ""));
       const list = el("div", { class: "fu-factor-list" });
       for (const l of f.factor_links.items)
         list.append(el("a", { class: "fu-card-link", href: l.href }, l.label));
@@ -1615,61 +1661,31 @@ components.comparison = async function (page, container) {
       card.append(box);
     }
 
-    // Back to the data. The finding is the claim; these are where to check it.
     if (Array.isArray(f.links) && f.links.length) {
       const links = el("div", { class: "fu-card-links" });
       for (const l of f.links)
-        links.append(el("a", { class: "fu-card-link", href: l.href },
-                        l.label, " →"));
+        links.append(el("a", { class: "fu-card-link", href: l.href }, l.label, " →"));
       card.append(links);
     }
-
-    const rows = (f.rows || []).map(r => ({
-      group: r.group,
-      category: wrapTickLabel(r.category),
-      value: r.p,
-      label: f.value_kind === "mean_rank"
-               ? (Number.isInteger(r.p) ? String(r.p) : r.p.toFixed(1))
-             : f.value_kind === "mean_pct" ? r.p.toFixed(1)
-             : Math.round(r.p) + "%",
-      low: r.p_low, upp: r.p_upp
-    }));
-    const categoryOrder = (f.categories || []).map(wrapTickLabel);
-    const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
-    const LINE = 17, LABEL_PAD = 16, BAR_PAD = 12;
-    const catHeight = categoryOrder.reduce((total, label) =>
-      total + Math.max(tickLines(label).length * LINE + LABEL_PAD,
-                       nGroups * 18 + BAR_PAD), 0);
-    wrap.style.height = Math.max(260, 84 + (nGroups > 1 ? 40 : 0) + catHeight) + "px";
-    pending.push(() => groupedBarChart(canvas, rows, {
-      title: "", xLabel: "", yLabel: f.axis || "Share (%)",
-      horizontal: true, categoryOrder, legend: nGroups > 1, multi: true,
-      colors: schemeSeriesColors(DEFAULT_SCHEME, nGroups)
-    }));
 
     strip.append(card);
     cards.push(card);
   }
 
-  for (let i = 0; i < cards.length; i++) {
-    dots.append(el("button", { class: "fu-deck-dot", "aria-label": `Finding ${i + 1}`,
+  for (let i = 0; i < cards.length; i++)
+    dots.append(el("button", { class: "fu-deck-dot", "aria-label": `Card ${i + 1}`,
                                onclick: () => goTo(i) }));
-  }
 
-  const bar = el("div", { class: "fu-deck-bar" }, prev, dots, counter, next);
-  deck.append(strip, bar);
+  const deck = el("div", { class: "fu-deck" },
+                  strip, el("div", { class: "fu-deck-bar" }, prev, dots, counter, next));
   content.append(deck);
   container.append(el("div", { class: "page" }, content));
-  for (const draw of pending) draw();
 
-  // Which card is centred. Read off scroll position rather than tracked in a
-  // variable, so a swipe and a button press agree.
   const currentIndex = () => {
     const mid = strip.scrollLeft + strip.clientWidth / 2;
     let best = 0, bestDist = Infinity;
     cards.forEach((c, i) => {
-      const centre = c.offsetLeft + c.offsetWidth / 2;
-      const dist = Math.abs(centre - mid);
+      const dist = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
       if (dist < bestDist) { bestDist = dist; best = i; }
     });
     return best;
@@ -1683,8 +1699,8 @@ components.comparison = async function (page, container) {
   function sync() {
     const i = currentIndex();
     counter.textContent = `${i + 1} of ${cards.length}`;
-    dots.querySelectorAll(".fu-deck-dot").forEach((d, j) =>
-      d.classList.toggle("on", j === i));
+    dots.querySelectorAll(".fu-deck-dot").forEach((dot, j) =>
+      dot.classList.toggle("on", j === i));
     prev.disabled = i === 0;
     next.disabled = i === cards.length - 1;
   }

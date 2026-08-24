@@ -1150,7 +1150,6 @@ table.data th select {
 .fu-stat-caption {
   font-size: 11.5px; color: var(--text-muted); margin-top: 3px; line-height: 1.4;
 }
-.fu-card-chart { margin-bottom: 6px; }
 .fu-card-links {
   display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px;
   padding-top: 12px; border-top: 1px solid var(--border);
@@ -1192,12 +1191,6 @@ table.data th select {
 
 /* The numbers behind a comparison's bars. Narrower than the explore table and
    with no filter row: ten rows have nothing to filter. */
-/* Capped so the one card with a full table does not tower over the rest of
-   the deck; it scrolls inside its own box like every other wide table here. */
-.fu-card .table-scroll { max-height: 260px; overflow-y: auto; }
-.fu-compare-table { font-size: 12.5px; margin-top: 12px; }
-.fu-compare-table th { white-space: nowrap; }
-.fu-compare-table td:first-child { min-width: 16ch; }
 
 /* Per-category links on a findings card. Replaces the coefficient table: each
    factor is a split on the explore page, so the reader can look at the
@@ -1207,3 +1200,62 @@ table.data th select {
 .fu-factor-list {
   display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px;
 }
+
+/* The aligned figures that replace a chart. A three-column grid rather than a
+   table element: the row label wraps freely and the two number columns stay
+   locked, which a table would only manage with fixed widths. */
+.fu-compare {
+  margin: 4px 0 2px; border-top: 1px solid var(--border);
+  /* Capped so the figures sit beside their label rather than being pushed to
+     the far edge of a wide card, where the eye has to travel to pair them. */
+  max-width: 60ch;
+}
+.fu-compare-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 9ch 9ch; gap: 12px;
+  align-items: baseline; padding: 9px 2px;
+  border-bottom: 1px solid var(--border);
+}
+.fu-compare-1 .fu-compare-row { grid-template-columns: minmax(0, 1fr) 9ch; }
+.fu-compare-1 { max-width: 48ch; }
+.fu-compare-head {
+  border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.fu-compare-label { font-size: 13.5px; line-height: 1.35; }
+.fu-compare-val {
+  text-align: right; font-family: var(--mono, monospace); font-size: 13.5px;
+  color: var(--text-muted);
+}
+/* The larger of the pair, so the shape of the comparison is legible without
+   reading every number. */
+.fu-compare-val.lead { color: var(--accent); font-weight: 700; }
+.fu-compare-head .fu-compare-val {
+  font-family: inherit; font-size: 11px; line-height: 1.25;
+}
+
+/* The lede: the sentence that says what the numbers mean. */
+.fu-card-lede {
+  font-size: 14.5px; line-height: 1.6; margin: 0 0 16px; max-width: 68ch;
+}
+
+/* Which part a card belongs to, marked on the card rather than only in the
+   text: part one is a difference of view, part two is a right-or-wrong
+   prediction, and a reader who lands mid-deck needs to know which. */
+.fu-card { border-top: 4px solid var(--border); }
+.fu-part-1 { border-top-color: #1f5fa9; }
+.fu-part-2 { border-top-color: #b8860b; }
+.fu-part-tag {
+  font-weight: 700; letter-spacing: .06em;
+}
+.fu-part-1 .fu-card-kicker, .fu-part-1 .fu-stat-value { color: #1f5fa9; }
+.fu-part-2 .fu-card-kicker, .fu-part-2 .fu-stat-value { color: #8a6508; }
+.fu-part-1 .fu-compare-val.lead { color: #1f5fa9; }
+.fu-part-2 .fu-compare-val.lead { color: #8a6508; }
+/* The card that announces each part. Shorter, centred, nothing but the claim. */
+.fu-card-divider {
+  justify-content: center; flex: 0 0 min(420px, 74%);
+  background: var(--row-hover);
+}
+.fu-card-divider .fu-card-headline { font-size: 24px; margin-bottom: 12px; }
+.fu-card-divider .fu-card-lede { margin-bottom: 0; }
