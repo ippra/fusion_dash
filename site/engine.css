@@ -1198,3 +1198,12 @@ table.data th select {
 .fu-compare-table { font-size: 12.5px; margin-top: 12px; }
 .fu-compare-table th { white-space: nowrap; }
 .fu-compare-table td:first-child { min-width: 16ch; }
+
+/* Per-category links on a findings card. Replaces the coefficient table: each
+   factor is a split on the explore page, so the reader can look at the
+   relationship instead of reading a number standing in for it. */
+.fu-factor-links { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.fu-factor-lead { font-size: 12.5px; color: var(--text-muted); }
+.fu-factor-list {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px;
+}

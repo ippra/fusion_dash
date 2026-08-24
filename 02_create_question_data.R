@@ -75,21 +75,32 @@ if (nrow(inconsistent) > 0) {
 # is an identity. The vendor-derived demographics have no `source` because the
 # FU26 items that resemble them (gend, race, edu, income, party) are separate
 # questions, so crossing them is a real comparison rather than a restatement.
+# `waves` records where a split can be built. Everything is "both" except the
+# nuclear-support banding, which rests on an item FU26 asked and FU25 did not:
+# a split covering one wave has to say so, or a chart drawn on 1,244 people
+# sits under a caption that counts 2,444.
 splits <- tribble(
-  ~id,             ~label,                  ~phrase,                     ~source,
-  "All",           "Everyone",              NA_character_,               NA_character_,
-  "Age",           "Age",                   "age group",                 NA_character_,
-  "Gender",        "Gender",                "gender",                    NA_character_,
-  "Race",          "Race and ethnicity",    "race and ethnicity group",  NA_character_,
-  "Education",     "Education",             "education group",           NA_character_,
-  "Income",        "Income",                "income group",              NA_character_,
-  "Region",        "Census region",         "census region",             NA_character_,
-  "Metro",         "Metropolitan status",   "community type",            NA_character_,
-  "Party_ID",      "Party identification",  "party group",               NA_character_,
-  "Vote_2024",     "2024 presidential vote", "vote group",               NA_character_,
-  "IDEOL_GROUP",   "Ideology",              "ideology group",            "ideol",
-  "GCC_GROUP",     "Climate change belief", "belief group",              "gcc",
-  "survey_year",   "Survey year",           "survey year's respondents", NA_character_
+  ~id,             ~label,                  ~phrase,                     ~source,          ~waves,
+  "All",           "Everyone",              NA_character_,               NA_character_,    "both",
+  "Age",           "Age",                   "age group",                 NA_character_,    "both",
+  "Gender",        "Gender",                "gender",                    NA_character_,    "both",
+  "Race",          "Race and ethnicity",    "race and ethnicity group",  NA_character_,    "both",
+  "Education",     "Education",             "education group",           NA_character_,    "both",
+  "Income",        "Income",                "income group",              NA_character_,    "both",
+  "Region",        "Census region",         "census region",             NA_character_,    "both",
+  "Metro",         "Metropolitan status",   "community type",            NA_character_,    "both",
+  "Party_ID",      "Party identification",  "party group",               NA_character_,    "both",
+  "Vote_2024",     "2024 presidential vote", "vote group",               NA_character_,    "both",
+  "IDEOL_GROUP",   "Ideology",              "ideology group",            "ideol",          "both",
+  "GCC_GROUP",     "Climate change belief", "belief group",              "gcc",            "both",
+  # The four the expert survey asked about that were not already here. They are
+  # the strongest correlates of support in the data, so a reader who has just
+  # been told that on the findings page can now cut every question by them.
+  "NUCLEAR_GROUP", "Views on nuclear power", "view of nuclear power",    "nuclear_support", "fu26",
+  "SCITRUST_GROUP", "Trust in scientists",  "trust group",               "univ_trust",     "both",
+  "AWARE_GROUP",   "Heard of fusion before", "awareness group",          "fusion_know",    "both",
+  "ENVCON_GROUP",  "Environmental concern", "concern group",             "worry_enviro",   "both",
+  "survey_year",   "Survey year",           "survey year's respondents", NA_character_,    "both"
 )
 
 # Two splits are built rather than read. The banding follows the instrument's
@@ -98,6 +109,11 @@ splits <- tribble(
 # judgment - seven groups on a bar chart is unreadable - and it is made here,
 # once, rather than in the front end.
 derive_groups <- function(d) {
+  # A wave that never asked the source item gets NA rather than an error, which
+  # is what lets the nuclear-support banding exist at all: FU25 has no
+  # nuclear_support column.
+  col <- function(name) if (name %in% names(d)) d[[name]] else NA_character_
+  num <- function(name) suppressWarnings(as.numeric(col(name)))
   d |>
     mutate(
       IDEOL_GROUP = case_when(
@@ -110,6 +126,36 @@ derive_groups <- function(d) {
         gcc == 1 ~ "Greenhouse gases are warming the planet",
         gcc == 0 ~ "They are not",
         TRUE     ~ NA_character_
+      ),
+      # Banded the same way the findings page collapses fusion support, so the
+      # two read against each other rather than against different cut points.
+      NUCLEAR_GROUP = case_when(
+        col("nuclear_support") %in% c("1", "2", "3") ~ "Opposes nuclear",
+        col("nuclear_support") == "4"                ~ "Neither",
+        col("nuclear_support") %in% c("5", "6", "7") ~ "Supports nuclear",
+        TRUE                                         ~ NA_character_
+      ),
+      # Trust in university scientists who study fusion, on the 0-10 trust
+      # scale. Thirds of the scale rather than thirds of the sample: the cut
+      # points then mean the same thing in a later wave whose distribution has
+      # moved.
+      SCITRUST_GROUP = case_when(
+        num("univ_trust") <= 3  ~ "Low trust (0-3)",
+        num("univ_trust") <= 6  ~ "Middling (4-6)",
+        num("univ_trust") <= 10 ~ "High trust (7-10)",
+        TRUE                    ~ NA_character_
+      ),
+      AWARE_GROUP = case_when(
+        col("fusion_know") == "1" ~ "Had heard of fusion",
+        col("fusion_know") == "0" ~ "Had not",
+        col("fusion_know") == "2" ~ "Not sure",
+        TRUE                      ~ NA_character_
+      ),
+      ENVCON_GROUP = case_when(
+        num("worry_enviro") <= 3  ~ "Low concern (0-3)",
+        num("worry_enviro") <= 7  ~ "Middling (4-7)",
+        num("worry_enviro") <= 10 ~ "High concern (8-10)",
+        TRUE                      ~ NA_character_
       )
     )
 }
@@ -119,6 +165,10 @@ derive_groups <- function(d) {
 # alphabetical in any locale.
 group_order <- list(
   Age = c("18-29", "30-49", "50-64", "65+"),
+  NUCLEAR_GROUP = c("Opposes nuclear", "Neither", "Supports nuclear"),
+  SCITRUST_GROUP = c("Low trust (0-3)", "Middling (4-6)", "High trust (7-10)"),
+  AWARE_GROUP = c("Had heard of fusion", "Had not", "Not sure"),
+  ENVCON_GROUP = c("Low concern (0-3)", "Middling (4-7)", "High concern (8-10)"),
   Education = c("HS or less", "Some college/2-yr degree",
                 "4-yr/post-graduate degree"),
   Income = c("< $50,000", "> $50,000"),
@@ -146,14 +196,29 @@ message("Waves read: ",
 
 # Every split column must be present in every wave before anything is
 # computed, not discovered missing halfway through 126 questions.
-split_columns <- setdiff(splits$id, c("All", "survey_year", "IDEOL_GROUP",
-                                      "GCC_GROUP"))
+# The splits read straight off a column, as against the ones derived above.
+# "fu26" -> "2026", for the splits that only one wave can build.
+wave_year_of <- function(tag)
+  as.character(waves$year[str_to_lower(waves$wave) == str_to_lower(tag)])
+
+derived_splits <- c("IDEOL_GROUP", "GCC_GROUP", "NUCLEAR_GROUP",
+                    "SCITRUST_GROUP", "AWARE_GROUP", "ENVCON_GROUP")
+split_columns <- setdiff(splits$id, c("All", "survey_year", derived_splits))
+
+# The source item behind each derived split has to exist in every wave the
+# split claims to cover - checked here rather than discovered as an empty
+# chart. A split declared "fu26" is exempt for FU25 by design.
 for (i in seq_len(nrow(waves_data))) {
   have <- names(waves_data$raw[[i]])
-  gone <- setdiff(c(split_columns, "ideol", "gcc", weight_var), have)
+  wave_year <- paste0("fu", substr(waves_data$wave[i], 3, 4)) |> str_to_lower()
+  needed_sources <- splits |>
+    filter(id %in% derived_splits, waves == "both" | waves == wave_year) |>
+    pull(source)
+  gone <- setdiff(c(split_columns, needed_sources, weight_var), have)
   if (length(gone) > 0) {
     print(gone)
-    stop("Columns above are missing from ", waves_data$wave[i], ".")
+    stop("Columns above are missing from ", waves_data$wave[i],
+         " but a split declared for that wave needs them.")
   }
 }
 
@@ -167,7 +232,7 @@ responses <- map2(waves_data$raw, seq_len(nrow(waves_data)), function(d, i) {
       wave = waves_data$wave[i],
       weight = as.numeric(.data[[weight_var]]),
       All = "All",
-      across(all_of(c(split_columns, "IDEOL_GROUP", "GCC_GROUP"))),
+      across(all_of(c(split_columns, derived_splits))),
       row = row_number()
     ) |>
     bind_cols(d |> select(-any_of(c(split_columns, weight_var))))
@@ -414,6 +479,30 @@ r_derive <- list(
     "      GCC_GROUP = case_when(\n",
     "        gcc == 1 ~ \"Greenhouse gases are warming the planet\",\n",
     "        gcc == 0 ~ \"They are not\"\n",
+    "      ),"),
+  NUCLEAR_GROUP = paste0(
+    "      NUCLEAR_GROUP = case_when(\n",
+    "        nuclear_support %in% c(\"1\", \"2\", \"3\") ~ \"Opposes nuclear\",\n",
+    "        nuclear_support == \"4\"                ~ \"Neither\",\n",
+    "        nuclear_support %in% c(\"5\", \"6\", \"7\") ~ \"Supports nuclear\"\n",
+    "      ),"),
+  SCITRUST_GROUP = paste0(
+    "      SCITRUST_GROUP = case_when(\n",
+    "        as.numeric(univ_trust) <= 3  ~ \"Low trust (0-3)\",\n",
+    "        as.numeric(univ_trust) <= 6  ~ \"Middling (4-6)\",\n",
+    "        as.numeric(univ_trust) <= 10 ~ \"High trust (7-10)\"\n",
+    "      ),"),
+  AWARE_GROUP = paste0(
+    "      AWARE_GROUP = case_when(\n",
+    "        fusion_know == \"1\" ~ \"Had heard of fusion\",\n",
+    "        fusion_know == \"0\" ~ \"Had not\",\n",
+    "        fusion_know == \"2\" ~ \"Not sure\"\n",
+    "      ),"),
+  ENVCON_GROUP = paste0(
+    "      ENVCON_GROUP = case_when(\n",
+    "        as.numeric(worry_enviro) <= 3  ~ \"Low concern (0-3)\",\n",
+    "        as.numeric(worry_enviro) <= 7  ~ \"Middling (4-7)\",\n",
+    "        as.numeric(worry_enviro) <= 10 ~ \"High concern (8-10)\"\n",
     "      ),")
 )
 
@@ -428,7 +517,14 @@ r_title <- function(title) {
 
 r_script <- function(title, intro, asked, options, split, group_order = NULL,
                      items = NULL, multi = FALSE, arm_label = NULL,
-                     split_label = split) {
+                     split_label = split, split_waves = "both") {
+  # A split only one wave can build reads only that wave. The alternative is a
+  # script that derives the grouping from a column the other file does not
+  # have, which is an error rather than an empty column - the verification
+  # below caught exactly that.
+  if (split_waves != "both") {
+    asked <- asked |> filter(str_to_lower(wave) == str_to_lower(split_waves))
+  }
   obj <- paste0("fu", substr(asked$wave, 3, 4))     # fu25, fu26
   grp <- if (split == "All") NULL else split
 
@@ -527,7 +623,11 @@ r_script <- function(title, intro, asked, options, split, group_order = NULL,
     if (is.null(arm_label)) "" else
       paste0("# Version shown to this half of the sample: ", arm_label, "\n"),
     if (split == "All") "" else
-      paste0("# Split by ", split_label, " (the `", split, "` column).\n"),
+      paste0("# Split by ", split_label, " (the `", split, "` column).\n",
+             if (split_waves != "both")
+               paste0("# ", str_to_upper(split_waves),
+                      " only: the other wave did not ask the question this ",
+                      "grouping is built from.\n") else ""),
     "\n",
     "library(tidyverse)\n",
     "library(srvyr)\n\n",
@@ -610,10 +710,12 @@ verify_r_code <- function(script, expect, options, label) {
 # derived column, the wave - plus every arm at least once. Running all ~1,100
 # would add minutes for no more coverage than this.
 verify_pairs <- function(arm_ids, split_ids) {
+  # One representative of each shape, plus every derived split: they each
+  # write their own case_when into the generated script, so an error in one
+  # would not show up in another.
   shapes <- c("All",
-              setdiff(split_ids, c("All", "IDEOL_GROUP", "GCC_GROUP",
-                                   "survey_year"))[1],
-              intersect(c("IDEOL_GROUP", "GCC_GROUP"), split_ids)[1],
+              setdiff(split_ids, c("All", derived_splits, "survey_year"))[1],
+              intersect(derived_splits, split_ids),
               intersect("survey_year", split_ids))
   shapes <- unique(shapes[!is.na(shapes)])
   c(map(shapes, ~list(arm = arm_ids[1], split = .x)),
@@ -649,7 +751,7 @@ for (i in seq_len(nrow(questions))) {
     arm_col <- if (is.null(arm_row)) NULL else arm_row[[field]]
     src |>
       transmute(across(all_of(c("survey_year", "weight", "All",
-                                split_columns, "IDEOL_GROUP", "GCC_GROUP"))),
+                                split_columns, derived_splits))),
                 wave = w,
                 resp = .data[[col]],
                 arm_raw = if (is.null(arm_col) || is.na(arm_col)) NA_character_
@@ -727,7 +829,12 @@ for (i in seq_len(nrow(questions))) {
     s <- splits$id[j]
     if (s == "survey_year" && nrow(asked) < 2) next
     if (identical(splits$source[j], q$variable)) next
-    have <- d |> filter(!is.na(.data[[s]]))
+    # A split that only one wave can build is measured against that wave.
+    # The other wave's respondents were not asked the grouping question;
+    # counting them as dropped would read as attrition rather than coverage.
+    base <- if (splits$waves[j] == "both") d else
+      d |> filter(survey_year == wave_year_of(splits$waves[j]))
+    have <- base |> filter(!is.na(.data[[s]]))
     if (nrow(have) == 0) next
 
     rows <- distribution(have, s, options$value)
@@ -753,11 +860,11 @@ for (i in seq_len(nrow(questions))) {
       smallest_n = smallest$n,
       # What the split cost: respondents who answered the question but have no
       # value for this grouping. Shown in the caption rather than absorbed.
-      dropped = nrow(d) - nrow(have)
+      dropped = nrow(base) - nrow(have)
     )
-    if (nrow(d) - nrow(have) > 0) {
+    if (nrow(base) - nrow(have) > 0) {
       dropped_report[[length(dropped_report) + 1]] <- tibble(
-        variable = q$variable, split = s, dropped = nrow(d) - nrow(have)
+        variable = q$variable, split = s, dropped = nrow(base) - nrow(have)
       )
     }
   }
@@ -785,6 +892,7 @@ for (i in seq_len(nrow(questions))) {
           arm_column = if (ak == "all") NA_character_ else arm_column),
         options = options, split = sp, group_order = group_order[[sp]],
         split_label = splits$label[match(sp, splits$id)],
+        split_waves = splits$waves[match(sp, splits$id)],
         arm_label = if (ak == "all") NULL else
           arms_cfg$label[match(ak, arms_cfg$arm_id)])
     }
@@ -873,7 +981,7 @@ for (b in batteries) {
     src <- responses |> filter(wave == w)
     bind_cols(
       src |> select(all_of(c("survey_year", "weight", "All", split_columns,
-                             "IDEOL_GROUP", "GCC_GROUP"))),
+                             derived_splits))),
       src[cols] |> set_names(b$variable)
     )
   }) |>
@@ -932,7 +1040,12 @@ for (b in batteries) {
   for (j in seq_len(nrow(splits))) {
     s <- splits$id[j]
     if (s == "survey_year" && nrow(asked) < 2) next
-    have <- d |> filter(!is.na(.data[[s]]))
+    # A split that only one wave can build is measured against that wave.
+    # The other wave's respondents were not asked the grouping question;
+    # counting them as dropped would read as attrition rather than coverage.
+    base <- if (splits$waves[j] == "both") d else
+      d |> filter(survey_year == wave_year_of(splits$waves[j]))
+    have <- base |> filter(!is.na(.data[[s]]))
     if (nrow(have) == 0) next
 
     rows <- multi_distribution(have, s, b$variable) |>
@@ -952,11 +1065,11 @@ for (b in batteries) {
       years = paste(sort(unique(have$survey_year)), collapse = "-"),
       smallest = smallest[[1]],
       smallest_n = smallest$n,
-      dropped = nrow(d) - nrow(have)
+      dropped = nrow(base) - nrow(have)
     )
-    if (nrow(d) - nrow(have) > 0) {
+    if (nrow(base) - nrow(have) > 0) {
       dropped_report[[length(dropped_report) + 1]] <- tibble(
-        variable = bid, split = s, dropped = nrow(d) - nrow(have)
+        variable = bid, split = s, dropped = nrow(base) - nrow(have)
       )
     }
   }
@@ -974,7 +1087,8 @@ for (b in batteries) {
     r_script(title = b$question_intro[1], intro = NA_character_,
              asked = asked_b, options = options, split = sp,
              group_order = group_order[[sp]], items = items, multi = TRUE,
-             split_label = splits$label[match(sp, splits$id)])))
+             split_label = splits$label[match(sp, splits$id)],
+             split_waves = splits$waves[match(sp, splits$id)])))
 
   r_code_scripts <- r_code_scripts + length(r_code[["all"]])
   for (pair in verify_pairs("all", names(splits_out))) {

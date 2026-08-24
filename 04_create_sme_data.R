@@ -396,14 +396,16 @@ check_against_02 <- function(variable, rows) {
 findings <- list()
 add_finding <- function(id, kicker, headline, stats, note, rows, categories,
                         links, value_kind = "share",
-                        axis = "Share of respondents", table = NULL,
-                        benchmark = NULL) {
+                        axis = "Share of respondents",
+                        benchmark = NULL, factor_links = NULL, ...) {
   findings[[length(findings) + 1]] <<- list(
     id = id, kicker = kicker, headline = headline,
     stats = stats, note = note, value_kind = value_kind, axis = axis,
     categories = as.list(categories), rows = rows,
     links = links,
-    table = if (is.null(table)) NA else table,
+    # A second link block, one entry per row of the chart, for a card whose
+    # point is that each category is worth looking at on its own.
+    factor_links = if (is.null(factor_links)) NA else factor_links,
     benchmark = if (is.null(benchmark)) NA else benchmark)
 }
 stat <- function(label, value, caption = NULL) {
@@ -618,6 +620,17 @@ if (nrow(missing_cols) > 0) {
   stop("Public columns above are named in sme_correlates.csv but not in the ",
        "public data.")
 }
+splits_available <- read_json(file.path(outputs, "02_question_data",
+                                       "splits.json"),
+                             simplifyVector = TRUE)$id
+bad_split <- setdiff(correlates$explore_split, splits_available)
+if (length(bad_split) > 0) {
+  print(bad_split)
+  stop("sme_correlates.csv sends readers to splits above, which the public ",
+       "explore page does not offer - the link would land on a grouping menu ",
+       "that has no such entry.")
+}
+
 unmapped <- setdiff(
   reference$variable[reference$battery == "fusion_sup_cor" &
                      reference$question_type == "checkbox_item"],
@@ -779,25 +792,17 @@ add_finding("correlates", "The full ranking",
     calibration |> transmute(group = "Actual ranking", category = label,
                              p = actual_rank, p_low = NA_real_, p_upp = NA_real_)),
   calibration$label,
-  list(link("See public support in the data", "explore", "new_fusion"),
-       link("See what experts picked", "sme-survey", "fusion_sup_cor")),
+  # One link per factor rather than a table of numbers: every one of the ten
+  # is now a split on the public explore page, so a reader who wants to see
+  # the relationship can look at it rather than read a coefficient.
+  list(link("See what experts picked", "sme-survey", "fusion_sup_cor")),
   value_kind = "mean_rank", axis = "Place (1 = strongest)",
-  table = list(
-    columns = as.list(c("Factor", "Experts naming it", "Experts' place",
-                        "Actual place", "Strength", "Alternative measure",
-                        "Gap in mean support")),
-    rows = pmap(list(calibration$label, calibration$picked,
-                     calibration$expert_rank, calibration$actual_rank,
-                     calibration$eta_adj, calibration$eta_alt,
-                     calibration$spread, calibration$top,
-                     calibration$bottom, calibration$alternative_column),
-      function(label, picked, er, ar, eta, eta_alt, spread, top, bottom, altcol)
-        as.list(c(label, paste0(round(picked), "%"), er, ar,
-                  format(round(eta, 2), nsmall = 2),
-                  if (is.na(eta_alt)) "—" else
-                    paste0(format(round(eta_alt, 2), nsmall = 2), " on ", altcol),
-                  paste0(format(round(spread, 1), nsmall = 1),
-                         " pts, ", top, " over ", bottom))))))
+  factor_links = list(
+    label = "Split public support by each factor:",
+    items = pmap(list(calibration$label, calibration$explore_split),
+      function(label, split_id)
+        list(label = label,
+             href = paste0("?q=new_fusion&grouping=", split_id, "#explore")))))
 
 # Every public number on this page traces back to a question 02 published.
 # Checked here in one pass rather than card by card: the cards collapse those

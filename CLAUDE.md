@@ -204,8 +204,27 @@ Three things in that block are easy to undo:
   and ideology. A group in the data that is missing from `group_order` stops
   the build.
 - **`source`** on a split suppresses the tautology of splitting a question by
-  itself — `ideol` by Ideology, `gcc` by Climate change belief. Both drew a
-  single bar at 100% in every group before it existed.
+  itself — `ideol` by Ideology, `gcc` by Climate change belief, and now
+  `nuclear_support`, `univ_trust`, `fusion_know` and `worry_enviro` by the four
+  splits built from them. Both of the first two drew a single bar at 100% in
+  every group before it existed.
+- **`waves`** records where a split can be built. Everything is `both` except
+  `NUCLEAR_GROUP`, which rests on an item FU26 asked and FU25 did not. A
+  wave-limited split measures its own denominator and its own `dropped` count
+  against that wave, so the caption reads "1,243 US adults … in the 2026 wave"
+  rather than counting 2,444 and reporting 1,200 as dropped — which would read
+  as attrition instead of coverage. Its generated R script reads that wave
+  only, for the same reason: deriving the grouping from a column the other
+  file does not have is an error, not an empty column, and the reproduction
+  check caught exactly that.
+
+**The four splits the expert survey pointed at.** `NUCLEAR_GROUP`,
+`SCITRUST_GROUP`, `AWARE_GROUP` and `ENVCON_GROUP` exist because they are the
+strongest correlates of support in the data, and the findings deck now links
+straight into them — a reader told that views on nuclear power are the single
+best predictor can cut any question by it in one click. Bands are thirds of
+the scale, not thirds of the sample, so the cut points still mean the same
+thing in a wave whose distribution has moved.
 
 Response option labels are **never truncated**. `wrapTickLabel` wraps at word
 boundaries with no line cap, and `draw()` sizes the canvas from the resulting

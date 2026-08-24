@@ -1600,21 +1600,19 @@ components.comparison = async function (page, container) {
     }
     if (f.note) card.append(el("p", { class: "fu-caption" }, f.note));
 
-    if (f.table && Array.isArray(f.table.columns)) {
-      const scroll = el("div", { class: "table-scroll" });
-      const t = el("table", { class: "data fu-compare-table" });
-      const head = el("tr");
-      for (const c of f.table.columns) head.append(el("th", {}, c));
-      t.append(el("thead", {}, head));
-      const body = el("tbody");
-      for (const r of f.table.rows || []) {
-        const tr = el("tr");
-        for (const cell of r) tr.append(el("td", {}, String(cell)));
-        body.append(tr);
-      }
-      t.append(body);
-      scroll.append(t);
-      card.append(scroll);
+    // One link per category, where the point of the card is that each row is
+    // worth looking at on its own. Replaces a table of coefficients: every one
+    // of these is a split on the public explore page now, so a reader can see
+    // the relationship rather than read a number for it.
+    if (f.factor_links && Array.isArray(f.factor_links.items)) {
+      const box = el("div", { class: "fu-factor-links" });
+      box.append(el("span", { class: "fu-factor-lead" },
+                    f.factor_links.label || ""));
+      const list = el("div", { class: "fu-factor-list" });
+      for (const l of f.factor_links.items)
+        list.append(el("a", { class: "fu-card-link", href: l.href }, l.label));
+      box.append(list);
+      card.append(box);
     }
 
     // Back to the data. The finding is the claim; these are where to check it.
