@@ -1262,3 +1262,45 @@ table.data th select {
 }
 .fu-card-divider .fu-card-headline { font-size: 24px; margin-bottom: 12px; }
 .fu-card-divider .fu-card-lede { margin-bottom: 0; }
+
+/* What each side was asked. On part three the two questions differ and that
+   difference is the finding, so both stems sit on the card rather than being
+   summarised in a caption. */
+.fu-asked {
+  margin: 0 0 18px; padding: 14px 16px; border-radius: 6px;
+  background: var(--row-hover); border: 1px solid var(--border);
+}
+.fu-asked-lead {
+  margin: 0 0 10px; font-size: 11px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text-muted); font-weight: 600;
+}
+.fu-asked-row {
+  display: grid; grid-template-columns: 15ch 1fr; gap: 14px;
+  align-items: baseline; padding: 6px 0;
+}
+.fu-asked-row + .fu-asked-row { border-top: 1px solid var(--border); }
+.fu-asked-who { font-size: 12.5px; font-weight: 650; }
+.fu-asked-text {
+  margin: 0; font-size: 13px; line-height: 1.5; font-style: italic;
+  color: var(--text);
+}
+.fu-asked-text strong { font-style: normal; }
+@media (max-width: 640px) {
+  .fu-asked-row { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* The options whose wording differs, in full, behind a disclosure. */
+.fu-mark { cursor: help; }
+.fu-wording {
+  margin-top: 12px; font-size: 12.5px; border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.fu-wording summary { cursor: pointer; color: var(--text-muted); }
+.fu-wording summary:hover { color: var(--accent); }
+.fu-wording-item { margin: 12px 0 0; }
+.fu-wording-label { margin: 0 0 4px; font-weight: 650; font-size: 12.5px; }
+.fu-wording-line {
+  margin: 0 0 3px; display: grid; grid-template-columns: 7ch 1fr; gap: 10px;
+  line-height: 1.45; color: var(--text-muted);
+}
+.fu-wording-who { font-weight: 650; color: var(--text); }

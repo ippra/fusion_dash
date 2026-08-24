@@ -558,11 +558,24 @@ made the page hard to follow:
 
 Part three is the three risk/cost/benefit batteries — the pair `NOTES` warns
 about, where the two surveys reuse the same column names for different stems.
-The public was asked which it would most want to understand; experts which
-non-experts most need to. That is not a comparison to make by accident, which
-is why the eighteen pairs are declared in the SME sheet as
-`compare_kind = "agenda"` with a `compare_label`: several items are worded
-differently between the surveys, so neither survey's wording can label both.
+That is not a comparison to make by accident, so the eighteen pairs are
+declared in the SME sheet as `compare_kind = "agenda"` with a `compare_label`.
+
+**Those cards print both question stems in full**, side by side, with the
+pivotal phrase marked — *"would you most want to understand"* against
+*"non-experts most need to understand"*. The difference between the two
+questions is the finding; describing it in a caption and hoping the reader
+takes it on trust is what made the section hard to follow. The expert stems
+share a two-sentence preamble across all three batteries, cut at "Which of the
+following"; `question_only()` stops the build if that sentence is not there
+rather than printing the preamble as though it were the question.
+
+Nine of the eighteen options are worded differently between the surveys — two
+of them substantively, the public's waste option saying "radioactive material
+management" against the expert's "waste management and decommissioning". Those
+rows carry a dagger, and a disclosure under the figures prints both wordings
+in full. `compare_label` exists because neither survey's wording can label
+both columns.
 
 Each part opens with a divider card that says so, every card is banded and
 tinted by part (blue, amber, green) and tagged in its kicker, because a reader
@@ -588,6 +601,14 @@ series, so an empty slot never reads as a missing number.
   largest positive and negative gaps between expert rank and actual rank in
   the correlates table, taken with `slice_max`/`slice_min` rather than named,
   so they follow the data if it changes.
+- **The current card is tracked, not re-derived.** Deriving it from scroll
+  position on every button press looks tidier and is wrong: a second click
+  landing while the smooth scroll is still travelling reads a position already
+  past the current card and advances two. The index is the source of truth for
+  the buttons; a scroll the reader performs writes back to it once the strip
+  settles. Card offsets come from `getBoundingClientRect`, not `offsetLeft` —
+  the latter is relative to the nearest positioned ancestor rather than the
+  strip, so comparing it against `scrollLeft` read one card early.
 - **Sliding is CSS scroll-snap**, not an animation loop: the buttons, the dots
   and the arrow keys all just scroll the strip, so a touch swipe and a
   trackpad work without three code paths. The strip sets `align-items:

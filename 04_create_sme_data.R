@@ -398,10 +398,20 @@ check_against_02 <- function(variable) {
 
 findings <- list()
 add_finding <- function(id, part, kicker, headline, lede, stats, compare,
-                        note, links, factor_links = NULL) {
+                        note, links, factor_links = NULL, questions = NULL,
+                        wording = NULL) {
   findings[[length(findings) + 1]] <<- list(
     id = id, part = part, kicker = kicker, headline = headline, lede = lede,
-    stats = stats, compare = compare, note = note, links = links,
+    stats = stats,
+    # What each side was actually asked. On part three the two questions are
+    # different, and that difference IS the finding, so the stems go on the
+    # card rather than being described in a caption.
+    questions = if (is.null(questions)) NA else questions,
+    compare = compare, note = note, links = links,
+    # The options whose wording differs between the surveys, shown in full
+    # behind a disclosure so the card stays readable and the detail is still
+    # there rather than summarised away.
+    wording = if (is.null(wording)) NA else wording,
     factor_links = if (is.null(factor_links)) NA else factor_links)
 }
 stat <- function(value, label, caption = NULL) {
@@ -414,8 +424,9 @@ stat <- function(value, label, caption = NULL) {
 compare_block <- function(columns, items) {
   list(columns = as.list(columns), items = items)
 }
-crow <- function(label, a, b, suffix = "%") {
+crow <- function(label, a, b, suffix = "%", mark = FALSE) {
   list(label = label,
+       mark = mark,
        values = as.list(c(paste0(a, suffix), paste0(b, suffix))),
        lead = if (a > b) 0L else if (b > a) 1L else -1L)
 }
@@ -821,6 +832,19 @@ if (length(missing_pub) > 0) {
   stop("Agenda pairs above name public variables that do not exist.")
 }
 
+# The expert stems share a two-sentence preamble across all three batteries;
+# only the question itself belongs on the card. Cut at the sentence that asks
+# it, and stop the build if that sentence is not there rather than silently
+# printing the preamble as though it were the question.
+question_only <- function(text) {
+  at <- str_locate(text, fixed("Which of the following"))[, "start"]
+  if (is.na(at)) {
+    stop("A part-three stem does not contain 'Which of the following', so ",
+         "the question cannot be separated from its preamble: ", text)
+  }
+  str_sub(text, at)
+}
+
 agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
                         stats_fn) {
   items <- agenda |> filter(battery == battery_id)
@@ -828,24 +852,48 @@ agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
     filter(survey_year == "2026",
            if_any(all_of(items$compare_to), ~ !is.na(.x)))
   base_sme <- d |> filter(if_any(all_of(items$variable), ~ !is.na(.x)))
+  pub_ref <- public_reference |> filter(variable %in% items$compare_to)
+  sme_ref <- reference |> filter(variable %in% items$variable)
+
   tab <- pmap_dfr(list(items$variable, items$compare_to, items$compare_label),
-    function(sme_col, pub_col, label) tibble(
-      label = label,
-      publics = round(100 * sum(base_pub$weight * (base_pub[[pub_col]] == "1"),
-                                na.rm = TRUE) / sum(base_pub$weight)),
-      experts = round(100 * mean(base_sme[[sme_col]] == "1", na.rm = TRUE)))) |>
+    function(sme_col, pub_col, label) {
+      pub_text <- pub_ref$question_text[pub_ref$variable == pub_col]
+      sme_text <- sme_ref$question_text[sme_ref$variable == sme_col]
+      tibble(
+        label = label,
+        differs = !identical(str_squish(pub_text), str_squish(sme_text)),
+        pub_text = pub_text, sme_text = sme_text,
+        publics = round(100 * sum(base_pub$weight * (base_pub[[pub_col]] == "1"),
+                                  na.rm = TRUE) / sum(base_pub$weight)),
+        experts = round(100 * mean(base_sme[[sme_col]] == "1", na.rm = TRUE)))
+    }) |>
     arrange(desc(publics))
+
+  differing <- tab |> filter(differs)
   add_finding(
     paste0("agenda_", battery_id), 3L, kicker, headline(tab), lede(tab),
     stats_fn(tab),
     compare_block(c("The public", "Experts"),
-                  pmap(list(tab$label, tab$publics, tab$experts), crow)),
+                  pmap(list(tab$label, tab$publics, tab$experts, tab$differs),
+                       function(l, a, b, m) crow(l, a, b, mark = m))),
     paste0("Both groups picked two of the same six options, so the shares sum ",
            "to about 200 rather than 100. ",
            format(nrow(base_pub), big.mark = ","), " members of the public ",
            "answered in 2026 and ", nrow(base_sme), " experts. ", note_extra),
     list(link("See the public answers", "explore", battery_id),
-         link("See the expert answers", "sme-survey", battery_id)))
+         link("See the expert answers", "sme-survey", battery_id)),
+    questions = list(
+      list(who = "The public was asked",
+           text = str_squish(unique(pub_ref$question_intro)[1]),
+           highlight = "would you most want to understand"),
+      list(who = "Experts were asked",
+           text = question_only(str_squish(unique(sme_ref$question_intro)[1])),
+           highlight = "non-experts most need to understand")),
+    wording = if (nrow(differing) == 0) NULL else list(
+      summary = paste0(nrow(differing), " of the six options are worded ",
+                       "differently in the two surveys - show them"),
+      items = pmap(list(differing$label, differing$pub_text, differing$sme_text),
+                   function(l, a, b) list(label = l, public = a, expert = b))))
   tab
 }
 

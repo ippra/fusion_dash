@@ -1583,11 +1583,14 @@ components.comparison = async function (page, container) {
                 "These answers can be right or wrong, and the public column " +
                 "is the answer." },
     3: { label: "Part three", title: "What each side thinks needs explaining",
-         blurb: "The public was asked what it would most want to understand " +
-                "about fusion. Experts were asked what non-experts most need " +
-                "to. Same options, different question — so a gap here is a " +
-                "mismatch of agenda, and it is the most directly usable " +
-                "thing on this page." }
+         blurb: "These three cards compare two questions that are not the " +
+                "same. Both offered the same six options and both asked for " +
+                "two picks — but the public was asked what it would most " +
+                "want to understand, and experts were asked what non-experts " +
+                "most need to understand. Each card prints both questions in " +
+                "full. A gap between the columns is therefore neither a " +
+                "difference of view nor a wrong prediction: it is a mismatch " +
+                "of agenda, and it is the most directly usable thing here." }
   };
 
   // A card that introduces each part, so the change of question is announced
@@ -1630,6 +1633,32 @@ components.comparison = async function (page, container) {
       card.append(row);
     }
 
+    // What each side was actually asked. On part three the two questions are
+    // different and that difference is the finding, so the stems sit on the
+    // card, above the numbers, with the pivotal phrase marked.
+    if (Array.isArray(f.questions) && f.questions.length) {
+      const box = el("div", { class: "fu-asked" });
+      box.append(el("p", { class: "fu-asked-lead" }, "What each side was asked"));
+      for (const q of f.questions) {
+        const row = el("div", { class: "fu-asked-row" });
+        row.append(el("span", { class: "fu-asked-who" }, q.who));
+        const quote = el("blockquote", { class: "fu-asked-text" });
+        // The highlight is a literal substring of the stem, so it is marked
+        // by splitting rather than by re-writing the question.
+        const at = q.highlight ? q.text.indexOf(q.highlight) : -1;
+        if (at >= 0) {
+          quote.append(q.text.slice(0, at),
+                       el("strong", {}, q.highlight),
+                       q.text.slice(at + q.highlight.length));
+        } else {
+          quote.append(q.text);
+        }
+        row.append(quote);
+        box.append(row);
+      }
+      card.append(box);
+    }
+
     if (f.lede) card.append(el("p", { class: "fu-card-lede" }, f.lede));
 
     // The aligned figures that replace the chart. `lead` marks the larger of
@@ -1647,12 +1676,34 @@ components.comparison = async function (page, container) {
       tbl.append(head);
       for (const it of f.compare.items) {
         const r = el("div", { class: "fu-compare-row" });
-        r.append(el("span", { class: "fu-compare-label" }, it.label));
+        const lbl = el("span", { class: "fu-compare-label" }, it.label);
+        // A dagger where the two surveys word the option differently. The
+        // disclosure below the figures spells each one out.
+        if (it.mark) lbl.append(el("span", { class: "fu-mark",
+          title: "worded differently in the two surveys" }, " †"));
+        r.append(lbl);
         it.values.forEach((v, i) => r.append(el("span", {
           class: "fu-compare-val" + (it.lead === i ? " lead" : "") }, v)));
         tbl.append(r);
       }
       card.append(tbl);
+    }
+
+    // The differing option wordings, in full, behind a disclosure: explicit
+    // without crowding out the finding.
+    if (f.wording && Array.isArray(f.wording.items)) {
+      const det = el("details", { class: "fu-wording" });
+      det.append(el("summary", {}, "† ", f.wording.summary));
+      for (const w of f.wording.items) {
+        const block = el("div", { class: "fu-wording-item" });
+        block.append(el("p", { class: "fu-wording-label" }, w.label));
+        block.append(el("p", { class: "fu-wording-line" },
+          el("span", { class: "fu-wording-who" }, "Public"), w.public));
+        block.append(el("p", { class: "fu-wording-line" },
+          el("span", { class: "fu-wording-who" }, "Expert"), w.expert));
+        det.append(block);
+      }
+      card.append(det);
     }
 
     if (f.note) card.append(el("p", { class: "fu-caption" }, f.note));
@@ -1687,32 +1738,58 @@ components.comparison = async function (page, container) {
   content.append(deck);
   container.append(el("div", { class: "page" }, content));
 
-  const currentIndex = () => {
+  /* Which card is current is tracked, not re-derived on every press.
+   *
+   * Deriving it from scroll position on each step looks tidier and is wrong:
+   * a second click landing while the smooth scroll is still travelling reads
+   * a position already past the current card and advances two. The index is
+   * the source of truth for the buttons; a scroll the reader performs
+   * themselves writes back to it once the strip has settled.
+   *
+   * Offsets come from getBoundingClientRect rather than offsetLeft, which is
+   * relative to the nearest positioned ancestor - not the strip - and so
+   * carries a constant that does not belong in a comparison against
+   * scrollLeft. */
+  let idx = 0;
+  let programmatic = 0;
+  const cardOffset = (c) =>
+    c.getBoundingClientRect().left - strip.getBoundingClientRect().left
+      + strip.scrollLeft;
+  const nearestIndex = () => {
     const mid = strip.scrollLeft + strip.clientWidth / 2;
     let best = 0, bestDist = Infinity;
     cards.forEach((c, i) => {
-      const dist = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
+      const dist = Math.abs(cardOffset(c) + c.offsetWidth / 2 - mid);
       if (dist < bestDist) { bestDist = dist; best = i; }
     });
     return best;
   };
   function goTo(i) {
-    const c = cards[Math.max(0, Math.min(cards.length - 1, i))];
-    if (c) strip.scrollTo({ left: c.offsetLeft - (strip.clientWidth - c.offsetWidth) / 2,
-                            behavior: "smooth" });
+    idx = Math.max(0, Math.min(cards.length - 1, i));
+    const c = cards[idx];
+    programmatic = Date.now();
+    strip.scrollTo({
+      left: cardOffset(c) - (strip.clientWidth - c.offsetWidth) / 2,
+      behavior: "smooth" });
+    sync();
   }
-  function step(delta) { goTo(currentIndex() + delta); }
+  function step(delta) { goTo(idx + delta); }
   function sync() {
-    const i = currentIndex();
-    counter.textContent = `${i + 1} of ${cards.length}`;
+    counter.textContent = `${idx + 1} of ${cards.length}`;
     dots.querySelectorAll(".fu-deck-dot").forEach((dot, j) =>
-      dot.classList.toggle("on", j === i));
-    prev.disabled = i === 0;
-    next.disabled = i === cards.length - 1;
+      dot.classList.toggle("on", j === idx));
+    prev.disabled = idx === 0;
+    next.disabled = idx === cards.length - 1;
   }
   strip.addEventListener("scroll", () => {
     clearTimeout(strip._t);
-    strip._t = setTimeout(sync, 60);
+    strip._t = setTimeout(() => {
+      // Ignore the tail of a scroll this component started; a swipe or a
+      // trackpad is the reader moving, and that does set the index.
+      if (Date.now() - programmatic < 700) return;
+      idx = nearestIndex();
+      sync();
+    }, 90);
   });
   strip.addEventListener("keydown", (e) => {
     if (e.key === "ArrowRight") { step(1); e.preventDefault(); }
