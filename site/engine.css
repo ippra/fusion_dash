@@ -1204,23 +1204,25 @@ table.data th select {
 /* The aligned figures that replace a chart. A three-column grid rather than a
    table element: the row label wraps freely and the two number columns stay
    locked, which a table would only manage with fixed widths. */
+/* The whole block is one grid and each row is display: contents, so every row
+   shares the same columns. Sizing the label column per row instead lets each
+   row pick its own width and the figures stop lining up; sizing it 1fr pushes
+   them to the far edge of a wide card, where the eye has to travel to pair a
+   number with its label. max-content is the longest label and no more, and
+   minmax(0, ...) lets it shrink again when the labels are long. */
 .fu-compare {
   margin: 4px 0 2px; border-top: 1px solid var(--border);
-  /* Capped so the figures sit beside their label rather than being pushed to
-     the far edge of a wide card, where the eye has to travel to pair them. */
-  max-width: 60ch;
+  display: grid; grid-template-columns: minmax(0, max-content) 9ch 9ch;
+  gap: 0 12px; align-items: baseline;
 }
-.fu-compare-row {
-  display: grid; grid-template-columns: minmax(0, 1fr) 9ch 9ch; gap: 12px;
-  align-items: baseline; padding: 9px 2px;
-  border-bottom: 1px solid var(--border);
+.fu-compare-1 { grid-template-columns: minmax(0, max-content) 9ch; }
+.fu-compare-row { display: contents; }
+.fu-compare-row > * {
+  padding: 9px 2px; border-bottom: 1px solid var(--border);
 }
-.fu-compare-1 .fu-compare-row { grid-template-columns: minmax(0, 1fr) 9ch; }
-.fu-compare-1 { max-width: 48ch; }
-.fu-compare-head {
-  border-bottom: 1px solid var(--border); padding-bottom: 6px;
-  font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
-  color: var(--text-muted);
+.fu-compare-head > * {
+  padding: 0 2px 6px; font-size: 11px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--text-muted);
 }
 .fu-compare-label { font-size: 13.5px; line-height: 1.35; }
 .fu-compare-val {
@@ -1236,7 +1238,7 @@ table.data th select {
 
 /* The lede: the sentence that says what the numbers mean. */
 .fu-card-lede {
-  font-size: 14.5px; line-height: 1.6; margin: 0 0 16px; max-width: 68ch;
+  font-size: 14.5px; line-height: 1.6; margin: 0 0 16px;
 }
 
 /* Which part a card belongs to, marked on the card rather than only in the

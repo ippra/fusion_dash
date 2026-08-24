@@ -542,7 +542,7 @@ things follow:
 
 ## The findings deck
 
-`sme-compare` is not a stack of charts — it has none. It is eleven cards you
+`sme-compare` is not a stack of charts — it has none. It is twelve cards you
 slide left and right: a headline, the numbers, a paragraph saying what they
 mean, and links to the explore pages. Nine small bar charts were what made an
 earlier version read like a dataset rather than like findings.
@@ -561,14 +561,25 @@ about, where the two surveys reuse the same column names for different stems.
 That is not a comparison to make by accident, so the eighteen pairs are
 declared in the SME sheet as `compare_kind = "agenda"` with a `compare_label`.
 
-**Those cards print both question stems in full**, side by side, with the
-pivotal phrase marked — *"would you most want to understand"* against
-*"non-experts most need to understand"*. The difference between the two
-questions is the finding; describing it in a caption and hoping the reader
-takes it on trust is what made the section hard to follow. The expert stems
-share a two-sentence preamble across all three batteries, cut at "Which of the
-following"; `question_only()` stops the build if that sentence is not there
-rather than printing the preamble as though it were the question.
+**Every card prints both question stems in full**, quoted from the two
+reference sheets by `pub_q()` / `sme_q()` rather than retyped, so a card cannot
+claim wording the instrument does not have. What the block is called says which
+part you are on: part one leads *"The same question, put to both groups"* and
+its two quotes differ only in "US" against "United States"; parts two and three
+lead *"What each side was asked"* and the pivotal phrase is marked — *"What
+percentage of respondents do you think"*, or *"would you most want to
+understand"* against *"non-experts most need to understand"*. The difference
+between the two questions is the finding; describing it in a caption and hoping
+the reader takes it on trust is what made the section hard to follow.
+
+The marked phrase is a literal substring of the stem and the engine splits on
+it, so a highlight that stops matching renders the question whole rather than a
+rewritten one. Part three's expert stems share a two-sentence preamble across
+all three batteries, cut at "Which of the following"; `question_only()` stops
+the build if that sentence is not there rather than printing the preamble as
+though it were the question. On the correlates card the second row is the public
+support question the ranking is scored against, quoted like the first rather
+than described — how it is scored is the note's job.
 
 Nine of the eighteen options are worded differently between the surveys — two
 of them substantively, the public's waste option saying "radioactive material
@@ -586,6 +597,15 @@ label wraps freely while the number columns stay locked, and the larger of each
 pair is marked so the shape of a comparison is legible without reading every
 figure. `fu-compare-1` drops the second column for the two cards that carry one
 series, so an empty slot never reads as a missing number.
+
+**The grid is on `.fu-compare`, and each row is `display: contents`**, so every
+row shares one set of columns. Putting the grid on the row instead lets each row
+size its own label column and the figures stop lining up down the card. The
+label column is `minmax(0, max-content)` — the longest label and no more — so
+the numbers sit beside what they describe; `1fr` pushes them to the far edge of
+a wide card, where the eye has to travel to pair a number with its label. Prose
+carries no width cap: the lede and the quoted stems run the full width of the
+card.
 
 - **`04` writes the headlines and the paragraphs**, from the same values the
   figures show. A

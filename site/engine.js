@@ -1633,13 +1633,18 @@ components.comparison = async function (page, container) {
       card.append(row);
     }
 
-    // What each side was actually asked. On part three the two questions are
-    // different and that difference is the finding, so the stems sit on the
-    // card, above the numbers, with the pivotal phrase marked.
-    if (Array.isArray(f.questions) && f.questions.length) {
+    // What each side was actually asked, quoted. Where the two questions are
+    // the same that is itself the point; where they differ, the difference is
+    // the finding. Either way the stems sit on the card, above the numbers,
+    // with the pivotal phrase marked, rather than being summarised in a
+    // caption the reader has to take on trust.
+    const asked = f.questions && Array.isArray(f.questions.items)
+                ? f.questions : null;
+    if (asked && asked.items.length) {
       const box = el("div", { class: "fu-asked" });
-      box.append(el("p", { class: "fu-asked-lead" }, "What each side was asked"));
-      for (const q of f.questions) {
+      box.append(el("p", { class: "fu-asked-lead" },
+                    asked.lead || "What each side was asked"));
+      for (const q of asked.items) {
         const row = el("div", { class: "fu-asked-row" });
         row.append(el("span", { class: "fu-asked-who" }, q.who));
         const quote = el("blockquote", { class: "fu-asked-text" });

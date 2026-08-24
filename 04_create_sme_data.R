@@ -438,6 +438,28 @@ link <- function(label, page, q = NULL, grouping = NULL) {
               else paste0("?", paste(query, collapse = "&"), "#", page))
 }
 
+# The questions, quoted from the two reference sheets rather than retyped, so
+# a card cannot claim wording the instrument does not have.
+pub_q <- function(v, full = FALSE) {
+  r <- public_reference |> filter(variable == v)
+  if (nrow(r) != 1) stop("No single public reference row for ", v)
+  str_squish(if (full) paste(na.omit(c(r$question_intro, r$question_text)),
+                             collapse = " ") else r$question_text)
+}
+sme_q <- function(v, full = FALSE) {
+  r <- reference |> filter(variable == v)
+  if (nrow(r) != 1) stop("No single SME reference row for ", v)
+  str_squish(if (full) paste(na.omit(c(r$question_intro, r$question_text)),
+                             collapse = " ") else r$question_text)
+}
+qq <- function(who, text, highlight = NULL) {
+  list(who = who, text = text,
+       highlight = if (is.null(highlight)) NA else highlight)
+}
+asked <- function(..., lead = "What each side was asked") {
+  list(lead = lead, items = list(...))
+}
+
 P1 <- "Part one - what each group thinks"
 P2 <- "Part two - what experts think the public thinks"
 P3 <- "Part three - what each side thinks needs explaining"
@@ -469,12 +491,15 @@ add_finding("views_time", 1L, "Timelines",
             "of experts say the same")),
   compare_block(c("Experts", "The public"),
                 pmap(list(tl$label, tl$experts, tl$publics), crow)),
-  paste0("Both groups were asked the same question in the same words, on the ",
-         "same six bands. ", sme_n("fusion_time"), " experts and ",
-         format(pub_n("fusion_time"), big.mark = ","),
+  paste0("The same six bands were offered to both. ", sme_n("fusion_time"),
+         " experts and ", format(pub_n("fusion_time"), big.mark = ","),
          " members of the public answered."),
   list(link("See the public answers", "explore", "fusion_time"),
-       link("See the expert answers", "sme-survey", "fusion_time")))
+       link("See the expert answers", "sme-survey", "fusion_time")),
+  questions = asked(
+    qq("The public was asked", pub_q("fusion_time")),
+    qq("Experts were asked", sme_q("fusion_time")),
+    lead = "The same question, put to both groups"))
 
 # 2. Risk, cost and benefit ----------------------------------------------------
 LV <- list(c("Risk", "fusion_risk"), c("Cost", "fusion_cost"),
@@ -501,11 +526,16 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
             "call the benefit high", "the largest gap of the three")),
   compare_block(c("Experts", "The public"),
                 pmap(list(lv$label, lv$experts, lv$publics), crow)),
-  paste0("The share choosing High or Very high on each five-point scale. All ",
-         "three questions were put to both groups in the same words."),
+  paste0("The share choosing High or Very high on each five-point scale. The ",
+         "risk question is quoted above; the cost and benefit questions are ",
+         "identical but for that one word, in both surveys."),
   list(link("See the public on risk", "explore", "fusion_risk"),
        link("See the public on benefit", "explore", "fusion_ben"),
-       link("See the expert answers", "sme-survey", "fusion_ben")))
+       link("See the expert answers", "sme-survey", "fusion_ben")),
+  questions = asked(
+    qq("The public was asked", pub_q("fusion_risk")),
+    qq("Experts were asked", sme_q("fusion_risk")),
+    lead = "The same question, put to both groups"))
 
 # 3. The balance ----------------------------------------------------------------
 RB <- list(c("Risks and costs outweigh benefits", "1", "2", "3"),
@@ -531,10 +561,13 @@ add_finding("views_balance", 1L, "The overall balance",
             paste0("against ", rb$experts[2], "% of experts"))),
   compare_block(c("Experts", "The public"),
                 pmap(list(rb$label, rb$experts, rb$publics), crow)),
-  paste0("A seven-point balance scale, collapsed to three. Both groups were ",
-         "asked in the same words."),
+  "A seven-point balance scale, collapsed to three.",
   list(link("See the public answers", "explore", "fusion_risk_ben"),
-       link("See the expert answers", "sme-survey", "fusion_risk_ben")))
+       link("See the expert answers", "sme-survey", "fusion_risk_ben")),
+  questions = asked(
+    qq("The public was asked", pub_q("fusion_risk_ben")),
+    qq("Experts were asked", sme_q("fusion_risk_ben")),
+    lead = "The same question, put to both groups"))
 
 # ==============================================================================
 # PART TWO. Experts asked to predict what the public said.
@@ -568,7 +601,11 @@ add_finding("guess_support", 2L, "Support",
          "the three add to 100. The public answered a seven-point scale, ",
          "collapsed here to the same three bands."),
   list(link("See public support", "explore", "new_fusion"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_sup")))
+       link("See the expert guesses", "sme-survey", "fusion_pub_sup")),
+  questions = asked(
+    qq("The public was asked", pub_q("new_fusion")),
+    qq("Experts were asked", sme_q("fusion_pub_sup"),
+       highlight = "What percentage of respondents do you think")))
 
 # 5. Awareness --------------------------------------------------------------------
 heard <- pub_pct("fusion_know", "1")
@@ -601,7 +638,11 @@ add_finding("guess_aware", 2L, "Awareness",
          "is a single number rather than a distribution. ",
          sme_n("fusion_pub_know"), " experts answered."),
   list(link("See public awareness", "explore", "fusion_know"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_know")))
+       link("See the expert guesses", "sme-survey", "fusion_pub_know")),
+  questions = asked(
+    qq("The public was asked", pub_q("fusion_know")),
+    qq("Experts were asked", sme_q("fusion_pub_know", full = TRUE),
+       highlight = "What percentage of the public do you think")))
 
 # 6. Timelines, predicted ----------------------------------------------------------
 tlg <- map_dfr(TL, function(b) tibble(
@@ -626,7 +667,11 @@ add_finding("guess_time", 2L, "Timelines",
          "which overlap at the edges; the public answered the 2026 wording, ",
          "which does not. The bands still line up one to one in order."),
   list(link("See public timelines", "explore", "fusion_time"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_time")))
+       link("See the expert guesses", "sme-survey", "fusion_pub_time")),
+  questions = asked(
+    qq("The public was asked", pub_q("fusion_time")),
+    qq("Experts were asked", sme_q("fusion_pub_time", full = TRUE),
+       highlight = "Which of the following do you think was the most common response?")))
 
 # 7. The balance, predicted --------------------------------------------------------
 rbg <- tibble(
@@ -654,7 +699,11 @@ add_finding("guess_balance", 2L, "The overall balance",
   paste0("Experts split 100 points across the three. The public answered the ",
          "same seven-point balance scale as in part one."),
   list(link("See the public answers", "explore", "fusion_risk_ben"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_rb_ben")))
+       link("See the expert guesses", "sme-survey", "fusion_pub_rb_ben")),
+  questions = asked(
+    qq("The public was asked", pub_q("fusion_risk_ben")),
+    qq("Experts were asked", sme_q("fusion_pub_rb_ben"),
+       highlight = "What percentage of respondents do you think")))
 
 # 8. Word associations -------------------------------------------------------------
 feel_opts <- parse_options(reference$response_options[reference$variable == "fusion_pub_feel"])
@@ -687,7 +736,11 @@ add_finding("guess_feeling", 2L, "Word associations",
          "“Positive”; the expert scale says “Somewhat”, so ",
          "the two are not quite the same ruler."),
   list(link("See the words the public gave", "public-qual"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_feel")))
+       link("See the expert guesses", "sme-survey", "fusion_pub_feel")),
+  questions = asked(
+    qq("The public was asked", pub_q("word_1_feel", full = TRUE)),
+    qq("Experts were asked", sme_q("fusion_pub_feel"),
+       highlight = "how do you think the public felt")))
 
 # 9. What actually drives support --------------------------------------------------
 # Experts named up to three factors they thought were the strongest correlates
@@ -800,6 +853,14 @@ add_finding("guess_drivers", 2L, "What drives support",
          " to 0.15, and environmental concern as perceived climate risk from ",
          "0.00 to 0.10 - neither moves it across the table."),
   list(link("See what experts picked", "sme-survey", "fusion_sup_cor")),
+  questions = asked(
+    qq("Experts were asked", sme_q("fusion_sup_cor"),
+       highlight = "the strongest correlates of public support"),
+    # The second row is the public question the ranking is scored against,
+    # quoted like the first rather than described, so both rows read the same
+    # way. How it is scored is the note's job.
+    qq("Measured against", pub_q("new_fusion")),
+    lead = "What was asked, and what it is measured against"),
   factor_links = list(
     label = "Every one of these is now a split on the public page. Cut support by:",
     items = pmap(list(calibration$label, calibration$explore_split),
@@ -882,13 +943,12 @@ agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
            "answered in 2026 and ", nrow(base_sme), " experts. ", note_extra),
     list(link("See the public answers", "explore", battery_id),
          link("See the expert answers", "sme-survey", battery_id)),
-    questions = list(
-      list(who = "The public was asked",
-           text = str_squish(unique(pub_ref$question_intro)[1]),
-           highlight = "would you most want to understand"),
-      list(who = "Experts were asked",
-           text = question_only(str_squish(unique(sme_ref$question_intro)[1])),
-           highlight = "non-experts most need to understand")),
+    questions = asked(
+      qq("The public was asked", str_squish(unique(pub_ref$question_intro)[1]),
+         highlight = "would you most want to understand"),
+      qq("Experts were asked",
+         question_only(str_squish(unique(sme_ref$question_intro)[1])),
+         highlight = "non-experts most need to understand")),
     wording = if (nrow(differing) == 0) NULL else list(
       summary = paste0(nrow(differing), " of the six options are worded ",
                        "differently in the two surveys - show them"),
