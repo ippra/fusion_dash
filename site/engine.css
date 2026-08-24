@@ -1103,6 +1103,84 @@ table.data th select {
 }
 .fu-toolbar-actions .fu-pdf-btn { margin-left: 0; }
 
+/* ---------- findings deck ---------- */
+/* A strip you slide rather than a page you scroll. Scroll-snap does the work,
+   so a swipe, a trackpad, the arrow keys and the buttons are one behaviour
+   instead of four. */
+.fu-deck { margin-top: 6px; }
+.fu-deck-strip {
+  display: flex; gap: 18px; overflow-x: auto; overflow-y: hidden;
+  /* Natural heights, not stretched: a flex row makes every child as tall as
+     the tallest, and one card carrying a ten-row table would leave the other
+     eight with a screen of empty space under them. */
+  align-items: flex-start;
+  scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  padding: 4px 2px 10px; scrollbar-width: thin;
+}
+.fu-deck-strip:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.fu-card {
+  scroll-snap-align: center; flex: 0 0 min(880px, 92%);
+  background: var(--card-bg, #fff); border: 1px solid var(--border);
+  border-radius: 10px; padding: 22px 24px 20px;
+  display: flex; flex-direction: column;
+  /* Capped and scrolled inside rather than allowed to run to any height: the
+     full-ranking card is two and a half times the height of the others, and
+     without this the deck's own controls end up a screen and a half below the
+     card you are reading. */
+  max-height: min(78vh, 820px); overflow-y: auto;
+}
+.fu-card-kicker {
+  margin: 0 0 6px; font-size: 11.5px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--accent); font-weight: 600;
+}
+.fu-card-headline {
+  margin: 0 0 16px; font-size: 21px; line-height: 1.3; font-weight: 650;
+}
+/* The numbers the headline rests on. Big, because the point of the page is
+   that a reader takes the finding away without reading the chart. */
+.fu-stat-row {
+  display: flex; flex-wrap: wrap; gap: 26px; margin: 0 0 18px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.fu-stat { min-width: 130px; max-width: 260px; }
+.fu-stat-value {
+  font-size: 30px; line-height: 1.1; font-weight: 700; color: var(--accent);
+}
+.fu-stat-label { font-size: 13px; margin-top: 2px; }
+.fu-stat-caption {
+  font-size: 11.5px; color: var(--text-muted); margin-top: 3px; line-height: 1.4;
+}
+.fu-card-chart { margin-bottom: 6px; }
+.fu-card-links {
+  display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px;
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.fu-card-link { font-size: 12.5px; text-decoration: none; color: var(--accent); }
+.fu-card-link:hover { text-decoration: underline; }
+.fu-deck-bar {
+  display: flex; align-items: center; gap: 12px; justify-content: center;
+  margin-top: 4px;
+}
+.fu-deck-nav {
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--control-border); background: var(--control-bg);
+  color: var(--text); font-size: 19px; line-height: 1;
+}
+.fu-deck-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.fu-deck-nav:disabled { opacity: 0.35; cursor: default; }
+.fu-deck-dots { display: flex; gap: 7px; }
+.fu-deck-dot {
+  width: 9px; height: 9px; border-radius: 50%; padding: 0; cursor: pointer;
+  border: 1px solid var(--control-border); background: transparent;
+}
+.fu-deck-dot.on { background: var(--accent); border-color: var(--accent); }
+.fu-deck-count { font-size: 12px; color: var(--text-muted); min-width: 6ch; }
+@media (max-width: 700px) {
+  .fu-card { flex: 0 0 94%; padding: 18px 16px 16px; }
+  .fu-card-headline { font-size: 18px; }
+  .fu-stat-value { font-size: 25px; }
+}
+
 /* The single actual value on a comparison card whose public side is one number
    rather than a series. Stated as well as drawn: a reader who skips the
    caption must not read the expert bars as the answer. */
@@ -1114,6 +1192,9 @@ table.data th select {
 
 /* The numbers behind a comparison's bars. Narrower than the explore table and
    with no filter row: ten rows have nothing to filter. */
+/* Capped so the one card with a full table does not tower over the rest of
+   the deck; it scrolls inside its own box like every other wide table here. */
+.fu-card .table-scroll { max-height: 260px; overflow-y: auto; }
 .fu-compare-table { font-size: 12.5px; margin-top: 12px; }
 .fu-compare-table th { white-space: nowrap; }
 .fu-compare-table td:first-child { min-width: 16ch; }

@@ -1534,79 +1534,80 @@ components.open_responses = async function (page, container) {
   await render();
 };
 
-/* Experts against the public.
+/* Experts against the public: findings, one card at a time.
  *
- * Half the expert survey asked what experts thought the public would say. Each
- * card puts that guess beside what the public actually said, on one pair of
- * bars per category.
+ * A deck you slide rather than a page you scroll. Each card carries one
+ * finding - a headline, the two or three numbers behind it, a chart, and links
+ * to the pages where the underlying distributions live. Someone who wants the
+ * finding gets it in a sentence; someone who wants the data is one click away.
  *
- * Every number here is 04's, including the public side - which 04 computes
- * from the same files 02 reads and then checks against what 02 published, so a
- * comparison cannot quietly disagree with the public page.
+ * Every number and every headline sentence is 04's, built from the same values
+ * the chart draws, so a headline cannot drift away from its own bars. The
+ * public side of each is checked against what 02 published before it is
+ * written.
  *
- * Two shapes. Where the two surveys asked answerable-in-common questions the
- * card carries two series. Where they do not - the public answered yes or no
- * and experts picked a band - the card carries the expert distribution and a
- * single benchmark line for the actual, because inventing a second series
- * would imply an alignment that is not there. */
+ * Sliding is CSS scroll-snap, not a JS animation loop: the buttons and the
+ * keyboard just scroll the strip, so a touch swipe, a trackpad and the arrow
+ * keys all work without three separate code paths. */
 components.comparison = async function (page, container) {
   const data = await fetchJSON(page.source);
   const content = el("div", { class: "content" });
   content.append(el("p", { class: "fu-explore-intro" }, page.intro || ""));
+
+  const deck = el("div", { class: "fu-deck" });
+  const strip = el("div", { class: "fu-deck-strip", tabindex: "0",
+                            role: "region", "aria-label": "Findings" });
+  const dots = el("div", { class: "fu-deck-dots" });
+  const counter = el("span", { class: "fu-deck-count" });
+  const prev = el("button", { class: "fu-deck-nav", "aria-label": "Previous finding",
+                              onclick: () => step(-1) }, "‹");
+  const next = el("button", { class: "fu-deck-nav", "aria-label": "Next finding",
+                              onclick: () => step(1) }, "›");
+
   const pending = [];
+  const cards = [];
 
-  for (const cmp of data) {
-    const card = el("div", { class: "card" });
-    card.append(el("h3", { class: "fu-question-head" }, cmp.title));
-    card.append(el("p", { class: "fu-caption" }, cmp.note || ""));
+  for (const f of data) {
+    const card = el("section", { class: "fu-card", "aria-roledescription": "finding" });
+    card.append(el("p", { class: "fu-card-kicker" }, f.kicker || ""));
+    card.append(el("h3", { class: "fu-card-headline" }, f.headline || ""));
 
-    const wrap = el("div", { class: "chart-wrap" });
+    // The numbers the headline rests on, big enough to read from the finding
+    // rather than from the chart.
+    if (Array.isArray(f.stats) && f.stats.length) {
+      const row = el("div", { class: "fu-stat-row" });
+      for (const st of f.stats) {
+        const box = el("div", { class: "fu-stat" });
+        box.append(el("div", { class: "fu-stat-value" }, String(st.value)));
+        box.append(el("div", { class: "fu-stat-label" }, st.label));
+        if (typeof st.caption === "string" && st.caption)
+          box.append(el("div", { class: "fu-stat-caption" }, st.caption));
+        row.append(box);
+      }
+      card.append(row);
+    }
+
+    const wrap = el("div", { class: "chart-wrap fu-card-chart" });
     const canvas = el("canvas");
     wrap.append(canvas);
     card.append(wrap);
 
-    const rows = (cmp.rows || []).map(r => ({
-      group: r.group,
-      category: wrapTickLabel(r.category),
-      value: r.p,
-      // A mean placing wants a decimal; a rank is a whole number and "9.0"
-      // reads as a measurement rather than a position.
-      label: cmp.value_kind === "mean_rank"
-               ? (Number.isInteger(r.p) ? String(r.p) : r.p.toFixed(1))
-               : Math.round(r.p) + "%",
-      low: r.p_low, upp: r.p_upp
-    }));
-    const categoryOrder = (cmp.categories || []).map(wrapTickLabel);
-    const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
-    // Sized from the labels, like the explore charts: a category label runs to
-    // several lines and a capped height would truncate it by another route.
-    const LINE = 17, LABEL_PAD = 16, BAR_PAD = 12;
-    const catHeight = categoryOrder.reduce((total, label) =>
-      total + Math.max(tickLines(label).length * LINE + LABEL_PAD,
-                       nGroups * 18 + BAR_PAD), 0);
-    wrap.style.height = Math.max(300, 100 + (nGroups > 1 ? 40 : 0) + catHeight) + "px";
-
-    // The benchmark, where the public side is one number rather than a series.
-    // Stated in words as well as drawn, because a reader who skips the caption
-    // should still not read the expert bars as the answer.
-    if (cmp.benchmark && typeof cmp.benchmark === "object") {
-      const b = cmp.benchmark;
+    if (f.benchmark && typeof f.benchmark === "object") {
+      const b = f.benchmark;
       card.append(el("p", { class: "fu-compare-benchmark" },
         `${b.label}: `, el("strong", {}, String(b.value)),
         b.category ? ` — which falls in “${b.category}”.` : "."));
     }
+    if (f.note) card.append(el("p", { class: "fu-caption" }, f.note));
 
-    // Some comparisons carry the numbers behind the bars. A plain table, not
-    // dataTable: ten rows need no search box, and the filter row would imply
-    // there is something here to filter.
-    if (cmp.table && Array.isArray(cmp.table.columns)) {
+    if (f.table && Array.isArray(f.table.columns)) {
       const scroll = el("div", { class: "table-scroll" });
       const t = el("table", { class: "data fu-compare-table" });
       const head = el("tr");
-      for (const c of cmp.table.columns) head.append(el("th", {}, c));
+      for (const c of f.table.columns) head.append(el("th", {}, c));
       t.append(el("thead", {}, head));
       const body = el("tbody");
-      for (const r of cmp.table.rows || []) {
+      for (const r of f.table.rows || []) {
         const tr = el("tr");
         for (const cell of r) tr.append(el("td", {}, String(cell)));
         body.append(tr);
@@ -1616,19 +1617,88 @@ components.comparison = async function (page, container) {
       card.append(scroll);
     }
 
-    content.append(card);
-    // Drawn after the page is in the document, not here: Chart.js sizes itself
-    // from the canvas's laid-out box, and a canvas in a detached fragment has
-    // none, so the chart comes out blank.
+    // Back to the data. The finding is the claim; these are where to check it.
+    if (Array.isArray(f.links) && f.links.length) {
+      const links = el("div", { class: "fu-card-links" });
+      for (const l of f.links)
+        links.append(el("a", { class: "fu-card-link", href: l.href },
+                        l.label, " →"));
+      card.append(links);
+    }
+
+    const rows = (f.rows || []).map(r => ({
+      group: r.group,
+      category: wrapTickLabel(r.category),
+      value: r.p,
+      label: f.value_kind === "mean_rank"
+               ? (Number.isInteger(r.p) ? String(r.p) : r.p.toFixed(1))
+             : f.value_kind === "mean_pct" ? r.p.toFixed(1)
+             : Math.round(r.p) + "%",
+      low: r.p_low, upp: r.p_upp
+    }));
+    const categoryOrder = (f.categories || []).map(wrapTickLabel);
+    const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
+    const LINE = 17, LABEL_PAD = 16, BAR_PAD = 12;
+    const catHeight = categoryOrder.reduce((total, label) =>
+      total + Math.max(tickLines(label).length * LINE + LABEL_PAD,
+                       nGroups * 18 + BAR_PAD), 0);
+    wrap.style.height = Math.max(260, 84 + (nGroups > 1 ? 40 : 0) + catHeight) + "px";
     pending.push(() => groupedBarChart(canvas, rows, {
-      title: "", xLabel: "", yLabel: cmp.axis || "Share (%)",
+      title: "", xLabel: "", yLabel: f.axis || "Share (%)",
       horizontal: true, categoryOrder, legend: nGroups > 1, multi: true,
       colors: schemeSeriesColors(DEFAULT_SCHEME, nGroups)
     }));
+
+    strip.append(card);
+    cards.push(card);
   }
 
+  for (let i = 0; i < cards.length; i++) {
+    dots.append(el("button", { class: "fu-deck-dot", "aria-label": `Finding ${i + 1}`,
+                               onclick: () => goTo(i) }));
+  }
+
+  const bar = el("div", { class: "fu-deck-bar" }, prev, dots, counter, next);
+  deck.append(strip, bar);
+  content.append(deck);
   container.append(el("div", { class: "page" }, content));
   for (const draw of pending) draw();
+
+  // Which card is centred. Read off scroll position rather than tracked in a
+  // variable, so a swipe and a button press agree.
+  const currentIndex = () => {
+    const mid = strip.scrollLeft + strip.clientWidth / 2;
+    let best = 0, bestDist = Infinity;
+    cards.forEach((c, i) => {
+      const centre = c.offsetLeft + c.offsetWidth / 2;
+      const dist = Math.abs(centre - mid);
+      if (dist < bestDist) { bestDist = dist; best = i; }
+    });
+    return best;
+  };
+  function goTo(i) {
+    const c = cards[Math.max(0, Math.min(cards.length - 1, i))];
+    if (c) strip.scrollTo({ left: c.offsetLeft - (strip.clientWidth - c.offsetWidth) / 2,
+                            behavior: "smooth" });
+  }
+  function step(delta) { goTo(currentIndex() + delta); }
+  function sync() {
+    const i = currentIndex();
+    counter.textContent = `${i + 1} of ${cards.length}`;
+    dots.querySelectorAll(".fu-deck-dot").forEach((d, j) =>
+      d.classList.toggle("on", j === i));
+    prev.disabled = i === 0;
+    next.disabled = i === cards.length - 1;
+  }
+  strip.addEventListener("scroll", () => {
+    clearTimeout(strip._t);
+    strip._t = setTimeout(sync, 60);
+  });
+  strip.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") { step(1); e.preventDefault(); }
+    if (e.key === "ArrowLeft") { step(-1); e.preventDefault(); }
+  });
+  sync();
 };
 
 /* A page whose data is not collected or wired up yet. It says what will go

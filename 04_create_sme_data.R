@@ -308,22 +308,23 @@ for (bid in names(batteries)) {
 catalog <- bind_rows(catalog) |> arrange(ref_row)
 wjson(catalog, "questions.json", pretty = TRUE)
 message("SME charts: ", nrow(catalog))
-
 # Expert against public --------------------------------------------------------
-# The point of the survey. Half of it asks experts to predict what the public
-# said, and the instrument promises participants they will be able to compare
-# their perceptions with what was observed.
+# The point of the survey, and the page that carries it is a set of findings
+# rather than a stack of charts. Each card states one thing in a sentence, puts
+# the two numbers behind it side by side, and links to the pages where the
+# underlying distributions live. A reader who wants the raw data is one click
+# away; a reader who wants the finding does not have to derive it.
+#
+# Everything a card says is computed here. The headline sentences are built
+# from the same numbers the chart draws, so a headline cannot drift away from
+# the bars beneath it - which is the same reason 05 carries numbers rather than
+# calculating them.
 #
 # Every pair is declared in the reference's `compare_to`, never matched on the
 # column name. 26 SME columns share a name with a public variable and only five
 # ask the same question - the three risk/cost/benefit batteries reuse the
-# public item names for a different stem ("which would you most want to
-# understand" against "which do non-experts most need to understand"), and
-# stacking those by name would produce a comparison that looks valid.
-#
-# The public side is computed here, from the same files 02 reads, and then
-# checked against what 02 actually published. A comparison that disagreed with
-# the public page would be worse than no comparison.
+# public item names for a different stem, and stacking those by name would
+# produce a comparison that looks valid.
 public_raw <- map(waves$data, ~read_csv(.x, col_types = cols(.default = col_character()),
                                         na = c("", "NA"), guess_max = Inf))
 public <- map2(public_raw, waves$year, function(x, year) {
@@ -331,29 +332,22 @@ public <- map2(public_raw, waves$year, function(x, year) {
 }) |>
   bind_rows()
 
-public_column <- function(variable) {
-  row <- public_reference |> filter(variable == !!variable)
-  if (nrow(row) != 1) stop("No single public reference row for ", variable)
-  cols <- c(row$column_fu25, row$column_fu26)
-  cols[!is.na(cols)]
-}
-
-# One column per wave, stacked under the canonical name - which is what carries
-# FU25's renamed columns onto FU26's names.
-public_answers <- function(variable) {
+public_answers <- function(variable, wave_filter = NULL) {
   row <- public_reference |> filter(variable == !!variable)
   map2(waves$wave, waves$column, function(w, field) {
     col <- row[[field]]
     if (is.na(col)) return(NULL)
-    public |> filter(survey_year == as.character(waves$year[waves$wave == w])) |>
+    year <- as.character(waves$year[waves$wave == w])
+    if (!is.null(wave_filter) && year != wave_filter) return(NULL)
+    public |> filter(survey_year == year) |>
       transmute(weight, resp = .data[[col]])
   }) |>
     bind_rows() |>
     filter(!is.na(resp))
 }
 
-public_share <- function(variable, recode = NULL) {
-  a <- public_answers(variable)
+public_share <- function(variable, recode = NULL, wave_filter = NULL) {
+  a <- public_answers(variable, wave_filter)
   if (!is.null(recode)) a <- a |> mutate(resp = recode(resp))
   a |>
     as_survey_design(weights = weight) |>
@@ -363,96 +357,161 @@ public_share <- function(variable, recode = NULL) {
               p_low = round(100 * p_low, 2), p_upp = round(100 * p_upp, 2))
 }
 
-# Guard: the five same-question comparisons must reproduce 02's published rows.
+# The weighted share of the public giving any of a set of answers, for a
+# headline that says "half of them" rather than making a reader add bars up.
+pub_pct <- function(variable, values, wave_filter = NULL) {
+  a <- public_answers(variable, wave_filter) |>
+    mutate(hit = resp %in% values)
+  round(100 * sum(a$weight * a$hit) / sum(a$weight))
+}
+sme_pct <- function(variable, values) {
+  a <- d |> filter(!is.na(.data[[variable]]))
+  round(100 * mean(a[[variable]] %in% values))
+}
+sme_avg <- function(variable) {
+  a <- d |> filter(!is.na(.data[[variable]]))
+  round(mean(as.numeric(a[[variable]])), 2)
+}
+
+# Guard: any public number a card shows must match what 02 published for the
+# same question. A findings page that disagreed with the explore page would be
+# worse than no findings page.
 published <- function(variable) {
   path <- file.path(outputs, "02_question_data", "q", paste0(variable, ".json"))
   if (!file.exists(path)) return(NULL)
   read_json(path, simplifyVector = TRUE)$splits$all$All |>
     as_tibble() |> transmute(resp = as.character(resp), p)
 }
-
-comparisons <- list()
-add_comparison <- function(id, title, note, rows, categories, benchmark = NULL,
-                           value_kind = "share", axis = "Share of respondents",
-                           table = NULL) {
-  comparisons[[length(comparisons) + 1]] <<- list(
-    id = id, title = title, note = note, value_kind = value_kind, axis = axis,
-    categories = as.list(categories), rows = rows,
-    benchmark = if (is.null(benchmark)) NA else benchmark,
-    table = if (is.null(table)) NA else table)
-}
-
-same <- reference |> filter(compare_kind == "same_question")
-for (i in seq_len(nrow(same))) {
-  q <- same[i, ]
-  options <- parse_options(q$response_options)
-  expert <- distribution(d |> mutate(resp = .data[[q$variable]]), "All",
-                         options$value) |>
-    transmute(group = "Experts", resp, p, p_low, p_upp)
-  pub <- public_share(q$compare_to) |>
-    transmute(group = "The public", resp, p, p_low, p_upp)
-
-  check <- published(q$compare_to)
-  if (!is.null(check)) {
-    cmp <- full_join(check, pub |> select(resp, p2 = p), by = "resp")
-    if (any(is.na(cmp$p)) || any(is.na(cmp$p2)) ||
-        max(abs(cmp$p - cmp$p2)) > 0.011) {
-      print(cmp)
-      stop("The public side of the ", q$variable, " comparison does not match ",
-           "what 02 published for ", q$compare_to, ".")
-    }
+check_against_02 <- function(variable, rows) {
+  want <- published(variable)
+  if (is.null(want)) return(invisible(NULL))
+  cmp <- full_join(want, rows |> select(resp, p2 = p), by = "resp")
+  if (any(is.na(cmp$p)) || any(is.na(cmp$p2)) || max(abs(cmp$p - cmp$p2)) > 0.011) {
+    print(cmp)
+    stop("The public side of a card does not match what 02 published for ",
+         variable, ".")
   }
-
-  rows <- bind_rows(expert, pub) |>
-    left_join(options, by = c("resp" = "value")) |>
-    transmute(group, category = label, p, p_low, p_upp)
-  add_comparison(
-    paste0("cmp_", q$variable),
-    q$question_text,
-    paste0("Both surveys asked this question in the same words. ",
-           "Expert shares are unweighted counts of 153 people; public shares ",
-           "are weighted to the population."),
-    rows, options$label)
 }
 
-# The prediction items. Each needs its own bridge to the public result, because
-# what the expert was asked to estimate differs: a band, an average, a share, or
-# which response was most common.
-sme_mean <- function(variable) {
-  d |> filter(!is.na(.data[[variable]])) |>
-    summarise(m = mean(as.numeric(.data[[variable]])), n = n())
+findings <- list()
+add_finding <- function(id, kicker, headline, stats, note, rows, categories,
+                        links, value_kind = "share",
+                        axis = "Share of respondents", table = NULL,
+                        benchmark = NULL) {
+  findings[[length(findings) + 1]] <<- list(
+    id = id, kicker = kicker, headline = headline,
+    stats = stats, note = note, value_kind = value_kind, axis = axis,
+    categories = as.list(categories), rows = rows,
+    links = links,
+    table = if (is.null(table)) NA else table,
+    benchmark = if (is.null(benchmark)) NA else benchmark)
+}
+stat <- function(label, value, caption = NULL) {
+  list(label = label, value = value,
+       caption = if (is.null(caption)) NA else caption)
+}
+link <- function(label, page, q = NULL) {
+  list(label = label,
+       href = if (is.null(q)) paste0("#", page) else paste0("?q=", q, "#", page))
 }
 
-# Support: experts typed three percentages meant to sum to 100; the public
-# answered a 7-point scale. Collapsed to the same three bands here.
+# 1. Support --------------------------------------------------------------------
 support_band <- function(x) case_when(x %in% c("1","2","3") ~ "Opposed",
                                       x == "4" ~ "Neither",
                                       x %in% c("5","6","7") ~ "Supported")
 pub_support <- public_share("new_fusion", support_band)
-# `pair` rather than `p`: inside transmute() a variable called p is the column,
-# not the argument, and the label silently became a number.
 exp_support <- map_dfr(
   list(c("fusion_pub_opp","Opposed"), c("fusion_pub_mid","Neither"),
        c("fusion_pub_sup","Supported")),
   function(pair) mean_of(d, "All", pair[1]) |>
     transmute(category = pair[2], p, p_low, p_upp))
-add_comparison("cmp_support",
-  "How much of the public supports building fusion power plants?",
-  paste0("Experts were asked to split 100 points across the three; the public ",
-         "answered a seven-point scale, collapsed here to the same three bands. ",
-         "The expert bar is the mean of what they typed, so the three need not ",
-         "sum to exactly 100."),
-  bind_rows(exp_support |> mutate(group = "Experts' guess"),
-            pub_support |> left_join(tibble(resp = c("Opposed","Neither","Supported"),
-                                            category = c("Opposed","Neither","Supported")),
-                                     by = "resp") |>
-              transmute(group = "The public, actually", category, p, p_low, p_upp)),
-  c("Opposed", "Neither", "Supported"))
+sup_actual <- pub_support$p[pub_support$resp == "Supported"]
+sup_guess <- exp_support$p[exp_support$category == "Supported"]
 
-# Risk-benefit balance: same shape, the public's seven points collapsed.
+add_finding("support", "Support",
+  paste0("The public backs fusion power plants more than experts expect — ",
+         "by ", round(sup_actual - sup_guess), " points."),
+  list(stat("Experts' guess", paste0(round(sup_guess), "%"),
+            "share of the public they expected to support it"),
+       stat("The public, actually", paste0(round(sup_actual), "%"),
+            "chose 5, 6 or 7 on the seven-point scale")),
+  paste0("Experts split 100 points across opposed, neither and supported. The ",
+         "public answered a seven-point scale, collapsed here to the same ",
+         "three bands. They read opposition almost exactly right — ",
+         round(exp_support$p[exp_support$category == "Opposed"]), "% guessed ",
+         "against ", round(pub_support$p[pub_support$resp == "Opposed"]),
+         "% actual — and expected the rest to sit on the fence."),
+  bind_rows(exp_support |> mutate(group = "Experts' guess"),
+            pub_support |> transmute(group = "The public, actually",
+                                     category = resp, p, p_low, p_upp)),
+  c("Opposed", "Neither", "Supported"),
+  list(link("See public support in the data", "explore", "new_fusion"),
+       link("See what experts guessed", "sme-survey", "fusion_pub_sup")))
+
+# 2. Awareness -------------------------------------------------------------------
+know_opts <- parse_options(reference$response_options[reference$variable == "fusion_pub_know"])
+heard <- pub_pct("fusion_know", "1")
+low_guess <- sme_pct("fusion_pub_know", c("1", "2"))
+know_band <- know_opts$label[findInterval(heard, c(0, 20.5, 40.5, 60.5, 80.5))]
+add_finding("awareness", "Awareness",
+  paste0("Nearly half the public had heard of fusion energy. ",
+         round(low_guess), "% of experts guessed 40% or fewer."),
+  list(stat("Experts guessing 40% or fewer", paste0(round(low_guess), "%")),
+       stat("The public, actually", paste0(heard, "%"),
+            paste0("said yes — which is the ", know_band, " band"))),
+  paste0("Experts picked a band. The public was asked a yes or no question, ",
+         "so the answer is a single number rather than a distribution."),
+  distribution(d |> mutate(resp = fusion_pub_know), "All", know_opts$value) |>
+    left_join(know_opts, by = c("resp" = "value")) |>
+    transmute(group = "Experts' guess", category = label, p, p_low, p_upp),
+  know_opts$label,
+  list(link("See public awareness in the data", "explore", "fusion_know"),
+       link("See what experts guessed", "sme-survey", "fusion_pub_know")),
+  axis = "Share of experts",
+  # Formatted here rather than in the engine: one benchmark is a percentage
+  # and the other is a mean on a five-point scale, and only this script knows
+  # which is which.
+  benchmark = list(label = "The public, actually", value = paste0(heard, "%"),
+                   category = know_band))
+
+# 3. Timelines -------------------------------------------------------------------
+# Three numbers on one scale: what the public said, what experts guessed the
+# public said, and what experts think themselves.
+soon <- c("1", "2")
+tl_public <- pub_pct("fusion_time", soon)
+tl_guess <- sme_pct("fusion_pub_time", soon)
+tl_expert <- sme_pct("fusion_time", soon)
+tl_band <- function(x) case_when(x %in% c("1","2") ~ "Within 10 years",
+                                 x == "3" ~ "11 to 25 years",
+                                 x %in% c("4","5") ~ "26 years or more",
+                                 x == "6" ~ "Never")
+TL_ORDER <- c("Within 10 years", "11 to 25 years", "26 years or more", "Never")
+tl_rows <- bind_rows(
+  public_share("fusion_time", tl_band) |>
+    transmute(group = "The public", category = resp, p, p_low, p_upp),
+  distribution(d |> mutate(resp = tl_band(fusion_pub_time)), "All", TL_ORDER) |>
+    transmute(group = "Experts' guess at the public", category = resp, p, p_low, p_upp),
+  distribution(d |> mutate(resp = tl_band(fusion_time)), "All", TL_ORDER) |>
+    transmute(group = "Experts' own view", category = resp, p, p_low, p_upp))
+add_finding("timeline", "Timelines",
+  paste0("The public is far more optimistic than the experts — and the ",
+         "experts did not see it coming."),
+  list(stat("The public says within 10 years", paste0(tl_public, "%")),
+       stat("Experts guessed the public would", paste0(tl_guess, "%")),
+       stat("Experts think so themselves", paste0(tl_expert, "%"))),
+  paste0("Bands collapsed from six to four. The expert prediction item ",
+         "repeats the 2025 wording of these bands, which overlap at the ",
+         "edges; the public answered the 2026 wording, which does not."),
+  tl_rows, TL_ORDER,
+  list(link("See public timelines in the data", "explore", "fusion_time"),
+       link("See the experts' own view", "sme-survey", "fusion_time"),
+       link("See what experts guessed", "sme-survey", "fusion_pub_time")))
+
+# 4. Risk and benefit balance ----------------------------------------------------
 rb_band <- function(x) case_when(x %in% c("1","2","3") ~ "Risks outweigh benefits",
                                  x == "4" ~ "About equal",
                                  x %in% c("5","6","7") ~ "Benefits outweigh risks")
+RB_ORDER <- c("Risks outweigh benefits", "About equal", "Benefits outweigh risks")
 pub_rb <- public_share("fusion_risk_ben", rb_band)
 exp_rb <- map_dfr(
   list(c("fusion_pub_rb_risk","Risks outweigh benefits"),
@@ -460,95 +519,97 @@ exp_rb <- map_dfr(
        c("fusion_pub_rb_ben","Benefits outweigh risks")),
   function(pair) mean_of(d, "All", pair[1]) |>
     transmute(category = pair[2], p, p_low, p_upp))
-add_comparison("cmp_riskben",
-  "How does the public weigh the risks and benefits of fusion energy?",
-  paste0("Experts were asked to split 100 points across the three; the public ",
-         "answered a seven-point balance scale, collapsed here to the same ",
-         "three bands."),
+rb_actual <- pub_rb$p[pub_rb$resp == "Benefits outweigh risks"]
+rb_guess <- exp_rb$p[exp_rb$category == "Benefits outweigh risks"]
+add_finding("riskben", "Risk and benefit",
+  paste0("On the risk-benefit balance the experts were close — within ",
+         round(abs(rb_actual - rb_guess)), " points on all three."),
+  list(stat("Experts' guess", paste0(round(rb_guess), "%"),
+            "expected to say benefits outweigh risks"),
+       stat("The public, actually", paste0(round(rb_actual), "%"))),
+  paste0("The one prediction on this page the experts got right. Experts ",
+         "split 100 points across the three; the public answered a ",
+         "seven-point balance scale, collapsed to the same bands."),
   bind_rows(exp_rb |> mutate(group = "Experts' guess"),
-            pub_rb |> transmute(group = "The public, actually", category = resp,
-                                p, p_low, p_upp)),
-  c("Risks outweigh benefits", "About equal", "Benefits outweigh risks"))
+            pub_rb |> transmute(group = "The public, actually",
+                                category = resp, p, p_low, p_upp)),
+  RB_ORDER,
+  list(link("See the public balance in the data", "explore", "fusion_risk_ben"),
+       link("See what experts guessed", "sme-survey", "fusion_pub_rb_ben")))
 
-# Timeline: experts picked the response they thought was most common. Their
-# distribution of guesses sits beside the public's actual distribution. The two
-# option lists are the same six bands in the same order, but the SME instrument
-# reproduces FU25's overlapping wording - see NOTES.md.
-tl <- parse_options(reference$response_options[reference$variable == "fusion_time"])
-exp_tl <- distribution(d |> mutate(resp = fusion_pub_time), "All", tl$value) |>
-  transmute(group = "Experts' guess", resp, p, p_low, p_upp)
-pub_tl <- public_share("fusion_time") |>
-  transmute(group = "The public, actually", resp, p, p_low, p_upp)
-add_comparison("cmp_timeline",
-  "How long until fusion energy is ready for widespread use?",
-  paste0("Experts were asked which response they thought was most common. ",
-         "Their guesses are shown as a distribution beside what the public ",
-         "actually said. The expert item repeats the 2025 wording of these ",
-         "bands, which overlap at the edges; the public answered the 2026 ",
-         "wording, which does not."),
-  bind_rows(exp_tl, pub_tl) |> left_join(tl, by = c("resp" = "value")) |>
-    transmute(group, category = label, p, p_low, p_upp),
-  tl$label)
+# 5. Their own views -------------------------------------------------------------
+# Not a prediction: the same three questions put to both groups, aggregated to
+# the top two points so one bar carries each.
+HIGH <- c("4", "5")
+own <- map_dfr(
+  list(c("fusion_risk", "Risk"), c("fusion_cost", "Cost"),
+       c("fusion_ben", "Benefit")),
+  function(pair) tibble(
+    category = pair[2],
+    public = pub_pct(pair[1], HIGH),
+    experts = sme_pct(pair[1], HIGH)))
+add_finding("ownviews", "Their own views",
+  paste0("Experts see far more benefit in fusion than the public does, and ",
+         "less risk."),
+  list(stat("Experts calling the benefit high", paste0(round(own$experts[own$category == "Benefit"]), "%")),
+       stat("The public", paste0(round(own$public[own$category == "Benefit"]), "%")),
+       stat("Experts calling the risk high", paste0(round(own$experts[own$category == "Risk"]), "%"),
+            paste0("against ", round(own$public[own$category == "Risk"]), "% of the public"))),
+  paste0("The share choosing High or Very high on each five-point scale. ",
+         "These three questions were put to both groups in the same words, ",
+         "so this is a difference of view rather than a failed prediction."),
+  bind_rows(
+    own |> transmute(group = "Experts", category, p = experts,
+                     p_low = NA_real_, p_upp = NA_real_),
+    own |> transmute(group = "The public", category, p = public,
+                     p_low = NA_real_, p_upp = NA_real_)),
+  c("Risk", "Cost", "Benefit"),
+  list(link("See the public on risk", "explore", "fusion_risk"),
+       link("See the public on benefit", "explore", "fusion_ben"),
+       link("See the experts", "sme-survey", "fusion_ben")),
+  axis = "Share saying High or Very high")
 
-# Awareness: experts picked a band, the public gave a yes or no, so the actual
-# is one number rather than a distribution. Marked on the expert's own scale.
-know_opts <- parse_options(reference$response_options[reference$variable == "fusion_pub_know"])
-pub_know <- public_share("fusion_know")
-heard <- pub_know$p[pub_know$resp == "1"]
-know_band <- know_opts$label[findInterval(heard, c(0, 20.001, 40.001, 60.001, 80.001))]
-add_comparison("cmp_awareness",
-  "What share of the public had heard of fusion energy?",
-  paste0("Experts picked a band. The public was asked a yes or no question, so ",
-         "the answer is a single number rather than a distribution: ",
-         format(round(heard, 1)), "% said they had heard of fusion energy ",
-         "before reading a description of it."),
-  distribution(d |> mutate(resp = fusion_pub_know), "All", know_opts$value) |>
-    left_join(know_opts, by = c("resp" = "value")) |>
-    transmute(group = "Experts' guess", category = label, p, p_low, p_upp),
-  know_opts$label,
-  benchmark = list(label = "The public, actually", value = round(heard, 1),
-                   category = know_band),
-  axis = "Share of experts")
-
-# Feeling about their own word associations: experts estimated the average, so
-# the actual average is the benchmark rather than a second series.
+# 6. Word associations -----------------------------------------------------------
 feel_opts <- parse_options(reference$response_options[reference$variable == "fusion_pub_feel"])
 pub_feel_mean <- public_answers("word_1_feel") |>
   as_survey_design(weights = weight) |>
   summarise(m = survey_mean(as.numeric(resp))) |> pull(m)
-add_comparison("cmp_feeling",
-  "How did the public feel about the words fusion energy brought to mind?",
-  paste0("Experts estimated the average. The public's actual average across ",
-         "their first word association was ", format(round(pub_feel_mean, 2)),
-         " on this five-point scale. The public scale labels 2 and 4 ",
+exp_feel_mean <- sme_avg("fusion_pub_feel")
+add_finding("feeling", "Word associations",
+  paste0("The words fusion brings to mind leave the public neutral, and ",
+         if (abs(exp_feel_mean - pub_feel_mean) < 0.25)
+           "experts called that closely." else
+           "experts expected them warmer."),
+  list(stat("Experts' average guess", format(round(exp_feel_mean, 2), nsmall = 2)),
+       stat("The public's actual average", format(round(pub_feel_mean, 2), nsmall = 2),
+            "on a five-point scale where 3 is neither positive nor negative")),
+  paste0("Experts estimated the average. The public scale labels 2 and 4 ",
          "“Negative” and “Positive”; the expert scale says ",
-         "“Somewhat”."),
+         "“Somewhat”, so the two are not quite the same ruler."),
   distribution(d |> mutate(resp = fusion_pub_feel), "All", feel_opts$value) |>
     left_join(feel_opts, by = c("resp" = "value")) |>
     transmute(group = "Experts' guess", category = label, p, p_low, p_upp),
   feel_opts$label,
+  list(link("See the public's words", "public-qual"),
+       link("See what experts guessed", "sme-survey", "fusion_pub_feel")),
+  axis = "Share of experts",
   benchmark = list(label = "The public's actual average",
-                   value = round(pub_feel_mean, 2),
-                   category = feel_opts$label[round(pub_feel_mean)]),
-  axis = "Share of experts")
+                   value = paste0(format(round(pub_feel_mean, 2), nsmall = 2),
+                                  " of 5"),
+                   category = feel_opts$label[round(pub_feel_mean)]))
 
-# Which factors actually predict public support ---------------------------------
-# The one prediction item with no natural counterpart: experts picked up to
-# three factors they thought were the strongest correlates of public support,
-# and the correlates can be computed. This is the sharpest test of calibration
-# in the survey, because their answer is a ranking and so is the truth.
+# 7-9. What actually predicts support --------------------------------------------
+# Experts picked up to three factors they thought were the strongest correlates
+# of public support, and the correlates can be computed. This is the sharpest
+# test of calibration in the survey, because their answer is a ranking and so
+# is the truth.
 #
-# One measure for all ten, so they are comparable: eta, the share of the
-# variance in support that lies between the groups of a factor rather than
+# One measure for all ten so they rank against each other: eta, the share of
+# the variation in support that lies between a factor's groups rather than
 # within them. It assumes no ordering, which race and awareness do not have,
 # and it catches a relationship that is not a straight line, which age and
-# ideology need. A correlation would have to be swapped for something else on
-# half of them.
-#
-# Bias-corrected, because eta rises with the number of groups by chance alone
-# and the factors here range from two groups to eleven. omega squared removes
-# that; a factor with no real relationship lands at zero rather than at
-# whatever its category count buys it.
+# ideology need. Bias-corrected, because eta rises with the number of groups by
+# chance and these factors run from two categories to eleven.
 correlates <- read_csv(sme_correlates, show_col_types = FALSE)
 
 missing_cols <- correlates |> filter(!public_column %in% names(public))
@@ -568,8 +629,7 @@ if (length(unmapped) > 0) {
 }
 
 # The vendor's columns carry their labels; a survey item carries codes, and
-# "7 over 1" tells a reader nothing. Translated from the public sheet where
-# there is a row to translate from.
+# "7 over 1" tells a reader nothing.
 code_labels <- function(column) {
   row <- public_reference |>
     filter(column_fu25 == column | column_fu26 == column)
@@ -578,18 +638,12 @@ code_labels <- function(column) {
   set_names(opts$label, opts$value)
 }
 
-# Weighted one-way variance decomposition of support across a factor's groups.
 eta_for <- function(column, waves_used) {
   frame <- public |>
-    filter(!is.na(new_fusion), !is.na(.data[[column]])) |>
+    filter(waves_used != "fu26" | survey_year == "2026",
+           !is.na(new_fusion), !is.na(.data[[column]])) |>
     transmute(w = weight, y = as.numeric(new_fusion),
               g = as.character(.data[[column]]))
-  if (waves_used == "fu26") {
-    frame <- public |>
-      filter(survey_year == "2026", !is.na(new_fusion), !is.na(.data[[column]])) |>
-      transmute(w = weight, y = as.numeric(new_fusion),
-                g = as.character(.data[[column]]))
-  }
   W <- sum(frame$w)
   grand <- sum(frame$w * frame$y) / W
   by_group <- frame |>
@@ -597,34 +651,22 @@ eta_for <- function(column, waves_used) {
   ss_between <- sum(by_group$Wg * (by_group$mg - grand)^2)
   ss_total <- sum(frame$w * (frame$y - grand)^2)
   k <- nrow(by_group)
-  n_eff <- nrow(frame)
-  ms_within <- (ss_total - ss_between) / (n_eff - k)
+  ms_within <- (ss_total - ss_between) / (nrow(frame) - k)
   omega_sq <- (ss_between - (k - 1) * ms_within) / (ss_total + ms_within)
   labels <- code_labels(column)
-  name_of <- function(code) {
+  name_of <- function(code)
     if (is.null(labels) || is.na(labels[code])) code else unname(labels[code])
-  }
-  tibble(
-    eta = sqrt(max(0, ss_between / ss_total)),
-    eta_adj = sqrt(max(0, omega_sq)),
-    groups = k, n = n_eff,
-    spread = max(by_group$mg) - min(by_group$mg),
-    top = name_of(by_group$g[which.max(by_group$mg)]),
-    top_mean = max(by_group$mg),
-    bottom = name_of(by_group$g[which.min(by_group$mg)]),
-    bottom_mean = min(by_group$mg)
-  )
+  tibble(eta_adj = sqrt(max(0, omega_sq)), groups = k, n = nrow(frame),
+         spread = max(by_group$mg) - min(by_group$mg),
+         top = name_of(by_group$g[which.max(by_group$mg)]),
+         bottom = name_of(by_group$g[which.min(by_group$mg)]))
 }
 
-# Where the expert's factor could reasonably be measured more than one way,
-# the alternative is declared beside it and computed too. Partisanship scores
-# 0.05 on party identification and 0.15 on ideology; environmental concern
-# scores 0 on the concern item and 0.10 on perceived climate risk. Neither
-# choice moves a factor across the table, but a reader who cannot see the
-# second number has to take the first on trust.
+# Where a factor could reasonably be measured more than one way, the
+# alternative is declared beside it and computed too - a reader who cannot see
+# the second number has to take the first on trust.
 actual <- correlates |>
-  mutate(stat = pmap(list(public_column, waves), function(col, wv)
-           eta_for(col, wv)),
+  mutate(stat = pmap(list(public_column, waves), eta_for),
          alt = map2(alternative_column, waves, function(col, wv)
            if (is.na(col) || !nzchar(col)) tibble(eta_alt = NA_real_)
            else eta_for(col, wv) |> transmute(eta_alt = eta_adj))) |>
@@ -632,7 +674,6 @@ actual <- correlates |>
   arrange(desc(eta_adj)) |>
   mutate(actual_rank = row_number())
 
-# What the experts picked: the share naming each factor in their top three.
 expert_pick <- multi_distribution(d, "All", correlates$sme_item) |>
   transmute(sme_item = resp, picked = p) |>
   arrange(desc(picked)) |>
@@ -644,30 +685,102 @@ calibration <- actual |>
 
 message("Correlates of public support, strongest first:")
 calibration |>
-  transmute(label = str_trunc(label, 38), n, groups,
-            eta = round(eta_adj, 3), alt = round(eta_alt, 3),
-            spread = round(spread, 2),
+  transmute(label = str_trunc(label, 38), n, groups, eta = round(eta_adj, 3),
+            alt = round(eta_alt, 3), spread = round(spread, 2),
             actual_rank, expert_rank, picked = round(picked)) |>
   print(n = Inf)
 
-add_comparison("cmp_correlates",
-  "Which factors actually go with public support for fusion energy?",
-  paste0("Experts picked up to three factors they thought were the strongest ",
-         "correlates of public support. Both rankings are shown as places, ",
-         "so a shorter bar is a stronger factor. Strength is measured as the ",
-         "share of the variation in support that lies between a factor\u2019s ",
-         "groups rather than within them, corrected for the fact that a ",
-         "factor with more categories scores higher by chance. Two caveats ",
-         "carried from the mapping: views on nuclear power were asked in 2026 ",
+# The single biggest underestimate and the single biggest overestimate, picked
+# from the table rather than typed, so they follow the data if it changes.
+gap <- calibration |> mutate(miss = expert_rank - actual_rank)
+under <- gap |> slice_max(miss, n = 1, with_ties = FALSE)
+over <- gap |> slice_min(miss, n = 1, with_ties = FALSE)
+
+gender_rows <- public |>
+  filter(!is.na(new_fusion), !is.na(Gender)) |>
+  as_survey_design(weights = weight) |>
+  group_by(Gender) |>
+  summarise(p = survey_mean(as.numeric(new_fusion), vartype = "ci"),
+            .groups = "drop") |>
+  transmute(group = "The public", category = Gender, p = round(p, 2),
+            p_low = round(p_low, 2), p_upp = round(p_upp, 2))
+
+add_finding("miss_under", "The blind spot",
+  paste0(under$label, " is the ", scales::ordinal(under$actual_rank),
+         " strongest correlate of public support. Only ",
+         round(under$picked), "% of experts named it."),
+  list(stat("Experts naming it", paste0(round(under$picked), "%"),
+            paste0("which placed it ", scales::ordinal(under$expert_rank),
+                   " of ten among experts")),
+       stat("Its actual place", scales::ordinal(under$actual_rank),
+            paste0(format(round(under$spread, 1), nsmall = 1),
+                   " points between ", under$top, " and ", under$bottom,
+                   " on the seven-point support scale"))),
+  paste0("Mean support by gender, on the scale the question was asked on. ",
+         "Men sit ", format(round(under$spread, 1), nsmall = 1),
+         " points above women - a gap wider than the one between graduates ",
+         "and people with no degree."),
+  gender_rows, c("Male", "Female"),
+  list(link("See public support in the data", "explore", "new_fusion"),
+       link("See what experts picked", "sme-survey", "fusion_sup_cor")),
+  value_kind = "mean_pct", axis = "Mean support (1-7)")
+
+climate_rows <- public |>
+  filter(!is.na(new_fusion), !is.na(worry_enviro)) |>
+  mutate(band = case_when(as.numeric(worry_enviro) <= 3 ~ "Low concern (0-3)",
+                          as.numeric(worry_enviro) <= 7 ~ "Middling (4-7)",
+                          TRUE ~ "High concern (8-10)")) |>
+  as_survey_design(weights = weight) |>
+  group_by(band) |>
+  summarise(p = survey_mean(as.numeric(new_fusion), vartype = "ci"),
+            .groups = "drop") |>
+  transmute(group = "The public", category = band, p = round(p, 2),
+            p_low = round(p_low, 2), p_upp = round(p_upp, 2))
+
+add_finding("miss_over", "The false lead",
+  paste0(round(over$picked), "% of experts named ", str_to_lower(over$label),
+         " a top correlate. It is the weakest of the ten."),
+  list(stat("Experts naming it", paste0(round(over$picked), "%"),
+            paste0("which placed it ", scales::ordinal(over$expert_rank),
+                   " of ten among experts")),
+       stat("Its actual place", scales::ordinal(over$actual_rank),
+            "of ten, on every measure tried")),
+  paste0("Mean support by how concerned people are about the environment. ",
+         "The line is flat. Measuring concern as perceived climate risk ",
+         "instead lifts the factor to ",
+         format(round(over$eta_alt, 2), nsmall = 2),
+         " - still near the bottom."),
+  climate_rows,
+  c("Low concern (0-3)", "Middling (4-7)", "High concern (8-10)"),
+  list(link("See environmental concern in the data", "explore", "worry_enviro"),
+       link("See what experts picked", "sme-survey", "fusion_sup_cor")),
+  value_kind = "mean_pct", axis = "Mean support (1-7)")
+
+add_finding("correlates", "The full ranking",
+  paste0("What actually goes with public support, against what experts ",
+         "thought would."),
+  list(stat("Strongest correlate", calibration$label[1],
+            paste0("experts placed it ",
+                   scales::ordinal(calibration$expert_rank[1]))),
+       stat("Experts' first pick", calibration$label[calibration$expert_rank == 1],
+            paste0("actually ",
+                   scales::ordinal(calibration$actual_rank[calibration$expert_rank == 1])))),
+  paste0("Both rankings shown as places, so a shorter bar is a stronger ",
+         "factor. Strength is the share of the variation in support lying ",
+         "between a factor's groups rather than within them, corrected for ",
+         "the fact that a factor with more categories scores higher by ",
+         "chance. Two caveats: views on nuclear power were asked in 2026 ",
          "only, so that one rests on half the sample; and trust is trust in ",
          "scientists as a source of information about fusion, which is partly ",
-         "downstream of fusion attitudes rather than independent of them."),
+         "downstream of fusion attitudes."),
   bind_rows(
-    calibration |> transmute(group = "Experts\u2019 ranking", category = label,
+    calibration |> transmute(group = "Experts' ranking", category = label,
                              p = expert_rank, p_low = NA_real_, p_upp = NA_real_),
     calibration |> transmute(group = "Actual ranking", category = label,
                              p = actual_rank, p_low = NA_real_, p_upp = NA_real_)),
   calibration$label,
+  list(link("See public support in the data", "explore", "new_fusion"),
+       link("See what experts picked", "sme-survey", "fusion_sup_cor")),
   value_kind = "mean_rank", axis = "Place (1 = strongest)",
   table = list(
     columns = as.list(c("Factor", "Experts naming it", "Experts' place",
@@ -682,11 +795,21 @@ add_comparison("cmp_correlates",
         as.list(c(label, paste0(round(picked), "%"), er, ar,
                   format(round(eta, 2), nsmall = 2),
                   if (is.na(eta_alt)) "—" else
-                    paste0(format(round(eta_alt, 2), nsmall = 2),
-                           " on ", altcol),
+                    paste0(format(round(eta_alt, 2), nsmall = 2), " on ", altcol),
                   paste0(format(round(spread, 1), nsmall = 1),
                          " pts, ", top, " over ", bottom))))))
 
+# Every public number on this page traces back to a question 02 published.
+# Checked here in one pass rather than card by card: the cards collapse those
+# distributions into bands, and a collapse can only be trusted if the thing
+# being collapsed matches.
+for (v in c("new_fusion", "fusion_time", "fusion_risk_ben", "fusion_know",
+            "fusion_risk", "fusion_cost", "fusion_ben", "worry_enviro")) {
+  check_against_02(v, public_share(v))
+}
+message("Public sides checked against 02: 8 questions")
+
+comparisons <- findings
 wjson(comparisons, "comparisons.json", pretty = TRUE)
 wjson(list(
   respondents = nrow(raw),

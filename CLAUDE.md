@@ -521,6 +521,38 @@ things follow:
   on a mismatch — a comparison that disagreed with the public page would be
   worse than none.
 
+## The findings deck
+
+`sme-compare` is not a stack of charts. It is nine cards you slide left and
+right, each one stating a single finding in a sentence, showing the two or
+three numbers behind it at a size you can read from across the room, and
+linking to the explore pages where the underlying distributions live. Someone
+who wants the finding gets it without deriving it; someone who wants the data
+is one click away.
+
+- **`04` writes the headlines**, from the same values the chart draws. A
+  sentence assembled in the front end, or typed into the builder, would go
+  stale the first time the data moved — "by 12 points" is computed, not
+  written. `scales::ordinal` turns a rank into "3rd" so even that follows the
+  table.
+- **The public side of every card is checked against `02`** in one pass over
+  eight questions before any card is written. The cards collapse those
+  distributions into bands, and a collapse can only be trusted if the thing
+  being collapsed matches what the explore page shows.
+- **The blind-spot and false-lead cards pick themselves.** They are the
+  largest positive and negative gaps between expert rank and actual rank in
+  the correlates table, taken with `slice_max`/`slice_min` rather than named,
+  so they follow the data if it changes.
+- **Sliding is CSS scroll-snap**, not an animation loop: the buttons, the dots
+  and the arrow keys all just scroll the strip, so a touch swipe and a
+  trackpad work without three code paths. The strip sets `align-items:
+  flex-start` — a flex row otherwise makes every card as tall as the tallest,
+  and the full-ranking card would leave the other eight with a screen of empty
+  space beneath them. Cards cap at `min(78vh, 820px)` and scroll inside, so
+  the deck's own controls never end up a screen below the card being read.
+- **Links use `?q=<variable>#<page>`**, which is the app's own deep-link form:
+  the router reads the hash and `getParam` reads the query string.
+
 **The eleventh comparison is computed, not carried.** `fusion_sup_cor` asks
 experts to name the strongest correlates of public support, and the correlates
 are computable — so `04` computes them: η, bias-corrected, of `new_fusion`
