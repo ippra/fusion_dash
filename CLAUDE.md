@@ -554,10 +554,19 @@ made the page hard to follow:
 |---|---|---|
 | Part one | both groups answered the same question, in the same words | a difference of view — nobody is wrong |
 | Part two | experts were asked to predict what the public said | a mistake, and the public column is the answer |
+| Part three | a parallel question put to each side from its own position | a mismatch of agenda |
+
+Part three is the three risk/cost/benefit batteries — the pair `NOTES` warns
+about, where the two surveys reuse the same column names for different stems.
+The public was asked which it would most want to understand; experts which
+non-experts most need to. That is not a comparison to make by accident, which
+is why the eighteen pairs are declared in the SME sheet as
+`compare_kind = "agenda"` with a `compare_label`: several items are worded
+differently between the surveys, so neither survey's wording can label both.
 
 Each part opens with a divider card that says so, every card is banded and
-tinted by part (blue for one, amber for two) and tagged in its kicker, because
-a reader landing mid-deck needs to know which kind of card they are on.
+tinted by part (blue, amber, green) and tagged in its kicker, because a reader
+landing mid-deck needs to know which kind of card they are on.
 
 Figures sit in a three-column grid rather than a chart or a `<table>`: the row
 label wraps freely while the number columns stay locked, and the larger of each

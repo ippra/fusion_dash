@@ -31,6 +31,12 @@ the document says. Tick an item when it is resolved, and date the tick.
       management and decommissioning challenges"). Anything that joins the two
       surveys on column names produces a comparison that looks valid. The
       sheet's `compare_to` column declares the five that are real.
+
+      The three batteries are nonetheless worth comparing, and part three of
+      the findings deck does: what the public says it wants explained against
+      what experts think it needs. Declared as `compare_kind = "agenda"` with
+      a short `compare_label` per item, because several options are worded
+      differently between the surveys and neither wording can label both.
 - [ ] **`fusion_pub_time` asks about the wrong bands.** It reproduces FU25's
       overlapping wording — `1 to 5 / 5 to 10 / 10 to 25 / 25 to 50 / 50 to
       100` — while the item it is predicting, FU26's `fusion_time`, uses the

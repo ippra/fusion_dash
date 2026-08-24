@@ -1245,6 +1245,7 @@ table.data th select {
 .fu-card { border-top: 4px solid var(--border); }
 .fu-part-1 { border-top-color: #1f5fa9; }
 .fu-part-2 { border-top-color: #b8860b; }
+.fu-part-3 { border-top-color: #1a7f6b; }
 .fu-part-tag {
   font-weight: 700; letter-spacing: .06em;
 }
@@ -1252,6 +1253,8 @@ table.data th select {
 .fu-part-2 .fu-card-kicker, .fu-part-2 .fu-stat-value { color: #8a6508; }
 .fu-part-1 .fu-compare-val.lead { color: #1f5fa9; }
 .fu-part-2 .fu-compare-val.lead { color: #8a6508; }
+.fu-part-3 .fu-card-kicker, .fu-part-3 .fu-stat-value,
+.fu-part-3 .fu-compare-val.lead { color: #146856; }
 /* The card that announces each part. Shorter, centred, nothing but the claim. */
 .fu-card-divider {
   justify-content: center; flex: 0 0 min(420px, 74%);

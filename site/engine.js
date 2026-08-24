@@ -1581,7 +1581,13 @@ components.comparison = async function (page, container) {
     2: { label: "Part two", title: "What experts think the public thinks",
          blurb: "Here experts were asked to predict what the public said. " +
                 "These answers can be right or wrong, and the public column " +
-                "is the answer." }
+                "is the answer." },
+    3: { label: "Part three", title: "What each side thinks needs explaining",
+         blurb: "The public was asked what it would most want to understand " +
+                "about fusion. Experts were asked what non-experts most need " +
+                "to. Same options, different question — so a gap here is a " +
+                "mismatch of agenda, and it is the most directly usable " +
+                "thing on this page." }
   };
 
   // A card that introduces each part, so the change of question is announced

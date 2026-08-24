@@ -429,6 +429,7 @@ link <- function(label, page, q = NULL, grouping = NULL) {
 
 P1 <- "Part one - what each group thinks"
 P2 <- "Part two - what experts think the public thinks"
+P3 <- "Part three - what each side thinks needs explaining"
 
 # ==============================================================================
 # PART ONE. The same question, put to both groups.
@@ -794,6 +795,140 @@ add_finding("guess_drivers", 2L, "What drives support",
       function(label, split_id)
         list(label = label,
              href = paste0("?q=new_fusion&grouping=", split_id, "#explore")))))
+
+# ==============================================================================
+# PART THREE. A parallel question, asked of each side from its own position.
+# ==============================================================================
+# The public was asked which risks, costs and benefits IT would most want to
+# understand. Experts were asked which ones NON-EXPERTS most need to
+# understand. Same six options, same cap of two picks, different question - so
+# a gap here is neither a difference of view nor a failed prediction. It is a
+# mismatch of agenda, and it is the most directly actionable thing in the
+# survey for a project about how fusion is communicated.
+#
+# The pairs are declared in the reference as compare_kind = "agenda", with a
+# short compare_label, because the two surveys word several of the items
+# differently - the public's waste option says "radioactive material
+# management", the expert's says "waste management and decommissioning" - so
+# neither survey's wording can stand as the label for both.
+agenda <- reference |>
+  filter(compare_kind == "agenda") |>
+  select(variable, battery, compare_to, compare_label)
+
+missing_pub <- setdiff(agenda$compare_to, public_reference$variable)
+if (length(missing_pub) > 0) {
+  print(missing_pub)
+  stop("Agenda pairs above name public variables that do not exist.")
+}
+
+agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
+                        stats_fn) {
+  items <- agenda |> filter(battery == battery_id)
+  base_pub <- public |>
+    filter(survey_year == "2026",
+           if_any(all_of(items$compare_to), ~ !is.na(.x)))
+  base_sme <- d |> filter(if_any(all_of(items$variable), ~ !is.na(.x)))
+  tab <- pmap_dfr(list(items$variable, items$compare_to, items$compare_label),
+    function(sme_col, pub_col, label) tibble(
+      label = label,
+      publics = round(100 * sum(base_pub$weight * (base_pub[[pub_col]] == "1"),
+                                na.rm = TRUE) / sum(base_pub$weight)),
+      experts = round(100 * mean(base_sme[[sme_col]] == "1", na.rm = TRUE)))) |>
+    arrange(desc(publics))
+  add_finding(
+    paste0("agenda_", battery_id), 3L, kicker, headline(tab), lede(tab),
+    stats_fn(tab),
+    compare_block(c("The public", "Experts"),
+                  pmap(list(tab$label, tab$publics, tab$experts), crow)),
+    paste0("Both groups picked two of the same six options, so the shares sum ",
+           "to about 200 rather than 100. ",
+           format(nrow(base_pub), big.mark = ","), " members of the public ",
+           "answered in 2026 and ", nrow(base_sme), " experts. ", note_extra),
+    list(link("See the public answers", "explore", battery_id),
+         link("See the expert answers", "sme-survey", battery_id)))
+  tab
+}
+
+risk_tab <- agenda_card("fusion_risk_topics", "Risks",
+  function(t) paste0("Experts want to explain whether it works. The public ",
+                     "wants to know whether it is safe."),
+  function(t) {
+    tech <- t[t$label == "Technological reliability", ]
+    health <- t[t$label == "Public health and safety", ]
+    env <- t[t$label == "Environmental impacts", ]
+    paste0(tech$experts, "% of experts put technological reliability among ",
+           "the two risks non-experts most need to understand. It is the ",
+           "public's last choice, picked by ", tech$publics, "%. The public's ",
+           "own two are health and safety (", health$publics,
+           "%) and environmental impacts (", env$publics,
+           "%), and experts name the second of those a third as often (",
+           env$experts, "%). This is the widest gap on the page, and it is a ",
+           "gap about subject rather than degree: one side is answering ",
+           "whether the machine will perform, the other whether it will hurt ",
+           "them or the land around them.")
+  },
+  function(t) list(
+    stat(paste0(t$experts[t$label == "Technological reliability"], "% v ",
+                t$publics[t$label == "Technological reliability"], "%"),
+         "technological reliability", "experts against the public"),
+    stat(paste0(t$publics[t$label == "Environmental impacts"], "% v ",
+                t$experts[t$label == "Environmental impacts"], "%"),
+         "environmental impacts", "the public against experts")),
+  note_extra = paste0("Two options are worded slightly differently between ",
+                      "the surveys; the labels here are short forms that fit ",
+                      "both."))
+
+cost_tab <- agenda_card("fusion_cost_topics", "Costs",
+  function(t) paste0("Experts think about building it. The public thinks ",
+                     "about running it, and cleaning it up."),
+  function(t) {
+    rd <- t[t$label == "Research and development", ]
+    dec <- t[t$label == "Decommissioning and cleanup", ]
+    ops <- t[t$label == "Operations and maintenance", ]
+    paste0("Expert attention concentrates: ", rd$experts,
+           "% pick research and development and ",
+           t$experts[t$label == "Construction and capital"],
+           "% construction, leaving little for anything else. The public ",
+           "spreads its two picks almost evenly across all five, and cares ",
+           "about the end of a plant's life in a way experts do not - ",
+           dec$publics, "% pick decommissioning and cleanup against ",
+           dec$experts, "% of experts, and ", ops$publics,
+           "% pick the cost of running it against ", ops$experts, "%.")
+  },
+  function(t) list(
+    stat(paste0(t$experts[t$label == "Research and development"], "% v ",
+                t$publics[t$label == "Research and development"], "%"),
+         "research and development", "experts against the public"),
+    stat(paste0(t$publics[t$label == "Decommissioning and cleanup"], "% v ",
+                t$experts[t$label == "Decommissioning and cleanup"], "%"),
+         "decommissioning and cleanup", "the public against experts")),
+  note_extra = "")
+
+ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
+  function(t) "On the benefits, the two sides broadly agree.",
+  function(t) {
+    clean <- t[t$label == "Clean energy", ]
+    sec <- t[t$label == "Energy security", ]
+    paste0("Clean energy is the first pick on both sides - ", clean$publics,
+           "% of the public and ", clean$experts,
+           "% of experts - and the rest of the list runs in much the same ",
+           "order. The one real difference is energy security, which ",
+           sec$experts, "% of experts pick against ", sec$publics,
+           "% of the public. Set beside the risk card, the shape of the ",
+           "communication problem is specific: the two sides already agree ",
+           "on what fusion is for. They disagree about what has to be settled ",
+           "before it is built.")
+  },
+  function(t) list(
+    stat(paste0(t$publics[t$label == "Clean energy"], "% v ",
+                t$experts[t$label == "Clean energy"], "%"),
+         "clean energy", "the public against experts - the first pick for both"),
+    stat(paste0(t$experts[t$label == "Energy security"], "% v ",
+                t$publics[t$label == "Energy security"], "%"),
+         "energy security", "the only sizeable gap of the six")),
+  note_extra = paste0("Three options are worded slightly differently between ",
+                      "the surveys; the labels here are short forms that fit ",
+                      "both."))
 
 # Every public number on this page traces back to a question 02 published.
 for (v in c("new_fusion", "fusion_time", "fusion_risk_ben", "fusion_know",
