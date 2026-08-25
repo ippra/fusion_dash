@@ -473,15 +473,23 @@ config <- list(
          html = about_html)
   ),
   footer = list(
-    # The tagline described half the project once the expert survey landed.
-    tagline = paste0("What US adults and fusion experts each believe about ",
-                     "fusion energy - and where the two diverge."),
+    # What the Observatory is, and who runs and funds it. The tagline
+    # described the two surveys; the surveys are an output of the programme
+    # rather than the programme itself.
+    tagline = paste0("Systematic data collection and engagement to solicit ",
+                     "and incorporate public feedback into the design and ",
+                     "development of fusion energy technologies."),
     links_html = paste0(
       "<a href=\"#about\">About &amp; methods</a>",
       "<a href=\"https://ou.edu/ippra\">OU IPPRA</a>",
+      "<a href=\"https://www.llnl.gov\">Lawrence Livermore</a>",
       "<a href=\"mailto:jtr@ou.edu\">Contact</a>"),
-    funding = paste0("Supported by the University of Oklahoma's Institute ",
-                     "for Public Policy Research and Analysis.")
+    funding = paste0("A collaboration between the University of Oklahoma's ",
+                     "Institute for Public Policy Research and Analysis and ",
+                     "Lawrence Livermore National Laboratory, with funding ",
+                     "from the U.S. Department of Energy. Hank Jenkins-Smith ",
+                     "(principal investigator), Kuhika Gupta, Joseph ",
+                     "Ripberger and Maggie Leon-Corwin.")
   )
 )
 
