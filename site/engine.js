@@ -1192,8 +1192,6 @@ components.fu_landing = async function (page, container) {
     ctas.append(tab);
   }
   if (ctas.children.length) body.append(ctas);
-  const metaLine = el("p", { class: "fu-meta-line" });
-  body.append(metaLine);
   hero.append(content);
 
   // The body: a short label and its prose, optionally beside a list. Two
@@ -1241,21 +1239,6 @@ components.fu_landing = async function (page, container) {
   container.append(el("div", { class: "page fu-landing-page" },
     el("div", { class: "content" },
       ...[hero, ...sections, directory, colophon].filter(Boolean))));
-
-  // Scale, not findings: what the argument above rests on, so a reader can
-  // judge whether it is worth their time before clicking anything.
-  try {
-    const [meta, sme] = await Promise.all([
-      fetchJSON("data/meta.json"),
-      fetchJSON("data/sme/meta.json").catch(() => null)]);
-    const years = (meta.waves || []).map(w => w.year);
-    const bits = [
-      `<b>${Number(meta.respondents).toLocaleString()}</b> US adults`,
-      sme ? `<b>${Number(sme.respondents).toLocaleString()}</b> fusion experts`
-          : null,
-      `<b>${years.join(" and ")}</b>`];
-    metaLine.innerHTML = bits.filter(Boolean).join(" · ");
-  } catch { metaLine.remove(); }
 };
 
 /* ---- open responses ------------------------------------------------------

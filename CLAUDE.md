@@ -903,8 +903,10 @@ component pointed at the expert survey's files.
   The findings deck delivers those; the landing page says what the programme
   is.
 
-The only figures on it are provenance — how many adults, how many experts,
-which years.
+**There are no figures on it at all.** A provenance line — how many adults,
+how many experts, which years — was the last thing on the page carrying a
+number, and it went too. The landing page now fetches nothing: it is the only
+component on the site that reads no data file.
 
 **The words are the proposal's**, from `submission materials/`
 `project_summary.docx`, close to verbatim: fusion's promise and the social
@@ -919,8 +921,8 @@ its own: `hero` (eyebrow, headline, lede paragraphs, actions) and `sections`
 (each a `lead`, a `body` of paragraphs, and optional numbered `points`). One
 section is used — why public acceptance matters.
 
-The page is **the headline, the summary's opening paragraph, three tabs, the
-provenance line and that one section**, and nothing else. An Observatory block
+The page is **the headline, the summary's opening paragraph, three tabs and
+one section**, and nothing else. An Observatory block
 with the four objectives, a colophon naming the investigators, and a five-row
 directory of the other pages were each written and each removed.
 `directory_lead`, `colophon` and a section's `points` still render if a page
