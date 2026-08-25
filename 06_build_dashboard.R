@@ -346,7 +346,8 @@ config <- list(
                     "project examines how the public understands and ",
                     "evaluates fusion energy, how experts communicate its ",
                     "risks, costs, benefits, and timelines, and where gaps ",
-                    "between the two create barriers to informed discussion ",
+                    "between the two may create barriers to informed ",
+                    "discussion ",
                     "and policy.")),
            # What is here, in three: the two surveys and the comparison of
            # them. This replaced a five-row directory that listed the same
