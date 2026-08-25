@@ -60,18 +60,56 @@ if (length(gone) > 0) {
 #
 # The instrument's six bands are collapsed to three because 153 respondents do
 # not support six, and the collapse is made here, once.
-splits <- tribble(
-  ~id,          ~label,                 ~phrase,
-  "All",        "Everyone",             NA_character_,
-  "EXP_GROUP",  "Years in fusion work", "experience group"
-)
+# Sector, field and role are select-all, so a respondent can belong to more
+# than one group of the same split. THE GROUPS THEREFORE OVERLAP: a person who
+# named two fields is counted in both, each group is estimated on its own
+# members, and the bars inside a group still sum to 100 because each group is
+# its own denominator. What is given up is that the groups no longer partition
+# the sample, which the caption says out loud.
+#
+# The alternative was to assign each person to one group, and the data ruled it
+# out. Rarest-wins - send a multi-picker to their least common category - is
+# defensible for sector, where 135 of 153 named only one. On field it moves
+# plasma physics from 76 people to 12 and leaves an eleven-person "mechanical
+# engineering" group of whom eight are plasma physicists; on role it leaves a
+# seventeen-person "facility operations" group, every one of whom named
+# another role too. The rule assumes the rare pick is the person's real
+# identity, which holds when the picks are near-exclusive and fails when they
+# are simultaneous. Overlapping invents nothing instead.
+# `split` renamed on read: it is also the name of the argument the generator
+# passes, and inside filter() the data mask wins - the column would silently
+# shadow the argument and every split would match every row.
+overlap_groups <- read_csv(sme_split_groups, col_types = cols(
+  group_order = col_integer(), .default = col_character())) |>
+  rename(split_id = split)
+missing_items <- setdiff(overlap_groups$item, names(raw))
+if (length(missing_items) > 0) {
+  print(missing_items)
+  stop("sme_split_groups.csv names items above that the data does not have.")
+}
 
-group_order <- list(
-  EXP_GROUP = c("Under 10 years", "10 to 19 years", "20 years or more")
+splits <- bind_rows(
+  tribble(
+    ~id,          ~label,                 ~phrase,
+    "All",        "Everyone",             NA_character_,
+    "EXP_GROUP",  "Years in fusion work", "experience group"
+  ),
+  overlap_groups |>
+    distinct(id = split_id, label = split_label, phrase)
+) |>
+  mutate(overlap = id %in% overlap_groups$split_id)
+
+group_order <- c(
+  list(EXP_GROUP = c("Under 10 years", "10 to 19 years", "20 years or more")),
+  overlap_groups |>
+    distinct(split_id, group, group_order) |>
+    arrange(split_id, group_order) |>
+    (\(x) split(x$group, x$split_id))()
 )
 
 d <- raw |>
   mutate(
+    sme_id = row_number(),
     All = "All",
     EXP_GROUP = case_when(
       exp_years %in% c("1", "2") ~ "Under 10 years",
@@ -82,9 +120,34 @@ d <- raw |>
     weight = 1
   )
 
+# One frame per split. An overlapping split stacks the rows once per group the
+# respondent belongs to, so `group_by(group)` downstream sees each person once
+# within each of their groups - the estimate and its interval are right for
+# every group, and only a naive total would be wrong. summarise_group() counts
+# distinct respondents for exactly that reason.
+frame_for <- function(frame, split_id) {
+  if (!split_id %in% overlap_groups$split_id) return(frame)
+  spec <- overlap_groups |> filter(split_id == !!split_id)
+  map(unique(spec$group), function(g) {
+    cols <- spec$item[spec$group == g]
+    frame |>
+      filter(if_any(all_of(cols), ~ !is.na(.x) & .x == "1")) |>
+      mutate(!!split_id := g)
+  }) |>
+    bind_rows()
+}
+
 message("Experience groups: ",
         paste(names(table(d$EXP_GROUP)), table(d$EXP_GROUP),
               sep = " n=", collapse = ", "))
+for (sp in unique(overlap_groups$split_id)) {
+  f <- frame_for(d, sp)
+  message(sp, " groups: ",
+          paste(names(table(f[[sp]])), table(f[[sp]]), sep = " n=",
+                collapse = ", "),
+          " (", f |> count(sme_id) |> filter(n > 1) |> nrow(),
+          " experts in more than one)")
+}
 
 # Options ----------------------------------------------------------------------
 parse_options <- function(text) {
@@ -178,12 +241,20 @@ mean_of <- function(frame, split_id, items) {
     bind_rows()
 }
 
+# Counts of people, not of rows. An overlapping split stacks a respondent once
+# per group they belong to, so nrow() would report more experts than answered
+# and `dropped` would go negative.
 summarise_group <- function(frame, split_id, base_n) {
   have <- frame |> filter(!is.na(.data[[split_id]]))
   sizes <- have |> count(.data[[split_id]], name = "n")
   smallest <- sizes |> slice_min(n, n = 1, with_ties = FALSE)
-  list(n = nrow(have), years = "2026", smallest = smallest[[1]],
-       smallest_n = smallest$n, dropped = base_n - nrow(have))
+  people <- n_distinct(have$sme_id)
+  list(n = people, years = "2026", smallest = smallest[[1]],
+       smallest_n = smallest$n, dropped = base_n - people,
+       # How many are in more than one group, so the caption can say the
+       # groups overlap rather than leaving a reader to add them up and find
+       # more experts than the survey has.
+       overlap = have |> count(sme_id) |> filter(n > 1) |> nrow())
 }
 
 # The R that rebuilds each chart -------------------------------------------------
@@ -220,8 +291,15 @@ sme_r_script <- function(title, intro, asked_if, kind, options, split,
   grp <- if (split == "All") NULL else split
   items <- options$value
 
+  # An overlapping split carries its raw checkbox columns through, because the
+  # stack below reads them; EXP_GROUP is banded in place.
+  spec <- overlap_groups |> filter(split_id == split)
   cols <- c("    weight = 1")
-  if (!is.null(grp)) cols <- c(cols, sub(",$", "", R_EXP_GROUP))
+  if (!is.null(grp)) {
+    cols <- c(cols, if (nrow(spec) > 0)
+                      paste0("    ", unique(spec$item))
+                    else sub(",$", "", R_EXP_GROUP))
+  }
   cols <- c(cols, if (kind == "share" && !multi)
                     paste0("    resp = ", variable)
                   else paste0("    ", items, " = ", items))
@@ -230,8 +308,25 @@ sme_r_script <- function(title, intro, asked_if, kind, options, split,
   # 0/1 for everyone shown it, and the denominator is the whole group - which
   # is why the bars do not sum to 100. A ranking or an allocation drops the
   # people who left that item blank, one item at a time.
+  # An overlapping split needs no drop: the stack only picks up the people who
+  # ticked something, so anyone in no group simply never appears.
   drops <- c(if (kind == "share" && !multi) "!is.na(resp)",
-             if (!is.null(grp)) "!is.na(EXP_GROUP)")
+             if (!is.null(grp) && nrow(spec) == 0) "!is.na(EXP_GROUP)")
+
+  stack <- if (is.null(grp) || nrow(spec) == 0) "" else paste0(
+    "\n# The ", str_to_lower(unique(spec$split_label)), " groups overlap: an ",
+    "expert who named two is\n# counted in each. The rows are stacked once ",
+    "per group they belong to, so\n# every group is estimated on its own ",
+    "members - the bars inside a group\n# still sum to 100 because each group ",
+    "is its own denominator.\n",
+    "d <- bind_rows(\n",
+    paste(map_chr(unique(spec$group), function(g) {
+      cols_g <- spec$item[spec$group == g]
+      test <- paste(paste0(cols_g, " == \"1\""), collapse = " |\n           ")
+      paste0("  d |> filter(", test, ") |>\n",
+             "    mutate(", grp, " = ", r_quote(g), ")")
+    }), collapse = ",\n"),
+    "\n)\n")
 
   est <- if (kind == "share" && !multi) paste0(
       "est <- d |>\n",
@@ -280,8 +375,9 @@ sme_r_script <- function(title, intro, asked_if, kind, options, split,
     "      levels = ", r_vec(options$value, 17), ",\n",
     "      labels = ", r_vec(options$label, 17), "\n",
     "    )",
-    if (is.null(grp)) "" else paste0(",\n    EXP_GROUP = factor(\n",
-      "      EXP_GROUP,\n      levels = ", r_vec(EXP_GROUPS_R, 17), "\n    )"),
+    if (is.null(grp)) "" else paste0(",\n    ", grp, " = factor(\n",
+      "      ", grp, ",\n      levels = ", r_vec(group_order[[grp]], 17),
+      "\n    )"),
     "\n  )\n")
 
   x_lab <- if (kind == "mean_rank") "Mean placing (1 = highest)"
@@ -289,7 +385,7 @@ sme_r_script <- function(title, intro, asked_if, kind, options, split,
            else if (multi) "Share of experts who picked it (%)"
            else "Share of experts (%)"
 
-  fill <- if (is.null(grp)) "" else ", fill = EXP_GROUP"
+  fill <- if (is.null(grp)) "" else paste0(", fill = ", grp)
   dodge <- if (is.null(grp)) "" else
     "\n                position = position_dodge2(reverse = TRUE),"
   plot <- paste0(
@@ -302,7 +398,8 @@ sme_r_script <- function(title, intro, asked_if, kind, options, split,
     "    title = str_wrap(", r_title(title), ", 70),\n",
     "    x = ", r_quote(x_lab), ",\n",
     "    y = NULL",
-    if (is.null(grp)) "" else ",\n    fill = \"Years in fusion work\"", "\n",
+    if (is.null(grp)) "" else paste0(",\n    fill = ",
+      r_quote(splits$label[splits$id == grp])), "\n",
     "  ) +\n",
     "  theme_minimal()\n")
 
@@ -318,7 +415,10 @@ sme_r_script <- function(title, intro, asked_if, kind, options, split,
     "# IPPRA Fusion Energy Survey, expert study. Rebuilds this plot from the\n",
     "# released data file and nothing else.\n",
     if (split == "All") "" else
-      "# Split by years in fusion work, banded from the `exp_years` column.\n",
+      paste0("# Split by ", str_to_lower(splits$label[splits$id == grp]),
+             if (nrow(spec) > 0)
+               ", from the select-all items below. Those groups\n# overlap."
+             else ", banded from the `exp_years` column.", "\n"),
     "#\n",
     "# These are 153 people identified as having relevant expertise, not a\n",
     "# sample of any population, and the file carries no weights. The design\n",
@@ -335,10 +435,9 @@ sme_r_script <- function(title, intro, asked_if, kind, options, split,
     "  transmute(\n", paste(cols, collapse = ",\n"), "\n  )",
     if (length(drops) == 0) "\n\n" else
       paste0(" |>\n  filter(", paste(drops, collapse = ", "), ")\n\n"),
-    est, "\n", order_block, "\n", plot)
+    stack, "\n", est, "\n", order_block, "\n", plot)
 }
 
-EXP_GROUPS_R <- group_order$EXP_GROUP
 
 # Charts -----------------------------------------------------------------------
 # One per single-response question and one per battery, the same rule the public
@@ -364,7 +463,7 @@ for (i in seq_len(nrow(singles))) {
   splits_out <- list()
   summaries_out <- list()
   for (s in splits$id) {
-    frame <- d
+    frame <- frame_for(d, s)
     if (kind == "mean_pct") {
       rows <- mean_of(frame, s, q$variable) |> mutate(resp = q$variable)
       rows <- order_rows(rows, s, q$variable)
@@ -375,7 +474,11 @@ for (i in seq_len(nrow(singles))) {
     if (nrow(rows) == 0) next
     splits_out[[s]] <- rows
     base <- frame |> filter(!is.na(.data[[q$variable]]))
-    summaries_out[[s]] <- summarise_group(base, s, nrow(base))
+    # Counted on `d`, not on `frame`: the split's own frame holds only people
+    # who have a group, so measuring against it would make `dropped` zero by
+    # construction and hide the experts who named no sector at all.
+    answered_n <- d |> filter(!is.na(.data[[q$variable]])) |> nrow()
+    summaries_out[[s]] <- summarise_group(base, s, answered_n)
   }
 
   # A typed percentage has no option list, so the single bar is labelled with
@@ -447,12 +550,14 @@ for (bid in names(batteries)) {
   splits_out <- list()
   summaries_out <- list()
   for (s in splits$id) {
-    rows <- if (kind == "mean_rank") mean_of(d, s, b$variable)
-            else multi_distribution(d, s, b$variable)
+    frame <- frame_for(d, s)
+    rows <- if (kind == "mean_rank") mean_of(frame, s, b$variable)
+            else multi_distribution(frame, s, b$variable)
     rows <- order_rows(rows, s, b$variable)
     splits_out[[s]] <- rows
-    base <- d |> filter(if_any(all_of(b$variable), ~ !is.na(.x)))
-    summaries_out[[s]] <- summarise_group(base, s, nrow(base))
+    base <- frame |> filter(if_any(all_of(b$variable), ~ !is.na(.x)))
+    answered_n <- d |> filter(if_any(all_of(b$variable), ~ !is.na(.x))) |> nrow()
+    summaries_out[[s]] <- summarise_group(base, s, answered_n)
   }
 
   r_code <- map(names(splits_out), function(sp)
@@ -486,6 +591,18 @@ for (bid in names(batteries)) {
 
 catalog <- bind_rows(catalog) |> arrange(ref_row)
 wjson(catalog, "questions.json", pretty = TRUE)
+
+# The split roster, emitted rather than retyped in the builder. The public side
+# already reaches the front end this way; the expert side was declared twice
+# until sector, field and role made that three places to forget.
+wjson(splits |>
+        transmute(id, label, phrase, overlap) |>
+        pmap(function(id, label, phrase, overlap) {
+          out <- list(id = id, label = label, overlap = overlap)
+          if (!is.na(phrase)) out$phrase <- phrase
+          out
+        }),
+      "splits.json", pretty = TRUE)
 message("SME charts: ", nrow(catalog))
 message("  reproduction scripts: ", rcode$scripts, " written, ",
         rcode$checks, " run and checked against their own chart")

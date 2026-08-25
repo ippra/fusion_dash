@@ -39,6 +39,11 @@ sme_themes <- file.path(reference_dir, "sme_themes.csv")
 sme_theme_labels <- file.path(reference_dir, "sme_theme_labels.csv")
 sme_verbatim_review <- file.path(reference_dir, "sme_verbatim_review.csv")
 sme_verbatim_withheld <- file.path(reference_dir, "sme_verbatim_withheld.csv")
+# Which checkbox items make up each professional split, and what the collapsed
+# group is called. Declared rather than derived: the buckets are a reading of
+# what the categories mean, and re-cutting them should be an edit to a sheet
+# rather than to a script.
+sme_split_groups <- file.path(reference_dir, "sme_split_groups.csv")
 
 # The waves the dashboard covers. Adding one is a row here plus a column_fu27
 # in the variable reference; every script iterates this table rather than
@@ -96,7 +101,8 @@ why_item_kept <- function(item, new_fusion, fusion_host) {
 absent <- c(variable_reference, sme_reference, sme_data, sme_correlates,
             arms_reference, word_stoplist, themes_reference, theme_labels,
             verbatim_review, verbatim_withheld, sme_themes, sme_theme_labels,
-            sme_verbatim_review, sme_verbatim_withheld, waves$data)
+            sme_verbatim_review, sme_verbatim_withheld,
+            sme_split_groups, waves$data)
 absent <- absent[!file.exists(absent)]
 
 if (length(absent) > 0) {

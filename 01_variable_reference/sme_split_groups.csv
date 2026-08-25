@@ -1,0 +1,27 @@
+split,split_label,phrase,group,group_order,item
+SECTOR,Sector,sector,Academia,1,primary_emp_acad
+SECTOR,Sector,sector,National laboratory,2,primary_emp_lab
+SECTOR,Sector,sector,Private industry,3,primary_emp_ind
+SECTOR,Sector,sector,"Government, nonprofit or other",4,primary_emp_gov
+SECTOR,Sector,sector,"Government, nonprofit or other",4,primary_emp_np
+SECTOR,Sector,sector,"Government, nonprofit or other",4,primary_emp_oth
+FIELD,Field of expertise,field of expertise,Plasma physics and experiment,1,primary_field_plasma
+FIELD,Field of expertise,field of expertise,Plasma physics and experiment,1,primary_field_diag
+FIELD,Field of expertise,field of expertise,Engineering and materials,2,primary_field_mat
+FIELD,Field of expertise,field of expertise,Engineering and materials,2,primary_field_nuc
+FIELD,Field of expertise,field of expertise,Engineering and materials,2,primary_field_elec
+FIELD,Field of expertise,field of expertise,Engineering and materials,2,primary_field_mech
+FIELD,Field of expertise,field of expertise,Computational modelling,3,primary_field_comp
+FIELD,Field of expertise,field of expertise,"Policy, regulation and management",4,primary_field_pol
+FIELD,Field of expertise,field of expertise,"Policy, regulation and management",4,primary_field_safe
+FIELD,Field of expertise,field of expertise,"Economics, systems and investment",5,primary_field_econ
+FIELD,Field of expertise,field of expertise,"Economics, systems and investment",5,primary_field_sys
+FIELD,Field of expertise,field of expertise,"Economics, systems and investment",5,primary_field_invest
+FIELD,Field of expertise,field of expertise,Other field,6,primary_field_oth
+ROLE,Role,role,Fundamental research,1,primary_role_res
+ROLE,Role,role,Technology development,2,primary_role_tech
+ROLE,Role,role,Education and workforce,3,primary_role_edu
+ROLE,Role,role,Policy and oversight,4,primary_role_pol
+ROLE,Role,role,Commercialisation and deployment,5,primary_role_startup
+ROLE,Role,role,Commercialisation and deployment,5,primary_role_sys
+ROLE,Role,role,Facility operations,6,primary_role_ops

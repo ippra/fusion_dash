@@ -882,6 +882,13 @@ components.explore = async function (page, container) {
     if (s.dropped > 0) text += fillTpl(tpl.dropped, {
       dropped: Number(s.dropped).toLocaleString(),
       group_phrase: (gcfg && gcfg.phrase) || "group" });
+    // A select-all split has groups that are not exclusive. Without this a
+    // reader adding the groups up finds more experts than the survey has and
+    // concludes the numbers are wrong.
+    if (s.overlap > 0 && tpl.overlap) text += fillTpl(tpl.overlap, {
+      overlap: Number(s.overlap).toLocaleString(),
+      n: Number(s.n).toLocaleString(),
+      group_phrase: (gcfg && gcfg.phrase) || "group" });
     // A select-all battery is one bar per option, each its own share of the
     // same people — so they do not sum to 100. Said before the reader works it
     // out from bars that look too small.

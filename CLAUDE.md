@@ -725,11 +725,47 @@ percentage:
 | `mean_rank` | mean placing, **lower is higher** | the three drag-to-rank blocks |
 | `mean_pct` | mean of the percentage they typed | the two allocations that sum to 100 |
 
-Splits are Everyone and years in fusion work, and that is the whole roster.
-Every other professional characteristic — sector, field, role, audiences — is
-select-all, so one person is both Academia and National laboratory and cannot
-be a group in a bar chart without inventing a rule for which one wins. The six
-experience bands collapse to three because 153 respondents do not support six.
+Five splits: Everyone, years in fusion work, and **sector, field and role,
+whose groups overlap**. The six experience bands collapse to three because 153
+respondents do not support six.
+
+The three professional splits are select-all, so a respondent can be in more
+than one group of the same split. **They are, and the caption says so** — a
+person who named two fields is counted in both, each group is estimated on its
+own members, and the bars inside a group still sum to 100 because each group
+is its own denominator. What is given up is that the groups no longer
+partition the sample.
+
+**Assigning each person to one group was tried against the data and rejected.**
+Rarest-wins — send a multi-picker to their least common category — is fine for
+sector, where 135 of 153 named only one. On field it moves plasma physics from
+76 people to 12 and leaves an eleven-person *Mechanical engineering* group of
+whom eight are plasma physicists; on role it leaves a seventeen-person
+*Facility operations* group, every one of whom named another role too. The
+rule assumes the rare pick is the person's real identity, which holds when the
+picks are near-exclusive and fails when they are simultaneous. Overlapping
+invents nothing instead.
+
+`01_variable_reference/sme_split_groups.csv` declares which checkbox items make
+up each collapsed group, so re-cutting the buckets is an edit to a sheet. Three
+things in the implementation are easy to undo:
+
+- **`frame_for()` stacks the rows**, once per group a respondent belongs to.
+  `group_by(group)` downstream then sees each person once within each of their
+  groups, so the estimate and its interval are right for every group.
+- **`summarise_group()` counts people, not rows** (`sme_id`). On a stacked
+  frame `nrow()` reports more experts than answered.
+- **`dropped` is measured against `d`, not against the split's frame.** The
+  split's frame holds only people who have a group, so measuring there makes
+  it zero by construction and hides the experts who named no sector at all.
+
+The sheet's `split` column is **renamed to `split_id` on read**: `split` is
+also the generator's argument name, and inside `filter()` the data mask wins —
+the column would shadow the argument and every split would match every row.
+
+The roster reaches the front end as `04`'s own `splits.json`, read by `06`
+rather than retyped. It was declared in both until these three made that a
+third place to forget.
 
 `groupedBarChart` keeps a single `activeChart` so the explore page cannot leak
 one per redraw. The comparison page draws ten at once and passes `multi: true`

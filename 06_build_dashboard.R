@@ -198,11 +198,9 @@ about_html <- paste0(
 # The expert page's splits and caption. Separate from the public roster because
 # the numbers mean something different: a share of 153 experts who answered,
 # with no weighting, and a caption that says so instead of saying "weighted".
-sme_groupings <- list(
-  list(id = "All", label = "Everyone", phrase = NA_character_),
-  list(id = "EXP_GROUP", label = "Years in fusion work",
-       phrase = "experience group")
-)
+# 04's own roster, read rather than retyped. Declared once: sector, field and
+# role would otherwise be a third place to keep in step.
+sme_groupings <- read_json(file.path(sme_in, "splits.json"))
 sme_caption <- list(
   answered = paste0("{n} experts answered this question {waves}. Bars show ",
                     "the plain percentage{split_clause} giving each answer - ",
@@ -214,6 +212,12 @@ sme_caption <- list(
   smallest = " The smallest group, {smallest}, has {smallest_n} experts.",
   dropped = paste0(" A further {dropped} answered but gave no {group_phrase}, ",
                    "and are not in the bars above."),
+  # Sector, field and role are select-all, so their groups are not exclusive.
+  # Said in the caption because a reader adding the groups up would otherwise
+  # find more experts than the survey has, and conclude the numbers are wrong.
+  overlap = paste0(" These groups overlap: {overlap} of the {n} named more ",
+                   "than one {group_phrase}, and are counted in each one ",
+                   "they named."),
   multi_response = paste0("Experts could pick more than one answer, so each ",
                           "bar is the share who chose that option and the ",
                           "bars do not add up to 100%."),
@@ -417,8 +421,8 @@ config <- list(
 # A caption template naming a token the front end does not fill renders as an
 # empty gap in a sentence, which reads as a missing number rather than a bug.
 known_tokens <- c("n", "waves", "split_clause", "years", "group_phrase",
-                  "smallest", "smallest_n", "dropped", "condition", "variable",
-                  "multi_response", "prompt", "label")
+                  "smallest", "smallest_n", "dropped", "overlap", "condition",
+                  "variable", "multi_response", "prompt", "label")
 # Both caption sets, not just the public one: the expert page brings its own,
 # and a token the front end does not fill would print as "{total}" on screen.
 used <- unlist(c(config$explore_caption, sme_caption)) |>
