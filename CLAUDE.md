@@ -935,12 +935,14 @@ directory of the other pages were each written and each removed.
 supplies them; the landing page supplies none of them.
 
 **`hero$actions` is what is here**, in three: the public survey, the expert
-survey, and the comparison. **Every count in those descriptions is read, not
-typed** — questions, waves, splits, comparisons — because `split thirteen
-ways` was written when there were thirteen and was still on the page at
-sixteen. `spell()` turns the small ones into words so they read as prose. Rendered as a connected row rather than three
+survey, and the comparison. Rendered as a connected row rather than three
 loose buttons, so they read as the whole of the site and not as three
-suggestions, and each carries the line the directory row used to. They stack
+suggestions.
+
+Where a count does appear in prose it is read rather than typed — `spell()`
+turns the small ones into words. `split thirteen ways` was written when there
+were thirteen splits and was still on the page at sixteen, which is the
+argument for computing them. They stack
 below 900px — three across leaves each about 230px, which wraps its note to
 five lines. The open-response pages are not tabs; they sit in the nav
 dropdowns, which is where the directory was duplicating.

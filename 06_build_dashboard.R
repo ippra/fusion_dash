@@ -122,19 +122,10 @@ sme_meta <- read_json(file.path(sme_in, "meta.json"), simplifyVector = TRUE)
 catalog <- read_json(file.path(data_in, "questions.json"), simplifyVector = TRUE)
 splits <- read_json(file.path(data_in, "splits.json"), simplifyVector = TRUE)
 meta <- read_json(file.path(data_in, "meta.json"), simplifyVector = TRUE)
-# The landing page describes what each tab holds, and the counts in those
-# descriptions are read rather than typed. "split thirteen ways" was written
-# when there were thirteen splits and was still on the page at sixteen.
-# comparisons.json is a bare array of cards, not an object with a `findings`
-# key - $findings on it is NULL, which reads as zero and prints "0
-# comparisons" on the landing page rather than failing.
-comparisons <- read_json(file.path(sme_in, "comparisons.json"))
-if (!is.null(names(comparisons))) {
-  stop("comparisons.json is no longer a bare array; the landing page counts ",
-       "its elements.")
-}
-n_comparisons <- length(comparisons)
-
+# A count that appears in prose is read rather than typed. "split thirteen
+# ways" was written when there were thirteen splits and was still on the page
+# at sixteen, which is the argument for computing them.
+#
 # Small numbers read better spelled out in a sentence.
 spell <- function(n) {
   words <- c("one", "two", "three", "four", "five", "six", "seven", "eight",
@@ -353,31 +344,19 @@ config <- list(
            # them. This replaced a five-row directory that listed the same
            # destinations as the nav bar sitting directly above it.
            actions = list(
-             list(label = "The public", page = "explore",
-                  note = paste0(nrow(catalog), " questions from ",
-                                spell(nrow(meta$waves)), " waves of a nationally ",
-                                "representative survey: awareness, support, ",
-                                "risk and benefit perceptions, siting, trust ",
-                                "and regulation. Any of them can be split ",
-                                spell(length(groupings_cfg) - 1), " ways.")),
+             list(label = "The Public", page = "explore",
+                  note = paste0("Nationally representative survey data on how ",
+                                "Americans understand, evaluate, and respond ",
+                                "to fusion energy.")),
              list(label = "Experts", page = "sme-survey",
-                  note = paste0(nrow(sme_catalog), " questions put to ",
-                                sme_meta$respondents, " people who research, ",
-                                "build, regulate and fund fusion energy: ",
-                                "timelines, barriers, risks, costs and ",
-                                "benefits, and what they expect the public ",
-                                "to think.")),
+                  note = paste0("Perspectives from researchers, engineers, ",
+                                "regulators, and industry leaders on the ",
+                                "future of fusion energy and its ",
+                                "communication challenges.")),
              list(label = "Public vs. Experts", page = "sme-compare",
-                  note = paste0(str_to_sentence(spell(n_comparisons)),
-                                " comparisons: questions both ",
-                                "groups answered in the same words, ",
-                                "questions where experts estimated what the ",
-                                "public said, and what each side thinks most ",
-                                "needs explaining.")))),
-         # The two halves of one argument, set side by side. Acceptance is
-         # why the public is surveyed; the communication gap is why the
-         # experts are, and why they were asked to estimate what the public
-         # said. Stacked, the second reads as a consequence of the first.
+                  note = paste0("Side-by-side comparisons showing where ",
+                                "expert expectations and public perceptions ",
+                                "align\u2014and where they diverge most.")))),
          sections = list(
            list(columns = list(
              list(lead = "Why public acceptance matters",
