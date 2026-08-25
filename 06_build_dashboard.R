@@ -310,8 +310,7 @@ config <- list(
     list(id = "home", component = "fu_landing", label = "Home",
          hero = list(
            eyebrow = paste0("Socio-Technical Observatory - University of ",
-                            "Oklahoma and Lawrence Livermore National ",
-                            "Laboratory - supported by the U.S. Department ",
+                            "Oklahoma - supported by the U.S. Department ",
                             "of Energy"),
            headline = "Building the Social Foundation for Fusion Energy",
            lede = list(
@@ -373,7 +372,10 @@ config <- list(
                     "and expert perceptions of the public provides the ",
                     "evidence needed to develop communication strategies that ",
                     "accurately convey the risks, costs, benefits, and ",
-                    "timelines associated with fusion energy.")))))),
+                    "timelines associated with fusion energy."))))),
+         colophon_html = paste0(
+           "Primary contact: <a href=\"mailto:kuhikagupta@ou.edu\">Kuhika ",
+           "Gupta</a>, University of Oklahoma.")),
          # No `blurb`, and absent rather than NULL: list() keeps a NULL
          # element, jsonlite writes it as {}, and {} is truthy in JavaScript -
          # the landing page listed itself in its own directory, with
@@ -483,7 +485,7 @@ config <- list(
       "<a href=\"#about\">About &amp; methods</a>",
       "<a href=\"https://ou.edu/ippra\">OU IPPRA</a>",
       "<a href=\"https://www.llnl.gov\">Lawrence Livermore</a>",
-      "<a href=\"mailto:jtr@ou.edu\">Contact</a>"),
+      "<a href=\"mailto:kuhikagupta@ou.edu\">Contact</a>"),
     funding = paste0("A collaboration between the University of Oklahoma's ",
                      "Institute for Public Policy Research and Analysis and ",
                      "Lawrence Livermore National Laboratory, with funding ",

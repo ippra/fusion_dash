@@ -422,6 +422,9 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
   margin: 0; max-width: 78ch; font-size: 13px; line-height: 1.65;
   color: var(--text-muted);
 }
+/* The colophon carries a mailto; without this it renders in the browser's
+   default blue, which is the one link on the site not in the theme. */
+.fu-colophon a { color: var(--accent); text-underline-offset: 3px; }
 @media (max-width: 900px) {
   .fu-hero { padding: 30px 18px 26px; }
   .fu-sec, .fu-colophon { padding-left: 18px; padding-right: 18px; }

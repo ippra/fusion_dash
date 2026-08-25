@@ -1251,8 +1251,13 @@ components.fu_landing = async function (page, container) {
     directory.append(grid);
   }
 
-  const colophon = page.colophon
-    ? el("section", { class: "fu-colophon" }, el("p", {}, page.colophon))
+  // colophon_html rather than colophon: the line carries a mailto link, and
+  // this is the same route about_html and the footer's links_html already
+  // take. Both are authored in the builder, never from data.
+  const colophon = (page.colophon_html || page.colophon)
+    ? el("section", { class: "fu-colophon" },
+        page.colophon_html ? el("p", { html: page.colophon_html })
+                           : el("p", {}, page.colophon))
     : null;
 
   container.append(el("div", { class: "page fu-landing-page" },
