@@ -278,13 +278,41 @@ if (nrow(unplained) > 0) {
   stop("Rows above have a show condition with no asked_if_plain.")
 }
 
-eligible <- reference |>
-  filter(question_type %in% c("question", "checkbox_item"), n_options >= 2,
-         question_focus != "background")
+# `explore_chart` is the third thing that decides whether an item gets a chart,
+# after its type and its focus. It is not the same judgement as
+# `question_focus`: the word-valence items are substantive fusion attitudes,
+# not background, and the sheet should go on saying so. They are held back
+# because the rating refers to a word the respondent typed and stored in
+# another column, so a distribution of the ratings alone says nothing about
+# what was rated. The valence still reaches a reader, as the colour of each
+# word on the qualitative page.
+#
+# Declared in the reference rather than as a list here, the same rule the
+# background filter follows: someone asking why an item is missing looks at
+# the sheet, and the reason is in its `notes`.
+if (!"explore_chart" %in% names(reference)) {
+  stop("variable_reference.csv has no `explore_chart` column.")
+}
+bad_flag <- reference |> filter(!explore_chart %in% c("yes", "no"))
+if (nrow(bad_flag) > 0) {
+  print(bad_flag |> select(variable, explore_chart))
+  stop("`explore_chart` must be yes or no for every row.")
+}
 
-background <- reference |>
-  filter(question_type %in% c("question", "checkbox_item"), n_options >= 2,
-         question_focus == "background")
+chartable <- reference |>
+  filter(question_type %in% c("question", "checkbox_item"), n_options >= 2)
+
+eligible <- chartable |>
+  filter(question_focus != "background", explore_chart == "yes")
+
+background <- chartable |> filter(question_focus == "background")
+
+not_charted <- chartable |>
+  filter(question_focus != "background", explore_chart == "no")
+if (nrow(not_charted) > 0) {
+  message("Held back from the explore page (explore_chart = no): ",
+          nrow(not_charted), " - ", paste(not_charted$variable, collapse = ", "))
+}
 
 # Single-response questions, one plot each.
 questions <- eligible |> filter(is.na(battery))

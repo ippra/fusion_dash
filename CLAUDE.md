@@ -71,7 +71,7 @@ that looks coded and is wrong exactly where it matters.
 
 ## The variable reference
 
-`01_variable_reference/variable_reference.csv` — 152 rows, 20 columns, one per
+`01_variable_reference/variable_reference.csv` — 152 rows, 23 columns, one per
 variable, carrying each question as it was actually asked. Two companions matter as much
 as the sheet:
 
@@ -322,10 +322,19 @@ sheet's rows is how the table is reordered; nothing else depends on row order.
 ## What reaches the dashboard
 
 `02` builds a question file for a reference row only when it is a `question` or
-`checkbox_item` with two or more options **and** `question_focus != "background"`.
-That last clause holds back 14 items — gender, race, income and its four
+`checkbox_item` with two or more options, `question_focus != "background"`
+**and** `explore_chart == "yes"`. The focus clause holds back 14 items — gender, race, income and its four
 follow-ups, education, party, ideology, partisan strength, lean, and trust in
 government. They are splits, not findings.
+
+**`explore_chart` holds back three more**: `word_1_feel`, `word_2_feel` and
+`word_3_feel`. It is a different judgement from `question_focus` and exists so
+the two do not have to be conflated — those three *are* substantive fusion
+attitudes rather than background, and the sheet should go on saying so. They
+are not charted because the rating refers to a word the respondent typed and
+stored in another column, so a distribution of the ratings alone says nothing
+about what was rated. The valence still reaches a reader as the colour of each
+word on the qualitative page, and `04`'s word-feeling comparison still uses it.
 
 The filter is keyed on the reference, not on a list in the script, so putting an
 item back means re-classifying it in `variable_reference.csv` — which is also
