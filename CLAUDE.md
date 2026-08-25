@@ -130,6 +130,16 @@ need a new number, it belongs in `02`.
 front end is showing intervals, so the point estimate a reader sees never
 changes when they tick the box.
 
+**The caption under a chart is a `{token}` template**, authored in `06` and
+filled by the engine from the question file, so no sentence there can state a
+figure the data does not carry. `06` halts on a token the front end does not
+fill — it would otherwise print as a gap in the sentence, which reads as a
+missing number rather than as a bug. Both surveys carry their own set, running
+in parallel: *the bars show the weighted distribution of responses* against
+*the raw (unweighted) distribution of responses*. `variable_line` is a
+separate paragraph from `provenance` because the variable code is a reference,
+not part of the sentence about how the survey was weighted.
+
 Expect `glm.fit: algorithm did not converge` warnings. They are the logit
 interval hitting a group where every respondent gave the same answer — four
 such cells, all real (no Black or Midwest respondent picked "Other" in the

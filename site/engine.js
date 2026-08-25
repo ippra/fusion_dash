@@ -904,6 +904,11 @@ components.explore = async function (page, container) {
       fillTpl(tpl.asked_if, { condition: v.asked_if })));
     caption.append(el("p", { class: "fu-caption-provenance",
       html: fillTpl(tpl.provenance, { variable: esc(v.variable) }) }));
+    // The variable code on its own line: it is a reference, not part of the
+    // sentence about how the survey was weighted.
+    if (tpl.variable_line) caption.append(el("p",
+      { class: "fu-caption-provenance fu-caption-variable",
+        html: fillTpl(tpl.variable_line, { variable: esc(v.variable) }) }));
   }
 
   async function draw() {

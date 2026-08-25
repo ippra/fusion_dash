@@ -140,7 +140,7 @@ if (length(mismatch) > 0) {
 # end fills from the question file, so no sentence here can state a figure the
 # data does not carry.
 INSTITUTE_LINK <- paste0(
-  "<a href=\"https://www.ou.edu/ippra\">The University of Oklahoma's ",
+  "<a href=\"https://www.ou.edu/ippra\">University of Oklahoma\u2019s ",
   "Institute for Public Policy Research and Analysis</a>")
 
 groupings_cfg <- splits |>
@@ -162,7 +162,7 @@ about_html <- paste0(
   "have heard of it, how they weigh its risks, costs and benefits, whether ",
   "they would support a facility near where they live, whom they would trust ",
   "for information about it, and how they think it should be regulated. It is ",
-  "run by ", INSTITUTE_LINK, ". This dashboard covers ", wave_line, ".</p>",
+  "run by the ", INSTITUTE_LINK, ". This dashboard covers ", wave_line, ".</p>",
   "<p><strong>Weighting.</strong> Each wave is weighted to national ",
   "benchmarks, so the percentages describe US adults rather than only the ",
   "people who took the survey. Where a question was asked in both waves the ",
@@ -201,41 +201,40 @@ about_html <- paste0(
 # role would otherwise be a third place to keep in step.
 sme_groupings <- read_json(file.path(sme_in, "splits.json"))
 sme_caption <- list(
-  answered = paste0("{n} experts answered this question {waves}. Bars show ",
-                    "the plain percentage{split_clause} giving each answer - ",
-                    "these are counts of the experts who answered, not ",
-                    "weighted estimates of any wider population."),
+  answered = paste0("{n} experts answered this question {waves}. The bars ",
+                    "show the raw (unweighted) distribution of ",
+                    "responses{split_clause}."),
   waves_one = "in {years}",
   waves_many = "in {years}",
-  split_clause = " of each {group_phrase}",
+  split_clause = " by {group_phrase}",
   smallest = " The smallest group, {smallest}, has {smallest_n} experts.",
-  dropped = paste0(" A further {dropped} answered but gave no {group_phrase}, ",
-                   "and are not in the bars above."),
+  dropped = paste0(" A further {dropped} answered the question but reported ",
+                   "no {group_phrase}, and are not shown."),
   # Sector, field and role are select-all, so their groups are not exclusive.
   # Said in the caption because a reader adding the groups up would otherwise
   # find more experts than the survey has, and conclude the numbers are wrong.
   overlap = paste0(" These groups overlap: {overlap} of the {n} named more ",
                    "than one {group_phrase}, and are counted in each one ",
                    "they named."),
-  multi_response = paste0("Experts could pick more than one answer, so each ",
+  multi_response = paste0("Experts could select more than one answer, so each ",
                           "bar is the share who chose that option and the ",
-                          "bars do not add up to 100%."),
-  answered_rank = paste0("{n} experts ranked these {waves}. Bars show the mean ",
-                         "placing{split_clause} - a LOWER number is a higher ",
-                         "placing, not a percentage."),
-  answered_mean_pct = paste0("{n} experts answered {waves}. The bar is the ",
-                             "mean percentage they gave{split_clause}, not a ",
-                             "share of the experts."),
+                          "bars do not sum to 100%."),
+  answered_rank = paste0("{n} experts ranked these items {waves}. The bars ",
+                         "show the mean placing{split_clause} - a LOWER ",
+                         "number is a higher placing, not a percentage."),
+  answered_mean_pct = paste0("{n} experts answered this question {waves}. The ",
+                             "bar shows the mean percentage they ",
+                             "gave{split_clause}, not a share of the experts."),
   rank_note = paste0("Experts who did not reach this question are left out ",
                      "rather than counted as unranked."),
-  asked_if = "Not everyone was asked: {condition}",
+  asked_if = "Not everyone was asked this question: {condition}",
   arm = "",
-  provenance = paste0("From the IPPRA Fusion Energy expert survey, run by ",
-                      INSTITUTE_LINK, ". The sample is people identified as ",
-                      "having relevant expertise, so it carries no weights ",
-                      "and describes those experts rather than any wider ",
-                      "group. This question is stored as <code>{variable}",
-                      "</code>.")
+  provenance = paste0("Results are from the IPPRA Fusion Energy expert survey ",
+                      "conducted by the ", INSTITUTE_LINK, ". The sample is ",
+                      "people identified as having relevant expertise; it ",
+                      "carries no weights and describes those experts rather ",
+                      "than any wider population."),
+  variable_line = "Variable: <code>{variable}</code>"
 )
 
 config <- list(
@@ -249,27 +248,28 @@ config <- list(
   theme = list(default = "fusion", allow_viewer_switch = TRUE),
   groupings = groupings_cfg,
   explore_caption = list(
-    answered = paste0("{n} US adults answered this question {waves}. Bars ",
-                      "show the weighted percentage{split_clause} giving ",
-                      "each answer."),
-    waves_one = "in the {years} wave",
-    waves_many = "across the {years} waves",
-    split_clause = " of each {group_phrase}",
+    answered = paste0("{n} U.S. adults answered this question {waves}. The ",
+                      "bars show the weighted distribution of ",
+                      "responses{split_clause}."),
+    waves_one = "in the {years} survey wave",
+    waves_many = "across the {years} survey waves",
+    split_clause = " by {group_phrase}",
     smallest = " The smallest group, {smallest}, has {smallest_n} respondents.",
     dropped = paste0(" A further {dropped} answered the question but reported ",
-                     "no {group_phrase}, and are not in the bars above."),
-    multi_response = paste0("Respondents could pick more than one answer, so ",
-                            "each bar is the share who chose that option and ",
-                            "the bars do not add up to 100%."),
-    asked_if = "Not everyone was asked: {condition}",
-    arm = paste0("This is one of {n} versions of the question that were asked ",
-                 "of different halves of the sample. Shown here: {prompt} - ",
-                 "{label}. The menu above the chart switches between them."),
-    provenance = paste0("From the IPPRA Fusion Energy Survey, run by ",
-                        INSTITUTE_LINK, ". Each wave is weighted to national ",
-                        "benchmarks, so the percentages describe US adults ",
-                        "rather than only the people surveyed. This question ",
-                        "is stored as <code>{variable}</code>.")
+                     "no {group_phrase}, and are not shown."),
+    multi_response = paste0("Respondents could select more than one answer, ",
+                            "so each bar is the share who chose that option ",
+                            "and the bars do not sum to 100%."),
+    asked_if = "Not everyone was asked this question: {condition}",
+    arm = paste0("This is one of {n} versions of the question, each asked of ",
+                 "a different portion of the sample. Shown here: {prompt} - ",
+                 "{label}. Use the menu above the chart to switch between ",
+                 "them."),
+    provenance = paste0("Results are from the IPPRA Fusion Energy Survey ",
+                        "conducted by the ", INSTITUTE_LINK, ". Each survey wave ",
+                        "is weighted to nationally representative ",
+                        "demographic benchmarks."),
+    variable_line = "Variable: <code>{variable}</code>"
   ),
   explainers = list(
     weighted_pct = paste0("Percentages are weighted so results represent US ",

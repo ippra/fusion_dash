@@ -470,6 +470,9 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 /* The caption's second paragraph is provenance boilerplate — one step
    quieter than the survey-line above it, so the numbers stay in front. */
 .fu-caption-provenance { opacity: 0.85; }
+/* The variable code sits under the provenance sentence, not in it. */
+.fu-caption-variable { margin-top: 6px; }
+
 .fu-caption-provenance a, .fu-explore-caption a { color: var(--accent); }
 .fu-caption-provenance code { font-family: var(--mono, monospace); font-size: 11px; }
 
