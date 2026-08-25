@@ -815,6 +815,14 @@ has none.
 One code path, not two: what differs between the surveys is carried in the
 data, which is what forced three things out of the engine and into the scripts.
 
+The page intro says only what the page is. The two claims it used to carry —
+that every response was read before publication, and that nothing here is
+weighted — are in the caption beside each item, which is where a reader meets
+them next to the responses they qualify. **That move added the review sentence
+to the predicted-words caption**, which had never carried one: the intro was
+the only place it was said, and the count of what was read has to sit with the
+thing it was read from.
+
 - **The captions are written by the script that did the counting.** Both
   surveys have a words question and they are not the same question — the
   public gave associations and rated how each felt, experts predicted what the

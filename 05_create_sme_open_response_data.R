@@ -132,6 +132,28 @@ words <- word_rows |>
 
 matched <- sum(!is.na(words$public_pct))
 
+# Both items were withheld from for one reason only, and it is not the public
+# side's reason: nothing here was held back for its opinion. The one withheld
+# response names two events and identifies its author as an organiser of them,
+# which in a sample of 153 experts is a good deal more identifying than the
+# same detail would be in a sample of 2,444 adults.
+HELD_WHY <- c(
+  one = "for a detail that would identify the respondent, not for its opinion",
+  many = "for details that would identify the respondents, not for their opinions"
+)
+
+words_seen <- review |> filter(item == "words")
+if (nrow(words_seen) != 1) {
+  stop("No content review recorded for the predicted words. Every open ",
+       "response is read before it is published; add a row to ",
+       "sme_verbatim_review.csv.")
+}
+if (words_seen$reviewed != entries_total) {
+  stop("The predicted words hold ", entries_total, " entries but ",
+       words_seen$reviewed, " were read on ", words_seen$reviewed_on,
+       ". Re-read them and update sme_verbatim_review.csv.")
+}
+
 wjson(list(
   words = words,
   entries = entries_total,
@@ -156,7 +178,11 @@ wjson(list(
     " words they gave. Words are matched exactly and nothing is merged, here ",
     "or on the public page, so \"clean\" and \"clean energy\" are separate ",
     "predictions and only one of them can match. ", matched, " of the ",
-    nrow(words), " predicted words appear in the public list at all."
+    nrow(words), " predicted words appear in the public list at all. ",
+    # The page intro used to carry this for all three items. It now says only
+    # what each item is, so the claim moves to the item it describes - and
+    # like everywhere else on the site, it comes with its count.
+    review_caution(words_seen$reviewed, 0L, words_seen$reviewed_on, HELD_WHY)
   )
 ), "words.json")
 
@@ -169,16 +195,6 @@ verbatim_items <- tribble(
   ~id,             ~variable,           ~label,                       ~theme_noun,
   "misunderstood", "fusion_mis",        "What non-experts misunderstand", "misunderstanding",
   "change",        "fusion_change_dis", "What they would change",         "change"
-)
-
-# Both items were withheld from for one reason only, and it is not the public
-# side's reason: nothing here was held back for its opinion. The one withheld
-# response names two events and identifies its author as an organiser of them,
-# which in a sample of 153 experts is a good deal more identifying than the
-# same detail would be in a sample of 2,444 adults.
-HELD_WHY <- c(
-  one = "for a detail that would identify the respondent, not for its opinion",
-  many = "for details that would identify the respondents, not for their opinions"
 )
 
 verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) {

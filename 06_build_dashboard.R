@@ -449,14 +449,15 @@ config <- list(
          index = "data/sme-open/index.json",
          words = "data/sme-open/words.json",
          verbatims = "data/sme-open/verbatims/{id}.json",
-         intro = paste0("What experts said in their own words: what they ",
-                        "think non-experts most misunderstand about fusion, ",
-                        "what they would change about how it is discussed, ",
-                        "and the words they expected the public to reach for. ",
-                        "Every response was read before publication. Nothing ",
-                        "here is weighted: these are counts of the ",
-                        sme_meta$respondents, " experts who answered, not ",
-                        "estimates for any population."),
+         # The two claims this used to carry - that every response was read
+         # before publication, and that nothing here is weighted - are in the
+         # caption beside every item, which is where a reader meets them next
+         # to the responses they qualify.
+         intro = paste0("Click an option in the menu below to explore expert ",
+                        "responses written in respondents\u2019 own words. ",
+                        "Responses are shown exactly as they were submitted ",
+                        "and can be filtered by theme where thematic coding ",
+                        "is available."),
          blurb = "Responses written in participants\u2019 own words."),
     list(id = "sme-compare", component = "comparison",
          label = "Comparisons",
