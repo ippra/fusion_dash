@@ -892,6 +892,12 @@ both, and the dropdown is where that choice is made. `blurb` is also what the
 landing page's directory used, which is why it reads as a standalone sentence
 rather than as menu chrome.
 
+**`default_question` is what a page opens on** when there is no `?q=`.
+`explore` opens on `fusion_know`; without it a page opens on row 1, which is
+whatever the survey asked first. `06` halts on a default the catalog does not
+carry, because the front end would fall back to row 1 in silence and that
+reads as the setting having been ignored.
+
 A page carrying `nav_group` folds into a dropdown at the position of its
 group's first member, and a page without one renders as a plain link where it
 sits — which is why `sme-compare` had to move *after* `sme-qual` in

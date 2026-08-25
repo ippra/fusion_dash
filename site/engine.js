@@ -770,10 +770,14 @@ components.explore = async function (page, container) {
   // question rather than per wave: a question asked in both waves is one entry
   // whose pooled distribution the survey-year split can take apart.
   const keyOf = (r) => r.id;
-  // ?q=<id> deep-links a question; else row 1.
+  // ?q=<id> deep-links a question; else the page's own default, which the
+  // builder checks exists; else row 1, which is whatever the survey asked
+  // first rather than a question chosen to open on.
   const urlQ = getParam("q");
-  let currentKey = (urlQ && questions.some(x => keyOf(x) === urlQ))
-    ? urlQ : (questions[0] && keyOf(questions[0]));
+  const has = (id) => id && questions.some(x => keyOf(x) === id);
+  let currentKey = has(urlQ) ? urlQ
+                 : has(page.default_question) ? page.default_question
+                 : (questions[0] && keyOf(questions[0]));
 
   const chartCard = el("div", { class: "card" });
   // The page may replace this: on the expert survey "weighted so results

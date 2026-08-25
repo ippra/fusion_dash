@@ -384,6 +384,10 @@ config <- list(
          nav_group = "Public Perspectives",
          label = "Survey Results",
          questions = "data/questions.json", default_grouping = "All",
+         # What the page opens on. Row 1 is whatever the survey asked first -
+         # a word association - which is a poor first impression of a survey
+         # about what people know and expect.
+         default_question = "fusion_know",
          intro = paste0("Click a question in the table below to view the ",
                         "weighted distribution of public responses by the ",
                         "group you select."),
@@ -491,6 +495,17 @@ config <- list(
                      "supported by the U.S. Department of Energy.")
   )
 )
+
+# A page opening on a question that does not exist falls back to row 1 without
+# saying so, which reads as the setting having been ignored.
+for (pg in config$pages) {
+  if (is.null(pg$default_question)) next
+  ids <- if (identical(pg$id, "sme-survey")) sme_catalog$id else catalog$id
+  if (!pg$default_question %in% ids) {
+    stop("Page '", pg$id, "' opens on '", pg$default_question,
+         "', which is not in its question catalog.")
+  }
+}
 
 # A caption template naming a token the front end does not fill renders as an
 # empty gap in a sentence, which reads as a missing number rather than a bug.
