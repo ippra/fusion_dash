@@ -255,8 +255,8 @@ config <- list(
   schema_version = 1,
   project = list(
     slug = "fusion",
-    title = "Fusion Energy Survey - Explore the Data",
-    nav_title = "Fusion Energy Survey",
+    title = "Fusion Energy Socio-Technical Observatory",
+    nav_title = "Fusion Energy Socio-Technical Observatory",
     nav_subtitle = "IPPRA - University of Oklahoma"
   ),
   theme = list(default = "fusion", allow_viewer_switch = TRUE),
@@ -392,7 +392,7 @@ config <- list(
          # the landing page listed itself in its own directory, with
          # "[object Object]" where the description goes.
     list(id = "explore", component = "explore",
-         nav_group = "Public",
+         nav_group = "Public Perspectives",
          label = "Explore Survey Data",
          questions = "data/questions.json", default_grouping = "All",
          intro = paste0("Click a question in the table below to see the ",
@@ -407,7 +407,7 @@ config <- list(
                         "ended question, split ", spell(length(groupings_cfg) - 1),
                         " ways.")),
     list(id = "public-qual", component = "open_responses",
-         nav_group = "Public",
+         nav_group = "Public Perspectives",
          label = "Explore Open Responses",
          index = "data/open/index.json",
          words = "data/open/words.json",
@@ -425,7 +425,7 @@ config <- list(
     # templates, because 153 unweighted experts are not a population estimate
     # and the caption must not say they are.
     list(id = "sme-survey", component = "explore",
-         nav_group = "Experts",
+         nav_group = "Expert Perspectives",
          label = "Explore Survey Data",
          questions = "data/sme/questions.json",
          question_dir = "data/sme/q",
@@ -453,7 +453,7 @@ config <- list(
     # there is more than one fielding - is carried in the data, not in a second
     # copy of the component.
     list(id = "sme-qual", component = "open_responses",
-         nav_group = "Experts",
+         nav_group = "Expert Perspectives",
          label = "Explore Open Responses",
          index = "data/sme-open/index.json",
          words = "data/sme-open/words.json",
@@ -469,7 +469,7 @@ config <- list(
          blurb = paste0("What experts think the public misunderstands, and ",
                         "what they would change about the conversation.")),
     list(id = "sme-compare", component = "comparison",
-         label = "Public vs. Experts",
+         label = "Comparisons",
          source = "data/sme/comparisons.json",
          intro = paste0("Slide through the findings below. They come in ",
                         "three parts, and the difference matters. Part one ",

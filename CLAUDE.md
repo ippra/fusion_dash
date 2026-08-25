@@ -861,11 +861,11 @@ Seven, declared in `06`'s `config$pages`:
 | id | component | nav |
 |---|---|---|
 | `home` | `fu_landing` | Home |
-| `explore` | `explore` | Public → Explore Survey Data |
-| `public-qual` | `open_responses` | Public → Explore Open Responses |
-| `sme-survey` | `explore` | Experts → Explore Survey Data |
-| `sme-qual` | `open_responses` | Experts → Explore Open Responses |
-| `sme-compare` | `comparison` | Public vs. Experts |
+| `explore` | `explore` | Public Perspectives → Explore Survey Data |
+| `public-qual` | `open_responses` | Public Perspectives → Explore Open Responses |
+| `sme-survey` | `explore` | Expert Perspectives → Explore Survey Data |
+| `sme-qual` | `open_responses` | Expert Perspectives → Explore Open Responses |
+| `sme-compare` | `comparison` | Comparisons |
 | `about` | `static_page` | About |
 
 **The two groups offer the same two things, named the same way**, so a reader
