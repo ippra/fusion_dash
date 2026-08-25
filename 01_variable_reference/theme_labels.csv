@@ -1,69 +1,69 @@
-item,theme,label,theme_order
-support,clean,Clean energy and lower emissions,1
-support,cheaper,Cheaper energy and lower bills,2
-support,nuclearcmp,Compares well with nuclear power,3
-support,progress,Progress and innovation,4
-support,host,Willing to host it here,5
-support,fossil,Replaces fossil fuels,6
-support,jobs,Jobs and economic benefit,7
-support,limitless,Limitless or abundant supply,8
-support,need,We need more energy,9
-support,safe,Safe enough in itself,10
-support,climate,Addresses climate change,11
-support,reliable,Reliable supply,12
-support,national,National independence and competitiveness,13
-support,doubt,Doubts it will be allowed to happen,14
-support,none,No reason given,15
-uncertain,noinfo,Not enough information to judge,1
-uncertain,siting,Not near where people live,2
-uncertain,risks,Unsure what the risks are,3
-uncertain,unproven,Wants it proven first,4
-uncertain,safety,Safety and accident risk,5
-uncertain,env,Environmental harm and water,6
-uncertain,balance,Weighing benefits against risks,7
-uncertain,local,Local impact on my area,8
-uncertain,cost,Cost and energy bills,9
-uncertain,nuclear,Association with nuclear power,10
-uncertain,distrust,"Distrust of government, industry or oversight",11
-uncertain,health,Health effects,12
-uncertain,never,Had never heard of fusion,13
-uncertain,jobs,Jobs and the local economy,14
-uncertain,clean,Clean energy potential,15
-uncertain,faroff,Too far off to matter,16
-uncertain,none,No reason given,17
-ask,safe,"How safe is it, and what are the risks?",1
-ask,howwork,"What is it, and how does it work?",2
-ask,when,"Will it work, and when will it be ready?",3
-ask,tradeoff,Do the benefits outweigh the risks?,4
-ask,envir,What will it do to the environment?,5
-ask,local,What would it mean for my community?,6
-ask,compare,How does it compare to what we use now?,7
-ask,benefit,"What are the benefits, and what is in it for me?",8
-ask,fail,What happens if something goes wrong?,9
-ask,whybother,Why pursue this at all?,10
-ask,hurdles,What is standing in the way?,11
-ask,bill,Will it lower my energy bill?,12
-ask,buildcost,"What will it cost to build, and who pays?",13
-ask,health,What are the health effects on people?,14
-ask,govern,"Who is accountable, and can we trust them?",15
-ask,waste,What happens to the waste and the radiation?,16
-ask,youlive,Would you want one near your own home?,17
-ask,explain,How should fusion be explained to the public?,18
-ask,jobs,What will it do to jobs and the economy?,19
-ask,misuse,Could it be misused or attacked?,20
-ask,notq,Not a question - a statement about fusion,21
-ask,none,No question offered,22
-oppose,safety,Safety and accident risk,1
-oppose,noinfo,Not enough information to judge,2
-oppose,env,Environmental harm and waste,3
-oppose,siting,Not near where people live,4
-oppose,preferother,Prefer other energy sources,5
-oppose,nuclear,Association with nuclear power,6
-oppose,unproven,Too new or unproven,7
-oppose,distrust,"Distrust of government, industry or science",8
-oppose,cost,Cost to taxpayers and bill payers,9
-oppose,health,Health effects,10
-oppose,nature,Should not meddle with nature,11
-oppose,local,Local impact on my area,12
-oppose,security,Security and weapons risk,13
-oppose,none,No reason given,14
+item,theme,label,theme_order,published
+support,clean,Clean energy and lower emissions,1,yes
+support,cheaper,Cheaper energy and lower bills,2,yes
+support,nuclearcmp,Compares well with nuclear power,3,yes
+support,progress,Progress and innovation,4,yes
+support,host,Willing to host it here,5,yes
+support,fossil,Replaces fossil fuels,6,yes
+support,jobs,Jobs and economic benefit,7,yes
+support,limitless,Limitless or abundant supply,8,yes
+support,need,We need more energy,9,yes
+support,safe,Safe enough in itself,10,yes
+support,climate,Addresses climate change,11,yes
+support,reliable,Reliable supply,12,yes
+support,national,National independence and competitiveness,13,yes
+support,doubt,Doubts it will be allowed to happen,14,yes
+support,none,No reason given,15,no
+uncertain,noinfo,Not enough information to judge,1,yes
+uncertain,siting,Not near where people live,2,yes
+uncertain,risks,Unsure what the risks are,3,yes
+uncertain,unproven,Wants it proven first,4,yes
+uncertain,safety,Safety and accident risk,5,yes
+uncertain,env,Environmental harm and water,6,yes
+uncertain,balance,Weighing benefits against risks,7,yes
+uncertain,local,Local impact on my area,8,yes
+uncertain,cost,Cost and energy bills,9,yes
+uncertain,nuclear,Association with nuclear power,10,yes
+uncertain,distrust,"Distrust of government, industry or oversight",11,yes
+uncertain,health,Health effects,12,yes
+uncertain,never,Had never heard of fusion,13,yes
+uncertain,jobs,Jobs and the local economy,14,yes
+uncertain,clean,Clean energy potential,15,yes
+uncertain,faroff,Too far off to matter,16,yes
+uncertain,none,No reason given,17,no
+ask,safe,"How safe is it, and what are the risks?",1,yes
+ask,howwork,"What is it, and how does it work?",2,yes
+ask,when,"Will it work, and when will it be ready?",3,yes
+ask,tradeoff,Do the benefits outweigh the risks?,4,yes
+ask,envir,What will it do to the environment?,5,yes
+ask,local,What would it mean for my community?,6,yes
+ask,compare,How does it compare to what we use now?,7,yes
+ask,benefit,"What are the benefits, and what is in it for me?",8,yes
+ask,fail,What happens if something goes wrong?,9,yes
+ask,whybother,Why pursue this at all?,10,yes
+ask,hurdles,What is standing in the way?,11,yes
+ask,bill,Will it lower my energy bill?,12,yes
+ask,buildcost,"What will it cost to build, and who pays?",13,yes
+ask,health,What are the health effects on people?,14,yes
+ask,govern,"Who is accountable, and can we trust them?",15,yes
+ask,waste,What happens to the waste and the radiation?,16,yes
+ask,youlive,Would you want one near your own home?,17,yes
+ask,explain,How should fusion be explained to the public?,18,yes
+ask,jobs,What will it do to jobs and the economy?,19,yes
+ask,misuse,Could it be misused or attacked?,20,yes
+ask,notq,Not a question - a statement about fusion,21,no
+ask,none,No question offered,22,no
+oppose,safety,Safety and accident risk,1,yes
+oppose,noinfo,Not enough information to judge,2,yes
+oppose,env,Environmental harm and waste,3,yes
+oppose,siting,Not near where people live,4,yes
+oppose,preferother,Prefer other energy sources,5,yes
+oppose,nuclear,Association with nuclear power,6,yes
+oppose,unproven,Too new or unproven,7,yes
+oppose,distrust,"Distrust of government, industry or science",8,yes
+oppose,cost,Cost to taxpayers and bill payers,9,yes
+oppose,health,Health effects,10,yes
+oppose,nature,Should not meddle with nature,11,yes
+oppose,local,Local impact on my area,12,yes
+oppose,security,Security and weapons risk,13,yes
+oppose,none,No reason given,14,no

@@ -469,10 +469,34 @@ shown.
 ## Themes on open responses
 
 `01_variable_reference/themes.csv` holds one primary theme per response, keyed
-on `case_id`; `theme_labels.csv` holds the roster and the order the filter menu
-reads in. Coded so far: `oppose` (183 responses, 14 themes), `support` (377, 15) and
-`uncertain` (1,630, 17). An item
-with no coding gets no theme column; nothing is guessed.
+on `case_id`; `theme_labels.csv` holds the roster, the order the filter menu
+reads in, and whether the page draws each theme at all. Coded so far:
+`oppose` (183 responses read, 174 drawn), `support` (377 / 317), `uncertain`
+(1,630 / 1,481) and `ask` (1,170 / 1,083). An item with no coding gets no
+theme column; nothing is guessed.
+
+**`published` is what makes those two numbers differ**, and it is a column in
+the sheet rather than a filter in code, because whether a response answered
+the question is a judgement someone may want to overturn and they can only
+overturn what they can see. Five themes are marked `no`:
+
+- *No reason given* on the three why-items and *No question offered* on `ask`
+  — "I don't know", "na", "Nothing", "No thanks". These are the verbatim
+  equivalent of the entries `word_stoplist.csv` keeps out of the word counts,
+  and counting them as a theme lets "gave no reason" read as a reason.
+- *Not a question - a statement about fusion* on `ask`, which is **not** a
+  non-answer. Those 16 responses are substantive and most of them are
+  criticism of the survey itself. They are held back because that item is
+  questions for a fusion expert and these are not questions, not because they
+  are unwelcome — the line the content review draws is elsewhere and stays
+  there. Putting them back is one cell in the sheet.
+
+The drop happens **after** the review check and the content withhold, so
+`reviewed` still means the whole corpus was read. The count is printed beside
+every item that has one — the same rule the identifier screen and the content
+withhold follow — and the caption distinguishes how many answered from how
+many are drawn, because "1,083 people answered" when 1,170 did would be wrong
+in the one direction that flatters the item.
 
 The procedure is
 `01_variable_reference/.claude/skills/open-response-themes/SKILL.md`, with an
@@ -520,11 +544,12 @@ are easy to undo:
   changes little either way: weighting moved nothing by more than 1.4 points
   on the two large items. The count sits on every bar so a two-response theme
   cannot be read as a rate.
-- **Theme order is 03's, in every split** — frequency across everyone, *No
-  reason given* last. Changing the split recolours the chart rather than
-  reshuffling it, the same rule the battery charts follow, so a reader
-  comparing groups does not lose the row they were looking at. Bars also share
-  one scale across the whole split.
+- **Theme order is 03's, in every split** — frequency across everyone.
+  Changing the split recolours the chart rather than reshuffling it, the same
+  rule the battery charts follow, so a reader comparing groups does not lose
+  the row they were looking at. Bars also share one scale across the whole
+  split. The themes marked `published = no` are not in the order because they
+  are not on the chart.
 - **A group under 30 responses is not drawn**, and the caption names it with
   its size. Eight people who oppose fusion plants outright and still landed in
   the unsure item are eight real people, but "12.5%" beside a group of 1,300

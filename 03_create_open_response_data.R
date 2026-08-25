@@ -48,9 +48,36 @@ stoplist <- read_csv(word_stoplist, show_col_types = FALSE)
 themes <- read_csv(themes_reference, col_types = cols(
   item = col_character(), case_id = col_character(), year = col_integer(),
   theme = col_character()))
+# `published` marks a coded theme that the page does not draw. Two kinds sit
+# behind it, and both are declared in the sheet rather than filtered in code,
+# because whether a response answered the question is a judgement someone may
+# want to overturn and they can only overturn what they can see:
+#
+#   the non-answers - "I don't know", "na", "Nothing", "No thanks". They are
+#   the verbatim equivalent of the entries word_stoplist.csv keeps out of the
+#   word counts, and counting them as a theme would let "gave no reason" read
+#   as a reason.
+#
+#   `ask`'s "Not a question", which is not a non-answer: those 16 responses
+#   are substantive, and most of them are criticism of the survey itself.
+#   They are held back from the chart because they are not questions for a
+#   fusion expert, which is what that item is; the count is printed beside it
+#   so nobody has to take that on trust.
+#
+# Either way the responses are read, coded and counted. What changes is
+# whether they reach the page.
 theme_roster <- read_csv(theme_labels, col_types = cols(
   item = col_character(), theme = col_character(), label = col_character(),
-  theme_order = col_integer()))
+  theme_order = col_integer(), published = col_character()))
+if (!"published" %in% names(theme_roster)) {
+  stop("theme_labels.csv has no `published` column. Every theme must say ",
+       "whether the page draws it.")
+}
+bad <- theme_roster |> filter(!published %in% c("yes", "no"))
+if (nrow(bad) > 0) {
+  print(bad)
+  stop("`published` must be yes or no for every theme.")
+}
 
 unlabelled <- themes |> anti_join(theme_roster, by = c("item", "theme"))
 if (nrow(unlabelled) > 0) {
@@ -277,6 +304,25 @@ HELD_WHY <- c(
   many = "for content directed at groups of people rather than at fusion energy"
 )
 
+# Reported, never silent - the same rule the identifier screen and the content
+# withhold follow. A response held back from the page is one the reader will
+# never know existed unless the number is here, and the wording says which kind
+# it was rather than lumping a non-answer together with a real one.
+unpublished_caution <- function(unpublished, has_themes) {
+  if (!has_themes || nrow(unpublished) == 0) return(NULL)
+  # The theme's own label, quoted rather than reworded into a clause: the
+  # non-answers and `ask`'s statements are held back for different reasons,
+  # and one sentence covering both would have to overstate one of them.
+  parts <- paste0(format(unpublished$n, big.mark = ","), " coded “",
+                  unpublished$theme, "”")
+  paste0(
+    "Read and coded, but not shown below: ",
+    paste(parts, collapse = ", and "),
+    ". The chart and the table cover the remaining ",
+    format(unpublished$total[1], big.mark = ","), "."
+  )
+}
+
 # Many people asked several questions at once - one wrote five, numbered. The
 # coding records the one they lead with, so a reader ranking the themes is
 # reading how many people led with a subject, not how many times it was asked.
@@ -365,6 +411,7 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   # person and has no business in a published file.
   coded <- themes |> filter(item == id)
   has_themes <- nrow(coded) > 0
+  unpublished <- tibble(theme = character(), n = integer(), total = integer())
   if (has_themes) {
     rows <- rows |>
       left_join(coded |> select(case_id, theme), by = "case_id")
@@ -375,11 +422,22 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
            "hide whatever was missed.")
     }
     rows <- rows |>
-      left_join(theme_roster |> filter(item == id) |> select(theme, label),
+      left_join(theme_roster |> filter(item == id) |>
+                  select(theme, label, published),
                 by = "theme") |>
       mutate(theme = label) |>
       select(-label)
+    # After the review check and the content withhold, so `reviewed` still
+    # means the whole corpus was read - these were read and coded, they are
+    # simply not drawn.
+    unpublished <- rows |> filter(published == "no") |> count(theme, name = "n")
+    rows <- rows |> filter(published == "yes") |> select(-published)
+    unpublished <- unpublished |> mutate(total = nrow(rows))
   }
+  # How many answered, against how many the page draws. They differ once a
+  # theme is held back, and a caption saying "1,083 people answered" when
+  # 1,170 did would be wrong in the one direction that flatters the item.
+  answered <- nrow(rows) + sum(unpublished$n)
   rows <- rows |> select(-case_id)
 
   flagged <- rows |> filter(screen(text))
@@ -392,7 +450,8 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   # survey year and each gate context only where the data actually holds more
   # than one group, so `ask` - fielded in 2026 only - does not offer a year
   # menu with one entry in it.
-  theme_labels_ordered <- theme_roster |> filter(item == id) |>
+  theme_labels_ordered <- theme_roster |> filter(item == id,
+                                                published == "yes") |>
     arrange(theme_order) |> pull(label)
   candidate_splits <- c(
     list(list(id = "all", label = "Everyone", key = "all",
@@ -437,9 +496,7 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     contexts = pmap(contexts, function(variable, label)
       list(key = paste0("ctx_", variable), label = label)),
     context_order = as.list(SUPPORT_BANDS),
-    themes = if (!has_themes) NA else
-      as.list(theme_roster |> filter(item == id) |> arrange(theme_order) |>
-                pull(label)),
+    themes = if (!has_themes) NA else as.list(theme_labels_ordered),
     theme_noun = theme_noun,
     # The last sentence is why this is written here: it names the one bar list
     # on the public site that is not a population estimate. On the expert page
@@ -457,15 +514,18 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     # A list so an item can carry more than one caveat, each its own
     # paragraph. auto_unbox would collapse a single one to a bare string.
     cautions = as.list(c(caution, routing_caution(withheld),
+                         unpublished_caution(unpublished, has_themes),
                          small_group_caution(dropped_groups),
                          review_caution(seen$reviewed, nrow(held_content),
                                         seen$reviewed_on, HELD_WHY))) |>
       discard(is.na),
     n = nrow(rows),
+    answered = answered,
     rows = rows
   ), file.path("verbatims", paste0(id, ".json")))
 
   list(id = id, label = label, n = nrow(rows),
+       not_shown = sum(unpublished$n),
        question = ref$question_text,
        withheld = sum(withheld),
        reviewed = seen$reviewed,
@@ -488,7 +548,8 @@ for (v in verbatims_cfg) {
             paste0(" (", v$withheld, " withheld: 2025 routed them here on a ",
                    "rule 2026 does not use)") else "")
   message("      read for content: ", v$reviewed, "; withheld by that ",
-          "reading: ", v$held_content)
+          "reading: ", v$held_content,
+          "; coded but not drawn: ", v$not_shown)
 }
 
 # Reported, never silent: a response withheld from the page is a response the

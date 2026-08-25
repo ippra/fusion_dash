@@ -1395,7 +1395,14 @@ components.open_responses = async function (page, container) {
     const v = await fetchJSON(page.verbatims.replace("{id}", id));
     const card = el("div", { class: "card" });
     card.append(el("h3", {}, v.label));
-    let note = `${v.n.toLocaleString()} people answered, in their own words. ` +
+    // Answered and shown are the same number until a theme is held back from
+    // the page, and saying "1,083 people answered" when 1,170 did would be
+    // wrong in the one direction that flatters the item.
+    const answered = v.answered != null ? v.answered : v.n;
+    let note = `${answered.toLocaleString()} people answered, in their own ` +
+      `words` +
+      (answered === v.n ? ". "
+        : `; ${v.n.toLocaleString()} of them are shown below. `) +
       `Responses are shown whole and unedited.`;
     if (v.asked_if) note += ` Not everyone was asked: ${v.asked_if}`;
     card.append(el("p", { class: "fu-caption" }, v.question || ""),
