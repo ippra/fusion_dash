@@ -908,22 +908,33 @@ which years — so a reader can judge whether the argument is worth their time.
 
 **The copy is authored in `06`**, not in the engine, which carries no prose of
 its own: `hero` (eyebrow, headline, a list of lede paragraphs, actions),
-`argument` (three `step`/`heading`/`body` blocks), `pivot`, `directory_lead`
-and `colophon`. It is drawn from the Observatory's own framing — fusion is
-shaped by more than scientific progress; gaps between expert and non-expert
-belief distort expectations, policy and investment; closing them is the
-Observatory's mission.
+`argument` (three `step`/`heading`/`body` blocks), `observatory` (lead, body,
+and the four objectives), `directory_lead` and `colophon`.
 
-The three argument blocks are a sequence and are numbered as one: **the
-problem**, **the measurement**, **the turn**. The turn is the expert
-prediction item, because that is what makes this a survey a fusion researcher
-has a stake in rather than one about them.
+**It is the proposal's language, not copy written for a website.** The source
+is `project_summary.docx` from the submission materials, and the register is
+the one the project already uses to describe itself: fusion's promise, the
+social challenges alongside the technical ones, and the fission precedent —
+*public risk perceptions combined with distrust of developers, operators and
+regulators can undercut the potential of a technology*. An earlier version
+argued the same points in a pitch voice and read like marketing; if this copy
+is revised, revise it from the project's own writing.
+
+The three argument blocks are a sequence: **why it is measured** (acceptance
+sustains investment in the short term and siting in the long term),
+**what is measured** (two surveys, the same questions wherever possible), and
+**what the expert survey adds** (the prediction items, and what a miss is
+evidence for). The third is the one that says why this survey is worth a
+fusion researcher's attention, and it says it by describing the design rather
+than by promising a surprise.
 
 Two things in it are easy to undo:
 
-- **The hero is two columns** — claim on the left, case on the right. One
-  column left half the band empty once the chart came out, and a headline set
-  to the full page width is a banner rather than a sentence.
+- **The hero is two columns** — headline, actions and provenance on the left,
+  the case on the right. One column left half the band empty once the chart
+  came out. The actions sit under the headline rather than under the prose
+  because a descriptive headline is three lines rather than six, and the two
+  columns have to end at roughly the same place.
 - **`home` carries no `blurb`, and it is absent rather than `NULL`.** `list()`
   keeps a `NULL` element, `jsonlite` writes it as `{}`, and `{}` is truthy —
   the landing page listed itself in its own directory with "[object Object]"

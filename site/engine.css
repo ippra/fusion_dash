@@ -328,11 +328,12 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
   gap: 16px 56px; align-items: start;
 }
 .fu-hero .fu-hero-content h1 {
-  font-size: clamp(30px, 4.2vw, 52px); margin: 0;
+  font-size: clamp(27px, 3.2vw, 40px); margin: 0;
   /* Balanced so the last line is not one orphaned word under a full one. */
   text-wrap: balance;
 }
-.fu-hero-body { padding-top: 6px; }
+.fu-hero-body { padding-top: 4px; }
+.fu-hero-lead .fu-hero-cta { margin-top: 26px; }
 .fu-hero .fu-hero-sub {
   font-size: 16.5px; line-height: 1.62; max-width: 52ch; margin: 0 0 16px;
 }
@@ -378,21 +379,28 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 .fu-arg p { margin: 0; font-size: 14.5px; line-height: 1.62;
             color: var(--text-muted); }
 
-/* The pivot: the one paragraph addressed to the reader rather than about the
-   project. Given the width of the page and a rule down its left edge so it
-   reads as an aside being made directly to them. */
-.fu-pivot { padding: 40px 44px 36px; }
-.fu-pivot-lead {
+/* The Observatory: what the programme is and what it is for, set as two
+   columns - the description beside its objectives - because a numbered list
+   of four is what the proposal itself uses and it reads faster than prose. */
+.fu-obs { padding: 38px 44px 34px; }
+.fu-obs-lead {
   font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--text-muted); margin: 0 0 14px;
+  text-transform: uppercase; color: var(--text-muted); margin: 0 0 16px;
 }
-.fu-pivot-body {
-  margin: 0; max-width: 68ch;
-  font-family: var(--font-display); font-weight: 500;
-  font-size: clamp(18px, 2.1vw, 23px); line-height: 1.5;
-  letter-spacing: -0.01em; color: var(--display-ink, var(--text));
-  border-left: 3px solid var(--accent); padding-left: 22px;
+.fu-obs-cols {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px 56px; align-items: start;
 }
+.fu-obs-prose p {
+  margin: 0 0 14px; font-size: 15px; line-height: 1.65; max-width: 56ch;
+}
+.fu-obs-prose p:last-child { margin-bottom: 0; }
+.fu-obs-points {
+  margin: 0; padding-left: 20px; display: grid; gap: 10px;
+  font-size: 14px; line-height: 1.55; color: var(--text-muted);
+}
+.fu-obs-points li::marker { font-family: var(--mono, monospace);
+                            color: var(--text-muted); font-size: 12px; }
 
 .fu-dir-lead {
   font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .1em;
@@ -411,7 +419,8 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
   .fu-argument { grid-template-columns: 1fr; }
   .fu-arg + .fu-arg { border-left: none; border-top: 1px solid var(--panel-border); }
   .fu-arg { padding: 24px 18px 26px; }
-  .fu-pivot, .fu-colophon { padding-left: 18px; padding-right: 18px; }
+  .fu-obs, .fu-colophon { padding-left: 18px; padding-right: 18px; }
+  .fu-obs-cols { grid-template-columns: 1fr; gap: 18px; }
   .fu-dir-lead { padding: 0 18px; }
 }
 }

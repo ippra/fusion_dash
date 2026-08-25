@@ -1185,9 +1185,9 @@ components.fu_landing = async function (page, container) {
       class: "fu-cta-button" + (c.quiet ? " fu-cta-quiet" : ""),
       href: "#" + target.id }, c.label));
   }
-  if (ctas.children.length) body.append(ctas);
+  if (ctas.children.length) lead.append(ctas);
   const metaLine = el("p", { class: "fu-meta-line" });
-  body.append(metaLine);
+  lead.append(metaLine);
   hero.append(content);
 
   // The argument, in steps. Each block is a claim and the sentence that
@@ -1203,11 +1203,26 @@ components.fu_landing = async function (page, container) {
     argument.append(card);
   }
 
-  // The one line that is the whole point of the expert survey, set apart from
-  // the argument because it is the turn the reader is meant to take.
-  const pivot = page.pivot ? el("section", { class: "fu-pivot" },
-    el("p", { class: "fu-pivot-lead" }, page.pivot.lead),
-    el("p", { class: "fu-pivot-body" }, page.pivot.body)) : null;
+  // What the Observatory is and what it is for, in its own terms. Descriptive
+  // rather than declamatory: this is a research programme, and the page should
+  // read like one.
+  const obs = page.observatory;
+  let observatory = null;
+  if (obs) {
+    observatory = el("section", { class: "fu-obs" });
+    observatory.append(el("p", { class: "fu-obs-lead" }, obs.lead));
+    const cols = el("div", { class: "fu-obs-cols" });
+    const prose = el("div", { class: "fu-obs-prose" });
+    for (const para of (Array.isArray(obs.body) ? obs.body : [obs.body]))
+      prose.append(el("p", {}, para));
+    cols.append(prose);
+    if (Array.isArray(obs.points) && obs.points.length) {
+      const ol = el("ol", { class: "fu-obs-points" });
+      for (const pt of obs.points) ol.append(el("li", {}, pt));
+      cols.append(ol);
+    }
+    observatory.append(cols);
+  }
 
   const directory = el("section", { class: "fu-directory-card" });
   if (page.directory_lead)
@@ -1227,7 +1242,7 @@ components.fu_landing = async function (page, container) {
 
   container.append(el("div", { class: "page fu-landing-page" },
     el("div", { class: "content" },
-      ...[hero, argument, pivot, directory, colophon].filter(Boolean))));
+      ...[hero, argument, observatory, directory, colophon].filter(Boolean))));
 
   // Scale, not findings: what the argument above rests on, so a reader can
   // judge whether it is worth their time before clicking anything.
