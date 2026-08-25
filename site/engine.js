@@ -2009,7 +2009,13 @@ async function boot() {
       nav.append(wrap);
       navGroups.set(p.nav_group, menu);
     }
-    navGroups.get(p.nav_group).append(el("a", { href: "#" + p.id, onclick: closeMenus }, p.label));
+    // Label plus its one-line description: the dropdown is where a reader
+    // chooses between two pages, and the labels alone do not say which is
+    // which until you have opened both.
+    const item = el("a", { href: "#" + p.id, onclick: closeMenus });
+    item.append(el("span", { class: "nav-item-label" }, p.label));
+    if (p.blurb) item.append(el("span", { class: "nav-item-note" }, p.blurb));
+    navGroups.get(p.nav_group).append(item);
   }
   document.addEventListener("click", closeMenus);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenus(); });

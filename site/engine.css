@@ -935,7 +935,14 @@ html #nav-pages .nav-menu a {
   display: block; height: auto; padding: 9px 12px;
   color: var(--text); border-radius: 6px; border-bottom: 0; font-weight: 400;
 }
+html #nav-pages .nav-menu a { max-width: 300px; }
+.nav-item-label { display: block; font-weight: 600; font-size: 14px; }
+.nav-item-note {
+  display: block; margin-top: 2px; font-size: 12px; line-height: 1.4;
+  color: var(--text-muted); font-weight: 400; white-space: normal;
+}
 html #nav-pages .nav-menu a:hover { background: var(--row-hover); color: var(--text); }
+html #nav-pages .nav-menu a:hover .nav-item-note { color: var(--text-muted); }
 html #nav-pages .nav-menu a.active { background: var(--row-selected); color: var(--text); font-weight: 600; }
 
 /* Footer: navbar-colored bookend — an unmistakable end of page. */

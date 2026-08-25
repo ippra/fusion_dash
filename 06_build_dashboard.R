@@ -122,19 +122,6 @@ sme_meta <- read_json(file.path(sme_in, "meta.json"), simplifyVector = TRUE)
 catalog <- read_json(file.path(data_in, "questions.json"), simplifyVector = TRUE)
 splits <- read_json(file.path(data_in, "splits.json"), simplifyVector = TRUE)
 meta <- read_json(file.path(data_in, "meta.json"), simplifyVector = TRUE)
-# A count that appears in prose is read rather than typed. "split thirteen
-# ways" was written when there were thirteen splits and was still on the page
-# at sixteen, which is the argument for computing them.
-#
-# Small numbers read better spelled out in a sentence.
-spell <- function(n) {
-  words <- c("one", "two", "three", "four", "five", "six", "seven", "eight",
-             "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
-             "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
-             "twenty")
-  if (n >= 1 && n <= length(words)) words[n] else format(n, big.mark = ",")
-}
-
 message("Questions carried over: ", length(q_files))
 
 # Every question the table lists must have a file behind it, and every file
@@ -393,7 +380,7 @@ config <- list(
          # "[object Object]" where the description goes.
     list(id = "explore", component = "explore",
          nav_group = "Public Perspectives",
-         label = "Explore Survey Data",
+         label = "Survey Results",
          questions = "data/questions.json", default_grouping = "All",
          intro = paste0("Click a question in the table below to see the ",
                         "weighted distribution of responses, split by the ",
@@ -403,12 +390,10 @@ config <- list(
          # x_label titles the category axis and y_label the value axis, which
          # the horizontal layout swaps on screen but not in meaning.
          chart = list(x_label = "Response", y_label = "Respondents (%)"),
-         blurb = paste0("Weighted response distributions for every closed-",
-                        "ended question, split ", spell(length(groupings_cfg) - 1),
-                        " ways.")),
+         blurb = "Charts and summaries of survey responses."),
     list(id = "public-qual", component = "open_responses",
          nav_group = "Public Perspectives",
-         label = "Explore Open Responses",
+         label = "Open Responses",
          index = "data/open/index.json",
          words = "data/open/words.json",
          verbatims = "data/open/verbatims/{id}.json",
@@ -418,15 +403,14 @@ config <- list(
                         "coded, each carries one theme you can filter by; ",
                         "where they have not, no theme is shown rather than ",
                         "a guessed one."),
-         blurb = paste0("Word associations, why people support or oppose ",
-                        "fusion, and what they would ask an expert.")),
+         blurb = "Responses written in participants\u2019 own words."),
     # The expert survey reuses the explore component - the question files have
     # the same shape - but reads its own directory and its own caption
     # templates, because 153 unweighted experts are not a population estimate
     # and the caption must not say they are.
     list(id = "sme-survey", component = "explore",
          nav_group = "Expert Perspectives",
-         label = "Explore Survey Data",
+         label = "Survey Results",
          questions = "data/sme/questions.json",
          question_dir = "data/sme/q",
          rcode_dir = "data/sme/rcode",
@@ -445,8 +429,7 @@ config <- list(
                             "expertise rather than a sample of a wider ",
                             "population. Intervals are 95% confidence ",
                             "intervals."),
-         blurb = paste0("What ", sme_meta$respondents, " fusion experts think ",
-                        "about timelines, barriers, risks and benefits.")),
+         blurb = "Charts and summaries of survey responses."),
     # The same component the public page uses, pointed at the expert survey's
     # files. One code path rather than two: what differs between the surveys -
     # whether there is a valence scale, whether anything is weighted, whether
@@ -454,7 +437,7 @@ config <- list(
     # copy of the component.
     list(id = "sme-qual", component = "open_responses",
          nav_group = "Expert Perspectives",
-         label = "Explore Open Responses",
+         label = "Open Responses",
          index = "data/sme-open/index.json",
          words = "data/sme-open/words.json",
          verbatims = "data/sme-open/verbatims/{id}.json",
@@ -466,8 +449,7 @@ config <- list(
                         "here is weighted: these are counts of the ",
                         sme_meta$respondents, " experts who answered, not ",
                         "estimates for any population."),
-         blurb = paste0("What experts think the public misunderstands, and ",
-                        "what they would change about the conversation.")),
+         blurb = "Responses written in participants\u2019 own words."),
     list(id = "sme-compare", component = "comparison",
          label = "Comparisons",
          source = "data/sme/comparisons.json",

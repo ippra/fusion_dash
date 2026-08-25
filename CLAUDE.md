@@ -861,10 +861,10 @@ Seven, declared in `06`'s `config$pages`:
 | id | component | nav |
 |---|---|---|
 | `home` | `fu_landing` | Home |
-| `explore` | `explore` | Public Perspectives → Explore Survey Data |
-| `public-qual` | `open_responses` | Public Perspectives → Explore Open Responses |
-| `sme-survey` | `explore` | Expert Perspectives → Explore Survey Data |
-| `sme-qual` | `open_responses` | Expert Perspectives → Explore Open Responses |
+| `explore` | `explore` | Public Perspectives → Survey Results |
+| `public-qual` | `open_responses` | Public Perspectives → Open Responses |
+| `sme-survey` | `explore` | Expert Perspectives → Survey Results |
+| `sme-qual` | `open_responses` | Expert Perspectives → Open Responses |
 | `sme-compare` | `comparison` | Comparisons |
 | `about` | `static_page` | About |
 
@@ -873,6 +873,14 @@ who has learned the Public menu already knows the Experts one. The comparison
 is not one of them: it belongs to neither survey, and burying it under Experts
 made it read as an expert-survey page rather than the thing the two surveys
 are for.
+
+**Both dropdowns offer the same two things, named and described the same
+way** — Survey Results and Open Responses — so a reader who has learned one
+menu already knows the other. The description under each item is the page's
+`blurb`: the labels alone do not say which is which until you have opened
+both, and the dropdown is where that choice is made. `blurb` is also what the
+landing page's directory used, which is why it reads as a standalone sentence
+rather than as menu chrome.
 
 A page carrying `nav_group` folds into a dropdown at the position of its
 group's first member, and a page without one renders as a plain link where it
