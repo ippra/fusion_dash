@@ -478,9 +478,10 @@ config <- list(
     # What the Observatory is, and who runs and funds it. The tagline
     # described the two surveys; the surveys are an output of the programme
     # rather than the programme itself.
-    tagline = paste0("Systematic data collection and engagement to solicit ",
-                     "and incorporate public feedback into the design and ",
-                     "development of fusion energy technologies."),
+    tagline = paste0("Understanding how the public and fusion experts ",
+                     "perceive the risks, costs, benefits, and future of ",
+                     "fusion energy\u2014and where those perspectives ",
+                     "diverge."),
     links_html = paste0(
       "<a href=\"#about\">About &amp; methods</a>",
       "<a href=\"https://ou.edu/ippra\">OU IPPRA</a>",
