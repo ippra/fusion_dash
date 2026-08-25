@@ -335,16 +335,19 @@ config <- list(
                             "Oklahoma and Lawrence Livermore National ",
                             "Laboratory - supported by the U.S. Department ",
                             "of Energy"),
-           headline = paste0("Incorporating public feedback into the ",
-                             "development of fusion energy technologies."),
+           headline = "Building the Social Foundation for Fusion Energy",
            lede = list(
-             paste0("Fusion energy holds immense promise as a potential ",
-                    "game-changer in the global energy landscape, offering a ",
-                    "virtually limitless and clean energy source. While ",
-                    "progress is being made to overcome technical challenges, ",
-                    "failure to understand and address the social challenges ",
-                    "to the development and adoption of fusion energy risks ",
-                    "delay and increased costs.")),
+             paste0("Fusion energy has the potential to transform the ",
+                    "nation's energy future. Although substantial progress is ",
+                    "being made to overcome the scientific and engineering ",
+                    "challenges, successful deployment will also depend on ",
+                    "effective science communication, informed public ",
+                    "engagement, and evidence-based decision-making. This ",
+                    "project examines how the public understands and ",
+                    "evaluates fusion energy, how experts communicate its ",
+                    "risks, costs, benefits, and timelines, and where gaps ",
+                    "between the two create barriers to informed discussion ",
+                    "and policy.")),
            # What is here, in three: the two surveys and the comparison of
            # them. This replaced a five-row directory that listed the same
            # destinations as the nav bar sitting directly above it.
