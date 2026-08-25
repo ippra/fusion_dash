@@ -1198,21 +1198,40 @@ components.fu_landing = async function (page, container) {
   // sections use it - why the work is done, and what the Observatory is - and
   // both are the project's own summary rather than copy written for a site.
   const sections = [];
+  const prose = (body) => {
+    const box = el("div", { class: "fu-sec-prose" });
+    for (const para of (Array.isArray(body) ? body : [body]))
+      box.append(el("p", {}, para));
+    return box;
+  };
   for (const sec of (page.sections || [])) {
     const wrap = el("section", { class: "fu-sec" });
-    if (sec.lead) wrap.append(el("p", { class: "fu-sec-lead" }, sec.lead));
-    const points = Array.isArray(sec.points) && sec.points.length;
-    const cols = el("div", { class: "fu-sec-cols" + (points ? "" : " fu-sec-wide") });
-    const prose = el("div", { class: "fu-sec-prose" });
-    for (const para of (Array.isArray(sec.body) ? sec.body : [sec.body]))
-      prose.append(el("p", {}, para));
-    cols.append(prose);
-    if (points) {
-      const ol = el("ol", { class: "fu-sec-points" });
-      for (const pt of sec.points) ol.append(el("li", {}, pt));
-      cols.append(ol);
+    // A section is either one labelled block, optionally beside a numbered
+    // list, or a pair of labelled blocks side by side. The pair is two halves
+    // of one argument - why the public matters, why the experts do - and they
+    // are set next to each other rather than stacked so neither reads as the
+    // consequence of the other.
+    if (Array.isArray(sec.columns) && sec.columns.length) {
+      const cols = el("div", { class: "fu-sec-cols" });
+      for (const col of sec.columns) {
+        const half = el("div", { class: "fu-sec-col" });
+        if (col.lead) half.append(el("p", { class: "fu-sec-lead" }, col.lead));
+        half.append(prose(col.body));
+        cols.append(half);
+      }
+      wrap.append(cols);
+    } else {
+      if (sec.lead) wrap.append(el("p", { class: "fu-sec-lead" }, sec.lead));
+      const points = Array.isArray(sec.points) && sec.points.length;
+      const cols = el("div", { class: "fu-sec-cols" + (points ? "" : " fu-sec-wide") });
+      cols.append(prose(sec.body));
+      if (points) {
+        const ol = el("ol", { class: "fu-sec-points" });
+        for (const pt of sec.points) ol.append(el("li", {}, pt));
+        cols.append(ol);
+      }
+      wrap.append(cols);
     }
-    wrap.append(cols);
     sections.push(wrap);
   }
 

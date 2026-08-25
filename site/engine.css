@@ -397,6 +397,10 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
   gap: 12px 56px; align-items: start;
 }
 .fu-sec-wide { grid-template-columns: minmax(0, 1fr); }
+/* In a pair the column is already the measure, so the cap does nothing but
+   leave a ragged right edge in the left half. */
+.fu-sec-col .fu-sec-prose p { max-width: none; }
+.fu-sec-col .fu-sec-lead { margin-bottom: 14px; }
 .fu-sec-prose p {
   margin: 0 0 14px; font-size: 15.5px; line-height: 1.68; max-width: 68ch;
 }

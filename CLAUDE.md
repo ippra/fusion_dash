@@ -917,19 +917,28 @@ written for the site instead and read like marketing. **If this is revised,
 revise it from the summary rather than rewriting it.**
 
 **The copy is authored in `06`**, not in the engine, which carries no prose of
-its own: `hero` (eyebrow, headline, lede paragraphs, actions) and `sections`
-(each a `lead`, a `body` of paragraphs, and optional numbered `points`). One
-section is used — why public acceptance matters.
+its own: `hero` (eyebrow, headline, lede paragraphs, actions) and `sections`.
+A section is either a `lead` with a `body` of paragraphs and optional numbered
+`points`, or a pair of `columns` each with its own `lead` and `body`.
+
+One section is used, and it is a pair: **why public acceptance matters** and
+**why expert understanding matters**. Side by side rather than stacked,
+because they are two halves of one argument — acceptance is why the public is
+surveyed, the communication gap is why the experts are — and stacking makes
+the second read as a consequence of the first.
 
 The page is **the headline, the summary's opening paragraph, three tabs and
-one section**, and nothing else. An Observatory block
+one paired section**, and nothing else. An Observatory block
 with the four objectives, a colophon naming the investigators, and a five-row
 directory of the other pages were each written and each removed.
 `directory_lead`, `colophon` and a section's `points` still render if a page
 supplies them; the landing page supplies none of them.
 
 **`hero$actions` is what is here**, in three: the public survey, the expert
-survey, and the comparison. Rendered as a connected row rather than three
+survey, and the comparison. **Every count in those descriptions is read, not
+typed** — questions, waves, splits, comparisons — because `split thirteen
+ways` was written when there were thirteen and was still on the page at
+sixteen. `spell()` turns the small ones into words so they read as prose. Rendered as a connected row rather than three
 loose buttons, so they read as the whole of the site and not as three
 suggestions, and each carries the line the directory row used to. They stack
 below 900px — three across leaves each about 230px, which wraps its note to

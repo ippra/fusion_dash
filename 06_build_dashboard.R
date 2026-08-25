@@ -122,6 +122,27 @@ sme_meta <- read_json(file.path(sme_in, "meta.json"), simplifyVector = TRUE)
 catalog <- read_json(file.path(data_in, "questions.json"), simplifyVector = TRUE)
 splits <- read_json(file.path(data_in, "splits.json"), simplifyVector = TRUE)
 meta <- read_json(file.path(data_in, "meta.json"), simplifyVector = TRUE)
+# The landing page describes what each tab holds, and the counts in those
+# descriptions are read rather than typed. "split thirteen ways" was written
+# when there were thirteen splits and was still on the page at sixteen.
+# comparisons.json is a bare array of cards, not an object with a `findings`
+# key - $findings on it is NULL, which reads as zero and prints "0
+# comparisons" on the landing page rather than failing.
+comparisons <- read_json(file.path(sme_in, "comparisons.json"))
+if (!is.null(names(comparisons))) {
+  stop("comparisons.json is no longer a bare array; the landing page counts ",
+       "its elements.")
+}
+n_comparisons <- length(comparisons)
+
+# Small numbers read better spelled out in a sentence.
+spell <- function(n) {
+  words <- c("one", "two", "three", "four", "five", "six", "seven", "eight",
+             "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
+             "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
+             "twenty")
+  if (n >= 1 && n <= length(words)) words[n] else format(n, big.mark = ",")
+}
 
 message("Questions carried over: ", length(q_files))
 
@@ -329,33 +350,69 @@ config <- list(
            # destinations as the nav bar sitting directly above it.
            actions = list(
              list(label = "The public", page = "explore",
-                  note = paste0("What US adults report about fusion energy, ",
-                                "and what they say in their own words.")),
+                  note = paste0(nrow(catalog), " questions from ",
+                                spell(nrow(meta$waves)), " waves of a nationally ",
+                                "representative survey: awareness, support, ",
+                                "risk and benefit perceptions, siting, trust ",
+                                "and regulation. Any of them can be split ",
+                                spell(length(groupings_cfg) - 1), " ways.")),
              list(label = "Experts", page = "sme-survey",
-                  note = paste0("What 153 people who research, build, ",
-                                "regulate and fund fusion energy report.")),
+                  note = paste0(nrow(sme_catalog), " questions put to ",
+                                sme_meta$respondents, " people who research, ",
+                                "build, regulate and fund fusion energy: ",
+                                "timelines, barriers, risks, costs and ",
+                                "benefits, and what they expect the public ",
+                                "to think.")),
              list(label = "Public vs. Experts", page = "sme-compare",
-                  note = paste0("Where expert expectations about public ",
-                                "opinion match the survey, and where they ",
-                                "miss.")))),
+                  note = paste0(str_to_sentence(spell(n_comparisons)),
+                                " comparisons: questions both ",
+                                "groups answered in the same words, ",
+                                "questions where experts estimated what the ",
+                                "public said, and what each side thinks most ",
+                                "needs explaining.")))),
+         # The two halves of one argument, set side by side. Acceptance is
+         # why the public is surveyed; the communication gap is why the
+         # experts are, and why they were asked to estimate what the public
+         # said. Stacked, the second reads as a consequence of the first.
          sections = list(
-           list(lead = "Why public acceptance matters",
-                body = list(
-                  paste0("As experience with nuclear fission has ",
-                         "demonstrated, public risk perceptions combined with ",
-                         "distrust of developers, operators and regulators ",
-                         "can undercut the potential of a technology. In the ",
-                         "short term, broad social acceptance and support are ",
-                         "necessary to sustain the levels of research, ",
-                         "development and public investment necessary to ",
-                         "advance fusion technology. In the longer term, ",
-                         "community-level acceptance and support will be ",
-                         "necessary to construct and site fusion energy ",
-                         "facilities across the country."),
-                  paste0("Systematic and evidence-based research on public ",
-                         "acceptance and support for fusion technology will ",
-                         "act as a multiplier to our investments to overcome ",
-                         "the technological challenges of fusion energy."))))),
+           list(columns = list(
+             list(lead = "Why public acceptance matters",
+                  body = list(
+                    paste0("As experience with nuclear fission has ",
+                           "demonstrated, public risk perceptions combined ",
+                           "with distrust of developers, operators and ",
+                           "regulators can undercut the potential of a ",
+                           "technology. In the short term, broad social ",
+                           "acceptance and support are necessary to sustain ",
+                           "the levels of research, development and public ",
+                           "investment necessary to advance fusion ",
+                           "technology. In the longer term, community-level ",
+                           "acceptance and support will be necessary to ",
+                           "construct and site fusion energy facilities ",
+                           "across the country."),
+                    paste0("Systematic and evidence-based research on public ",
+                           "acceptance and support for fusion technology will ",
+                           "act as a multiplier to our investments to ",
+                           "overcome the technological challenges of fusion ",
+                           "energy."))),
+             list(lead = "Why expert understanding matters",
+                  body = list(
+                    paste0("Fusion energy's future will be shaped not only by ",
+                           "scientific progress, but also by how that ",
+                           "progress is understood by the public and by ",
+                           "decision-makers. Persistent gaps between expert ",
+                           "understanding and non-expert beliefs can distort ",
+                           "expectations, influence policy choices and affect ",
+                           "long-term investment."),
+                    paste0("Experts are also the people who explain fusion ",
+                           "energy - to communities, to journalists and to ",
+                           "policymakers - and those explanations rest on ",
+                           "assumptions about what non-experts already ",
+                           "believe. Measuring both sides shows where those ",
+                           "assumptions hold and where they do not, which is ",
+                           "what communication strategies need if they are to ",
+                           "articulate the risks and benefits of hosting ",
+                           "fusion energy facilities."))))))),
          # No `blurb`, and absent rather than NULL: list() keeps a NULL
          # element, jsonlite writes it as {}, and {} is truthy in JavaScript -
          # the landing page listed itself in its own directory, with
@@ -373,7 +430,8 @@ config <- list(
          # the horizontal layout swaps on screen but not in meaning.
          chart = list(x_label = "Response", y_label = "Respondents (%)"),
          blurb = paste0("Weighted response distributions for every closed-",
-                        "ended question, split thirteen ways.")),
+                        "ended question, split ", spell(length(groupings_cfg) - 1),
+                        " ways.")),
     list(id = "public-qual", component = "open_responses",
          nav_group = "Public",
          label = "Explore Open Responses",
