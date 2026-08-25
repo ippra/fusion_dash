@@ -404,7 +404,7 @@ config <- list(
          index = "data/open/index.json",
          words = "data/open/words.json",
          verbatims = "data/open/verbatims/{id}.json",
-         intro = paste0("Click an option in the menu below to explore ",
+         intro = paste0("Click an option in the menu below to explore public ",
                         "responses written in respondents\u2019 own words. ",
                         "Responses are shown exactly as they were submitted ",
                         "and can be filtered by theme where thematic coding ",
