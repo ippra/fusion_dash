@@ -891,10 +891,43 @@ swapping `component` in `06` — the page, its nav position and its landing-page
 blurb stay put. `sme-qual` was the last one; it is now the `open_responses`
 component pointed at the expert survey's files.
 
-`fu_landing` is adapted from wxdash's `wx_landing`: same hero, live flagship
-chart and directory, with the map alternative link gone and the meta line
-reading this project's `meta.json`. Its chart reads `v.splits[armKey]` like the
-explorer does, so a split-sample flagship would still draw.
+## The landing page argues; it shows nothing
+
+`fu_landing` no longer resembles wxdash's `wx_landing` it was forked from.
+**There is no chart and no headline figure**, and both absences are the point:
+
+- A teaser plot invited a reader to judge the whole project on whichever
+  question happened to be on it, and said nothing about why someone who works
+  in fusion should care what the public thinks.
+- A big number on the way in gives away a finding before the reader has any
+  reason to want it. The page's job is to make an expert want the finding; the
+  findings deck's job is to deliver it.
+
+The only figures on it are provenance — how many adults, how many experts,
+which years — so a reader can judge whether the argument is worth their time.
+
+**The copy is authored in `06`**, not in the engine, which carries no prose of
+its own: `hero` (eyebrow, headline, a list of lede paragraphs, actions),
+`argument` (three `step`/`heading`/`body` blocks), `pivot`, `directory_lead`
+and `colophon`. It is drawn from the Observatory's own framing — fusion is
+shaped by more than scientific progress; gaps between expert and non-expert
+belief distort expectations, policy and investment; closing them is the
+Observatory's mission.
+
+The three argument blocks are a sequence and are numbered as one: **the
+problem**, **the measurement**, **the turn**. The turn is the expert
+prediction item, because that is what makes this a survey a fusion researcher
+has a stake in rather than one about them.
+
+Two things in it are easy to undo:
+
+- **The hero is two columns** — claim on the left, case on the right. One
+  column left half the band empty once the chart came out, and a headline set
+  to the full page width is a banner rather than a sentence.
+- **`home` carries no `blurb`, and it is absent rather than `NULL`.** `list()`
+  keeps a `NULL` element, `jsonlite` writes it as `{}`, and `{}` is truthy —
+  the landing page listed itself in its own directory with "[object Object]"
+  where the description goes. The same trap `waves` hits, in a new place.
 
 ## The front end
 

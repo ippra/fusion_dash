@@ -290,24 +290,87 @@ config <- list(
   # Only the public survey has data behind it so far; the other three are
   # placeholders that say so rather than empty shells that look broken.
   pages = list(
+    # The landing page argues, and shows nothing. No chart and no headline
+    # figure: a teaser plot invited a reader to judge the project on whichever
+    # question happened to be on it, and a big number on the way in gives away
+    # a finding before the reader knows why it should matter to them. The
+    # copy's job is to make an expert want the finding, not to hand it over.
     list(id = "home", component = "fu_landing", label = "Home",
          hero = list(
-           eyebrow = "IPPRA Fusion Energy Survey - University of Oklahoma",
-           headline = paste0("What do Americans know, expect and want from ",
-                             "fusion energy?"),
-           # The companion expert study is published, so the line no longer
-           # promises it. A landing page saying "to come" about something a
-           # reader can click on in the nav is the kind of small untruth that
-           # makes them doubt the rest.
-           sub = paste0("Nationally representative survey data on awareness, ",
-                        "risk and benefit perceptions, siting, trust and ",
-                        "regulation - beside a companion study of ",
-                        sme_meta$respondents, " fusion experts, and what ",
-                        "each group gets right about the other."),
-           cta_label = "Explore the survey questions",
-           # The flagship chart: support for building fusion plants, asked in
-           # both waves, on a scale a reader takes in at a glance.
-           question = "new_fusion")),
+           eyebrow = paste0("Socio-Technical Observatory - OU IPPRA - ",
+                            "supported by the U.S. Department of Energy"),
+           headline = paste0("Fusion will be settled by more than what ",
+                             "happens in the laboratory."),
+           lede = list(
+             paste0("A clean and virtually limitless power source could ",
+                    "reshape how we live, work and thrive. Unlocking it takes ",
+                    "more than a technological breakthrough. It takes ",
+                    "societal awareness, trust and acceptance - and without ",
+                    "broad public support, progress and adoption can face ",
+                    "significant delays."),
+             paste0("So the question is not only whether fusion will work. It ",
+                    "is whether the people who decide its funding, its siting ",
+                    "and its regulation will understand it the same way the ",
+                    "people who build it do.")),
+           actions = list(
+             list(label = "Where experts and the public diverge",
+                  page = "sme-compare"),
+             list(label = "Browse the survey data", page = "explore",
+                  quiet = TRUE))),
+         argument = list(
+           list(step = "The problem",
+                heading = "A gap in understanding is not a harmless thing.",
+                body = paste0("Persistent gaps between expert understanding ",
+                              "and non-expert belief distort expectations, ",
+                              "influence policy choices, and affect long-term ",
+                              "investment. They shape which arguments get ",
+                              "made, which risks get answered, and which ",
+                              "projects survive a decade of public ",
+                              "attention.")),
+           list(step = "The measurement",
+                heading = "Both sides of the gap, asked the same questions.",
+                body = paste0("A nationally representative survey of US ",
+                              "adults, and a parallel survey of the people ",
+                              "who research, build, regulate and fund fusion ",
+                              "energy. Wherever the two could be asked the ",
+                              "same thing, they were asked it in the same ",
+                              "words - which is what makes a difference ",
+                              "between them a finding rather than an ",
+                              "artefact.")),
+           list(step = "The turn",
+                heading = "And then we asked the experts to predict.",
+                body = paste0("Before showing them anything, we asked the ",
+                              "expert sample what they thought the public had ",
+                              "said. A difference of view is one thing; a ",
+                              "prediction that misses is another, because it ",
+                              "is a belief about the audience that is already ",
+                              "shaping how fusion gets explained."))),
+         pivot = list(
+           lead = "Why this should matter to you if you work in fusion",
+           body = paste0("Communication strategy rests on an assumption about ",
+                         "what the public already thinks. That assumption is ",
+                         "usually inherited rather than measured, and it is ",
+                         "held most confidently by the people with the least ",
+                         "occasion to test it. This survey tests it. Several ",
+                         "of the results are not what the field expects, and ",
+                         "the ones that are wrong are wrong in a direction ",
+                         "that matters.")),
+         directory_lead = "What is here",
+         colophon = paste0("This is the second report in a series. The first ",
+                           "covered a nationally representative survey of US ",
+                           "adults fielded in March 2025, measuring ",
+                           "awareness, perceptions and support for fusion ",
+                           "energy. This one turns to the other side of the ",
+                           "communication gap. Identifying and closing that ",
+                           "gap is central to the mission of the ",
+                           "Socio-Technical Observatory established by the ",
+                           "University of Oklahoma's Institute for Public ",
+                           "Policy Research and Analysis, with funding from ",
+                           "the U.S. Department of Energy.")),
+         # No `blurb`, and absent rather than NULL: list() keeps a NULL
+         # element, jsonlite writes it as {}, and {} is truthy in JavaScript -
+         # the landing page listed itself in its own directory, with
+         # "[object Object]" where the description goes.
     list(id = "explore", component = "explore",
          nav_group = "Public",
          label = "Explore Survey Data",
@@ -407,8 +470,9 @@ config <- list(
          html = about_html)
   ),
   footer = list(
-    tagline = paste0("What US adults know, expect and want from fusion ",
-                     "energy."),
+    # The tagline described half the project once the expert survey landed.
+    tagline = paste0("What US adults and fusion experts each believe about ",
+                     "fusion energy - and where the two diverge."),
     links_html = paste0(
       "<a href=\"#about\">About &amp; methods</a>",
       "<a href=\"https://ou.edu/ippra\">OU IPPRA</a>",

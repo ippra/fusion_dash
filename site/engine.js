@@ -1162,40 +1162,56 @@ components.fu_landing = async function (page, container) {
   const h = page.hero || {};
   const surveyPage = CONFIG.pages.find(p => p.component === "explore");
 
-  const hero = el("section", { class: "fu-hero fu-hero-survey" });
+  // No chart. The landing page argues why the survey exists rather than
+  // showing one of its answers: a single teaser plot invited a reader to
+  // judge the project on whichever question happened to be on it, and said
+  // nothing about why an expert should care what the public thinks.
+  const hero = el("section", { class: "fu-hero" });
   const content = el("div", { class: "fu-hero-content" });
-  if (h.eyebrow) content.append(el("p", { class: "fu-eyebrow" }, h.eyebrow));
-  content.append(el("h1", {}, h.headline || CONFIG.project.title));
-  if (h.sub) content.append(el("p", { class: "fu-hero-sub" }, h.sub));
-  // Entering the explorer lands on the question shown here, with the chosen
-  // split carried along, so people continue from what they were looking at.
-  const flagship = h.question;
-  const intoExplorer = () => setParams({
-    q: flagship, grouping: sel.value !== "All" ? sel.value : null });
-  if (surveyPage && flagship) content.append(el("p", { class: "fu-hero-cta" },
-    el("a", { class: "fu-cta-button", href: "#" + surveyPage.id,
-              onclick: intoExplorer },
-      h.cta_label || "Explore the survey results")));
+  // Two columns: the claim on the left, the case for it on the right. One
+  // column left half the band empty once the chart came out, and a headline
+  // set to the full width of the page is a banner rather than a sentence.
+  const lead = el("div", { class: "fu-hero-lead" });
+  if (h.eyebrow) lead.append(el("p", { class: "fu-eyebrow" }, h.eyebrow));
+  lead.append(el("h1", {}, h.headline || CONFIG.project.title));
+  const body = el("div", { class: "fu-hero-body" });
+  for (const para of (Array.isArray(h.lede) ? h.lede : [h.lede]).filter(Boolean))
+    body.append(el("p", { class: "fu-hero-sub" }, para));
+  content.append(lead, body);
+  const ctas = el("p", { class: "fu-hero-cta" });
+  for (const c of (h.actions || [])) {
+    const target = CONFIG.pages.find(p => p.id === c.page);
+    if (target) ctas.append(el("a", {
+      class: "fu-cta-button" + (c.quiet ? " fu-cta-quiet" : ""),
+      href: "#" + target.id }, c.label));
+  }
+  if (ctas.children.length) body.append(ctas);
   const metaLine = el("p", { class: "fu-meta-line" });
-  content.append(metaLine);
+  body.append(metaLine);
+  hero.append(content);
 
-  const chartCard = el("div", { class: "card fu-hero-chartcard" });
-  const chartTitle = el("h3", {}, "");
-  const wrap = el("div", { class: "chart-wrap fu-hero-chartwrap" });
-  const canvas = el("canvas");
-  wrap.append(canvas);
-  const controls = el("div", { class: "fu-hero-chartbar" });
-  const sel = el("select", { class: "grouping", id: "hero-split" });
-  for (const g of CONFIG.groupings || [{ id: "All", label: "All" }])
-    sel.append(el("option", { value: g.id }, g.label));
-  sel.value = "All";
-  const caption = el("p", { class: "fu-caption" });
-  controls.append(el("label", { class: "field-label", for: "hero-split" },
-                      "Split by"), sel);
-  chartCard.append(chartTitle, controls, wrap, caption);
-  hero.append(content, chartCard);
+  // The argument, in steps. Each block is a claim and the sentence that
+  // supports it; the copy is authored in the builder so the engine carries no
+  // prose of its own.
+  const argument = el("section", { class: "fu-argument" });
+  for (const blk of (page.argument || [])) {
+    const card = el("article", { class: "fu-arg" });
+    if (blk.step) card.append(el("span", { class: "fu-arg-step" }, blk.step));
+    card.append(el("h2", {}, blk.heading));
+    for (const para of (Array.isArray(blk.body) ? blk.body : [blk.body]))
+      card.append(el("p", {}, para));
+    argument.append(card);
+  }
 
-  const directory = el("div", { class: "card fu-directory-card" });
+  // The one line that is the whole point of the expert survey, set apart from
+  // the argument because it is the turn the reader is meant to take.
+  const pivot = page.pivot ? el("section", { class: "fu-pivot" },
+    el("p", { class: "fu-pivot-lead" }, page.pivot.lead),
+    el("p", { class: "fu-pivot-body" }, page.pivot.body)) : null;
+
+  const directory = el("section", { class: "fu-directory-card" });
+  if (page.directory_lead)
+    directory.append(el("h2", { class: "fu-dir-lead" }, page.directory_lead));
   const grid = el("div", { class: "fu-directory" });
   for (const p of CONFIG.pages.filter(p => p.blurb && !p.hidden)) {
     const a = el("a", { class: "fu-dir-row", href: "#" + p.id });
@@ -1205,52 +1221,28 @@ components.fu_landing = async function (page, container) {
   }
   directory.append(grid);
 
+  const colophon = page.colophon
+    ? el("section", { class: "fu-colophon" }, el("p", {}, page.colophon))
+    : null;
+
   container.append(el("div", { class: "page fu-landing-page" },
-    el("div", { class: "content" }, hero, directory)));
+    el("div", { class: "content" },
+      ...[hero, argument, pivot, directory, colophon].filter(Boolean))));
 
+  // Scale, not findings: what the argument above rests on, so a reader can
+  // judge whether it is worth their time before clicking anything.
   try {
-    const meta = await fetchJSON("data/meta.json");
+    const [meta, sme] = await Promise.all([
+      fetchJSON("data/meta.json"),
+      fetchJSON("data/sme/meta.json").catch(() => null)]);
     const years = (meta.waves || []).map(w => w.year);
-    metaLine.innerHTML =
-      `<b>${Number(meta.respondents).toLocaleString()}</b> survey responses · ` +
-      `<b>${years.join(" and ")}</b> · ` +
-      `<b>${meta.questions}</b> questions`;
+    const bits = [
+      `<b>${Number(meta.respondents).toLocaleString()}</b> US adults`,
+      sme ? `<b>${Number(sme.respondents).toLocaleString()}</b> fusion experts`
+          : null,
+      `<b>${years.join(" and ")}</b>`];
+    metaLine.innerHTML = bits.filter(Boolean).join(" · ");
   } catch { metaLine.remove(); }
-
-  try {
-    if (!surveyPage || !flagship) { chartCard.remove(); return; }
-    const [v, questions] = await Promise.all([
-      fetchJSON(`data/q/${flagship}.json`), fetchJSON(surveyPage.questions)]);
-    chartTitle.textContent = v.question || flagship;
-    // Splits are keyed by experiment arm; the flagship is a pooled question,
-    // so read the single "all" set.
-    const armKey = Array.isArray(v.arms) && v.arms.length ? v.arms[0].id : "all";
-    const SPLITS = v.splits[armKey] || {};
-    const labelFor = (resp) => {
-      const hit = (v.options || []).find(o => String(o.value) === String(resp));
-      return hit ? wrapTickLabel(hit.label) : String(resp);
-    };
-    const draw = () => {
-      const g = (SPLITS[sel.value] && SPLITS[sel.value].length)
-        ? sel.value : "All";
-      const rows = (SPLITS[g] || []).map(r => ({
-        group: r.group, category: labelFor(r.resp), value: r.p,
-        label: Math.round(r.p) + "%" }));
-      const nGroups = new Set(rows.map(r => naLabel(r.group))).size;
-      groupedBarChart(canvas, rows, {
-        xLabel: "Response", yLabel: "Respondents (%)", horizontal: true,
-        legend: nGroups > 1,
-        // Same palette the explorer opens in, so the teaser and the page it
-        // advertises look like the same site.
-        colors: schemeSeriesColors(DEFAULT_SCHEME, nGroups),
-        categoryOrder: (v.options || []).map(o => wrapTickLabel(o.label)) });
-    };
-    sel.onchange = draw;
-    caption.append(`One of ${questions.length} questions in the survey — `,
-      el("a", { href: "#" + surveyPage.id, onclick: intoExplorer },
-         "explore them all"), ".");
-    draw();
-  } catch { chartCard.remove(); }
 };
 
 /* ---- open responses ------------------------------------------------------

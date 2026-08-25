@@ -311,17 +311,33 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 .fu-hero-search .fu-hero-search .fu-meta-line { margin-top: 18px; font-size: 12px; color: var(--text-muted); }
 .fu-meta-line b { color: var(--text); font-weight: 600; }
 
-/* ---------- survey-first landing hero (Aug 2026, Joe's direction) --------
-   Text column beside a live flagship-question chart card; the choropleth
-   hero above now belongs to Find Your Place. */
-.fu-hero-survey {
-  display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
-  align-items: center; gap: 8px;
-  background: var(--panel, var(--bg));
-  min-height: 0;
+/* ---------- landing: an argument, not a dashboard ------------------------
+   No chart and no headline figure. The page has one job - make a reader who
+   works in fusion want the finding - so it is set as prose: one wide measure
+   for the lede, a numbered three-step argument, and the pivot that says why
+   it is their problem. Everything is type and space; the only colour is the
+   accent on the two calls to action. */
+.fu-hero {
+  display: block; min-height: 0; overflow: visible;
+  background: none; border: none; box-shadow: none; border-radius: 0;
+  padding: 60px 44px 52px;
 }
-.fu-hero-survey .fu-hero-content { max-width: none; padding: 40px 12px 40px 44px; }
-.fu-hero-cta { margin: 0 0 14px; }
+.fu-hero .fu-hero-content {
+  max-width: none; padding: 0;
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 16px 56px; align-items: start;
+}
+.fu-hero .fu-hero-content h1 {
+  font-size: clamp(30px, 4.2vw, 52px); margin: 0;
+  /* Balanced so the last line is not one orphaned word under a full one. */
+  text-wrap: balance;
+}
+.fu-hero-body { padding-top: 6px; }
+.fu-hero .fu-hero-sub {
+  font-size: 16.5px; line-height: 1.62; max-width: 52ch; margin: 0 0 16px;
+}
+.fu-hero .fu-hero-sub:last-of-type { margin-bottom: 26px; }
+.fu-hero-cta { margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 12px; }
 .fu-cta-button {
   display: inline-block; text-decoration: none;
   background: var(--accent); color: var(--accent-contrast);
@@ -330,19 +346,74 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 }
 .fu-cta-button:hover { filter: brightness(1.12); }
 .fu-cta-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.fu-hero-alt { font-size: 13.5px; color: var(--text-muted); margin: 0; }
-.fu-hero-alt a { color: var(--accent); }
-.fu-hero-chartcard { margin: 20px 20px 20px 8px; padding: 16px 18px 12px; }
-.fu-hero-chartcard h3 { margin: 0 0 8px; font-size: 14.5px; line-height: 1.35; }
-.fu-hero-chartbar { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.fu-hero-chartbar .field-label { margin: 0; white-space: nowrap; }
-.fu-hero-chartcard .fu-caption a { color: var(--accent); }
-.fu-hero-chartbar .grouping { width: auto; padding: 4px 8px; font-size: 13px; }
-.fu-hero-chartwrap { height: 300px; }
+/* The second action is a way on, not a second invitation - same target size,
+   no second block of colour competing with the first. */
+.fu-cta-quiet {
+  background: transparent; color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--panel-border);
+}
+.fu-cta-quiet:hover { background: var(--row-hover); filter: none; }
+
+/* The argument. Three steps, numbered, because the reader is being walked
+   from a problem to a measurement to the turn - and a reader who lands
+   mid-page needs to see that it is a sequence. */
+.fu-argument {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0; margin-top: 0;
+  border-top: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+}
+.fu-arg { padding: 30px 34px 32px; }
+.fu-arg + .fu-arg { border-left: 1px solid var(--panel-border); }
+.fu-arg-step {
+  display: block; font-family: var(--mono, monospace);
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 12px;
+}
+.fu-arg h2 {
+  font-family: var(--font-display); font-size: 19px; line-height: 1.25;
+  font-weight: 700; letter-spacing: -0.01em; margin: 0 0 10px;
+  color: var(--display-ink, var(--text));
+}
+.fu-arg p { margin: 0; font-size: 14.5px; line-height: 1.62;
+            color: var(--text-muted); }
+
+/* The pivot: the one paragraph addressed to the reader rather than about the
+   project. Given the width of the page and a rule down its left edge so it
+   reads as an aside being made directly to them. */
+.fu-pivot { padding: 40px 44px 36px; }
+.fu-pivot-lead {
+  font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-muted); margin: 0 0 14px;
+}
+.fu-pivot-body {
+  margin: 0; max-width: 68ch;
+  font-family: var(--font-display); font-weight: 500;
+  font-size: clamp(18px, 2.1vw, 23px); line-height: 1.5;
+  letter-spacing: -0.01em; color: var(--display-ink, var(--text));
+  border-left: 3px solid var(--accent); padding-left: 22px;
+}
+
+.fu-dir-lead {
+  font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text-muted);
+  font-weight: 600; margin: 0 0 10px; padding: 0 24px;
+}
+.fu-colophon { padding: 30px 44px 8px; }
+.fu-colophon p {
+  margin: 0; max-width: 78ch; font-size: 13px; line-height: 1.65;
+  color: var(--text-muted);
+}
 @media (max-width: 900px) {
-  .fu-hero-survey { grid-template-columns: 1fr; }
-  .fu-hero-survey .fu-hero-content { padding: 26px 18px 4px; }
-  .fu-hero-chartcard { margin: 12px 14px 16px; }
+  .fu-hero { padding: 30px 18px 26px; }
+  .fu-hero .fu-hero-content { grid-template-columns: 1fr; gap: 18px; }
+  .fu-hero-body { padding-top: 0; }
+  .fu-argument { grid-template-columns: 1fr; }
+  .fu-arg + .fu-arg { border-left: none; border-top: 1px solid var(--panel-border); }
+  .fu-arg { padding: 24px 18px 26px; }
+  .fu-pivot, .fu-colophon { padding-left: 18px; padding-right: 18px; }
+  .fu-dir-lead { padding: 0 18px; }
+}
 }
 
 /* ---------- toolbar explorer layout (Joe's Aug-2026 redesign) ------------
@@ -659,7 +730,10 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 /* ---------- landing surface cards ---------- */
 /* Landing directory — a table of contents, not a feature-card grid: hairline
    rows, whole row clickable, hover is an underline. Deliberately quiet. */
-.fu-directory-card { padding: 0; overflow: hidden; margin-top: 20px; }
+.fu-directory-card {
+  padding: 0; overflow: hidden; margin-top: 8px;
+  border-top: 1px solid var(--panel-border);
+}
 .fu-directory { display: grid; grid-template-columns: 1fr 1fr; }
 .fu-dir-row {
   display: block; text-decoration: none; color: var(--text);
