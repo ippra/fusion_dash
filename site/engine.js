@@ -1212,17 +1212,21 @@ components.fu_landing = async function (page, container) {
     sections.push(wrap);
   }
 
-  const directory = el("section", { class: "fu-directory-card" });
-  if (page.directory_lead)
+  // The directory duplicated the nav bar, which is on every page anyway. It
+  // renders only if the page asks for it by giving it a heading.
+  let directory = null;
+  if (page.directory_lead) {
+    directory = el("section", { class: "fu-directory-card" });
     directory.append(el("h2", { class: "fu-dir-lead" }, page.directory_lead));
-  const grid = el("div", { class: "fu-directory" });
-  for (const p of CONFIG.pages.filter(p => p.blurb && !p.hidden)) {
-    const a = el("a", { class: "fu-dir-row", href: "#" + p.id });
-    a.append(el("h3", {}, (p.nav_group ? p.nav_group + " — " : "") + p.label),
-             el("p", {}, p.blurb));
-    grid.append(a);
+    const grid = el("div", { class: "fu-directory" });
+    for (const p of CONFIG.pages.filter(p => p.blurb && !p.hidden)) {
+      const a = el("a", { class: "fu-dir-row", href: "#" + p.id });
+      a.append(el("h3", {}, (p.nav_group ? p.nav_group + " — " : "") + p.label),
+               el("p", {}, p.blurb));
+      grid.append(a);
+    }
+    directory.append(grid);
   }
-  directory.append(grid);
 
   const colophon = page.colophon
     ? el("section", { class: "fu-colophon" }, el("p", {}, page.colophon))

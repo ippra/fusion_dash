@@ -915,10 +915,17 @@ written for the site instead and read like marketing. **If this is revised,
 revise it from the summary rather than rewriting it.**
 
 **The copy is authored in `06`**, not in the engine, which carries no prose of
-its own: `hero` (eyebrow, headline, lede paragraphs, actions), `sections`
-(each a `lead`, a `body` of paragraphs, and optional numbered `points`),
-`directory_lead` and `colophon`. Two sections are used — why public acceptance
-matters, and what the Observatory is.
+its own: `hero` (eyebrow, headline, lede paragraphs, actions) and `sections`
+(each a `lead`, a `body` of paragraphs, and optional numbered `points`). One
+section is used — why public acceptance matters.
+
+The page is **the headline, the summary's opening paragraph, two calls to
+action, the provenance line and that one section**, and nothing else. An
+Observatory block with the four objectives, a colophon naming the
+investigators, and a directory of the other pages were each written and each
+removed. The directory in particular duplicated the nav bar, which is on every
+page anyway. `directory_lead`, `colophon` and `points` still render if a page
+supplies them; the landing page supplies none of them.
 
 Two things in it are easy to undo:
 
