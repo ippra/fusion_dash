@@ -385,8 +385,8 @@ config <- list(
          label = "Survey Results",
          questions = "data/questions.json", default_grouping = "All",
          intro = paste0("Click a question in the table below to view the ",
-                        "weighted distribution of responses by the group you ",
-                        "select."),
+                        "weighted distribution of public responses by the ",
+                        "group you select."),
          # x_label titles the category axis and y_label the value axis, which
          # the horizontal layout swaps on screen but not in meaning.
          chart = list(x_label = "Response", y_label = "Respondents (%)"),
@@ -417,11 +417,13 @@ config <- list(
          groupings = sme_groupings,
          caption = sme_caption,
          default_grouping = "All",
-         intro = paste0("Click a question below to see how the ", 
-                        sme_meta$respondents, " experts answered. These are ",
-                        "plain counts, not weighted estimates: the sample is ",
-                        "people identified as having relevant expertise, not ",
-                        "a sample of any wider population."),
+         # "raw (unweighted)" carries the caveat the longer sentence used
+         # to. What it does not carry - that a purposive sample of experts is
+         # not a sample of any population - is in the caption under every
+         # chart and in the value tooltip, which is where it belongs anyway.
+         intro = paste0("Click a question in the table below to view the raw ",
+                        "(unweighted) distribution of expert responses by the ",
+                        "group you select."),
          chart = list(x_label = "Response", y_label = "Experts (%)"),
          value_tip = paste0("Percentages are plain counts of the experts who ",
                             "answered - this sample is not weighted, because ",
