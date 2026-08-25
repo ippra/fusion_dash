@@ -1438,26 +1438,29 @@ components.open_responses = async function (page, container) {
     const v = await fetchJSON(page.verbatims.replace("{id}", id));
     const card = el("div", { class: "card" });
     card.append(el("h3", {}, v.label));
-    // Answered and shown are the same number until a theme is held back from
-    // the page, and saying "1,083 people answered" when 1,170 did would be
-    // wrong in the one direction that flatters the item.
-    const answered = v.answered != null ? v.answered : v.n;
-    let note = `${answered.toLocaleString()} people answered, in their own ` +
-      `words` +
-      (answered === v.n ? ". "
-        : `; ${v.n.toLocaleString()} of them are shown below. `) +
-      `Responses are shown whole and unedited.`;
-    if (v.asked_if) note += ` Not everyone was asked: ${v.asked_if}`;
-    card.append(el("p", { class: "fu-caption" }, v.question || ""),
-                el("p", { class: "fu-caption" }, note));
+    // The question as it was put, then what the page below it shows. Both are
+    // written by the script that built the item - the engine composed them
+    // from parts and could not know whether it was addressing respondents or
+    // experts, or whether there was a chart under the caption at all.
+    if (v.asked_line) card.append(el("p", { class: "fu-caption" }, v.asked_line));
+    if (v.asked_if) card.append(el("p", { class: "fu-caption" },
+      `Not everyone was asked: ${v.asked_if}`));
     const ctx = Array.isArray(v.contexts) ? v.contexts : [];
     const themed = Array.isArray(v.themes) && v.themes.length;
     // Written by the script that coded the responses: the sentence has to name
     // the item's own unit ("the concern it leads with" against "the question")
     // and say whether anything on the page is weighted, and only the script
     // knows which survey it is describing.
-    if (themed && v.theme_caption)
+    if (v.theme_caption)
       card.append(el("p", { class: "fu-caption" }, v.theme_caption));
+    // How the counting works, behind a disclosure. A reader who wants the
+    // rule can have it; one who does not is not made to read past it to
+    // reach the chart.
+    if (v.theme_note) {
+      const note = el("details", { class: "fu-note-disclosure" });
+      note.append(el("summary", {}, "Note"), el("p", {}, v.theme_note));
+      card.append(note);
+    }
     // A list, one paragraph each: an item can rest on more than one caveat.
     (Array.isArray(v.cautions) ? v.cautions : [])
       .filter(c => typeof c === "string" && c)
@@ -1540,9 +1543,7 @@ components.open_responses = async function (page, container) {
       tools.append(el("label", { class: "field-label", for: "op-split" },
                      "Split by"), sel);
     }
-    const hint = el("span", { class: "fu-theme-hint" },
-      "Click a theme to filter the responses below");
-    tools.append(hint);
+    // The caption above already says a click filters the responses.
     const legend = el("div", { class: "fu-theme-legend" });
     const list = el("div", { class: "fu-theme-rows" });
     wrap.append(tools, legend, list);

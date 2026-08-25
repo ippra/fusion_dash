@@ -132,16 +132,6 @@ words <- word_rows |>
 
 matched <- sum(!is.na(words$public_pct))
 
-# Both items were withheld from for one reason only, and it is not the public
-# side's reason: nothing here was held back for its opinion. The one withheld
-# response names two events and identifies its author as an organiser of them,
-# which in a sample of 153 experts is a good deal more identifying than the
-# same detail would be in a sample of 2,444 adults.
-HELD_WHY <- c(
-  one = "for a detail that would identify the respondent, not for its opinion",
-  many = "for details that would identify the respondents, not for their opinions"
-)
-
 words_seen <- review |> filter(item == "words")
 if (nrow(words_seen) != 1) {
   stop("No content review recorded for the predicted words. Every open ",
@@ -178,11 +168,7 @@ wjson(list(
     " words they gave. Words are matched exactly and nothing is merged, here ",
     "or on the public page, so \"clean\" and \"clean energy\" are separate ",
     "predictions and only one of them can match. ", matched, " of the ",
-    nrow(words), " predicted words appear in the public list at all. ",
-    # The page intro used to carry this for all three items. It now says only
-    # what each item is, so the claim moves to the item it describes - and
-    # like everywhere else on the site, it comes with its count.
-    review_caution(words_seen$reviewed, 0L, words_seen$reviewed_on, HELD_WHY)
+    nrow(words), " predicted words appear in the public list at all."
   )
 ), "words.json")
 
@@ -196,6 +182,9 @@ verbatim_items <- tribble(
   "misunderstood", "fusion_mis",        "What non-experts misunderstand", "misunderstanding",
   "change",        "fusion_change_dis", "What they would change",         "change"
 )
+# What reads in "did not include a substantive ___". "misunderstanding" and
+# "change" do not, so the note uses the plainer word for these two.
+EXCLUDED_NOUN <- "answer"
 
 verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) {
   ref <- ref_of(variable)
@@ -290,24 +279,20 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) 
     themes = if (!has_themes) NA else as.list(theme_order),
     theme_noun = theme_noun,
     theme_dist = theme_dist,
-    # Nothing on this page is weighted, so the sentence the public page needs -
-    # naming the one bar list that is not a population estimate - would be
-    # false here. Written by the script that knows the survey.
-    theme_caption = paste0(
-      "Each response carries one theme - the ", theme_noun, " it leads with ",
-      "or dwells on, where it raises more than one. Themes were drafted by ",
-      "reading the whole set, assigned by reading each response, and checked ",
-      "by reading each theme's responses together. Click a theme below to ",
-      "filter the responses to it. Bars are the plain share of responses; ",
-      "nothing on this page is weighted, because 153 people identified as ",
-      "having relevant expertise is not a sample of any population."
+    # "Experts were asked", not "Respondents were asked": this survey's
+    # respondents are the experts, and the page says so everywhere else.
+    asked_line = paste0("Experts were asked: \u201c",
+                        str_squish(ref$question_text), "\u201d"),
+    theme_caption = if (!has_themes) NA else paste0(
+      "The chart below groups responses into common themes. Click any theme ",
+      "to view the original responses, shown exactly as they were submitted."
     ),
-    cautions = as.list(c(
-      unpublished_caution(unpublished, has_themes),
-      small_group_caution(dropped_groups),
-      review_caution(seen$reviewed, nrow(held_content), seen$reviewed_on,
-                     HELD_WHY)
-    )) |> discard(is.na),
+    # See 03: the read-and-withheld cautions are off the page, the build
+    # checks behind them are not.
+    theme_note = if (!has_themes) NA else
+      theme_note(answered, nrow(rows), theme_noun, EXCLUDED_NOUN, "expert"),
+    cautions = as.list(c(small_group_caution(dropped_groups))) |>
+      discard(is.na),
     n = nrow(rows),
     answered = answered,
     # case_id identifies a person and has no business in a published file.

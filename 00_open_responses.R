@@ -96,6 +96,34 @@ theme_distribution <- function(rows, theme_order, splits) {
   )
 }
 
+# The note over the theme chart: how many answered, how many were excluded for
+# not answering, and the one-theme-per-response rule that makes the bars counts
+# of people rather than counts of things said. Built from the counts rather
+# than written, so it cannot drift from them.
+#
+# `noun` is what the theme names for this item - a question, a reason, a
+# concern. `excluded_noun` is the same word where it reads in "did not include
+# a substantive ___" and something plainer where it does not. `person` is
+# respondent or expert.
+theme_note <- function(answered, shown, noun, excluded_noun, person) {
+  excluded <- answered - shown
+  # No "Note:" prefix - the disclosure it sits behind is labelled Note, and
+  # the two together read as the word twice.
+  paste0(
+    "A total of ", format(answered, big.mark = ","), " ", person,
+    "s answered this question. ",
+    if (excluded > 0) paste0(
+      "Responses that did not include a substantive ", excluded_noun, " (",
+      format(excluded, big.mark = ","), " total) were excluded. ") else "",
+    "Each of the ", if (excluded > 0) "remaining " else "",
+    format(shown, big.mark = ","),
+    " responses was assigned to a single theme based on its primary ", noun,
+    ". Responses that raised multiple ", noun, "s were classified according ",
+    "to the ", noun, " they lead with or emphasized most, so each ", person,
+    " is counted only once."
+  )
+}
+
 # A group too small to carry a percentage does not get drawn as one. Eight
 # people who oppose fusion plants outright and still landed in the unsure item
 # are a real eight people, but "12.5%" beside a group of 1,300 invites a
@@ -111,48 +139,6 @@ small_group_caution <- function(dropped) {
            collapse = "; "),
     ". Too few to draw as a share without inviting a comparison the number ",
     "cannot support. Those responses are still in the table below."
-  )
-}
-
-# Reported, never silent - the same rule the identifier screen and the content
-# withhold follow. A response held back from the page is one the reader will
-# never know existed unless the number is here, and the wording says which kind
-# it was rather than lumping a non-answer together with a real one.
-unpublished_caution <- function(unpublished, has_themes) {
-  if (!has_themes || nrow(unpublished) == 0) return(NULL)
-  # The theme's own label, quoted rather than reworded into a clause: the
-  # non-answers and `ask`'s statements are held back for different reasons,
-  # and one sentence covering both would have to overstate one of them.
-  parts <- paste0(format(unpublished$n, big.mark = ","), " coded “",
-                  unpublished$theme, "”")
-  paste0(
-    "Read and coded, but not shown below: ",
-    paste(parts, collapse = ", and "),
-    ". The chart and the table cover the remaining ",
-    format(unpublished$total[1], big.mark = ","), "."
-  )
-}
-
-# The count of what was withheld is stated beside every item, the same rule the
-# identifier screen follows: a response the reader will never know existed
-# unless the number is there. `why` names what the withholding was for, in two
-# forms - `one` and `many` - because the clause has to agree with the count and
-# "a group of people" is not "groups of people". It belongs to the caller
-# because the two surveys withheld for different reasons: content aimed at
-# groups of people on the public side, an identifying detail on the expert
-# side.
-review_caution <- function(reviewed, n_held, reviewed_on, why) {
-  stopifnot(all(c("one", "many") %in% names(why)))
-  paste0(
-    "Every one of these ", format(reviewed, big.mark = ","), " responses was ",
-    "read before publication, on ", format(reviewed_on, "%d %B %Y"), ". ",
-    if (n_held == 0) {
-      "None was withheld."
-    } else if (n_held == 1) {
-      paste0("One was withheld, ", why[["one"]], ".")
-    } else {
-      paste0(n_held, " were withheld, ", why[["many"]], ".")
-    }
   )
 }
 

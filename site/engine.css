@@ -1408,6 +1408,16 @@ table.data th select {
   .fu-asked-row { grid-template-columns: 1fr; gap: 2px; }
 }
 
+/* How the theme counting works, behind a disclosure over the chart. */
+.fu-note-disclosure {
+  margin: 2px 0 12px; font-size: 13px; color: var(--text-muted);
+}
+.fu-note-disclosure summary { cursor: pointer; }
+.fu-note-disclosure summary:hover { color: var(--accent); }
+.fu-note-disclosure p {
+  margin: 8px 0 0; max-width: 78ch; line-height: 1.6;
+}
+
 /* The options whose wording differs, in full, behind a disclosure. */
 .fu-mark { cursor: help; }
 .fu-wording {

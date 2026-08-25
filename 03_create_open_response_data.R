@@ -287,39 +287,22 @@ routing_caution <- function(withheld) {
   )
 }
 #
-# What the two withheld responses were withheld for, in a clause the caption
-# can finish. Both were held back for content aimed at groups of people rather
-# than at fusion energy; the expert survey withheld for a different reason, so
-# the clause belongs to the script rather than to review_caution().
-HELD_WHY <- c(
-  one = "for content directed at a group of people rather than at fusion energy",
-  many = "for content directed at groups of people rather than at fusion energy"
-)
-
-# Many people asked several questions at once - one wrote five, numbered. The
-# coding records the one they lead with, so a reader ranking the themes is
-# reading how many people led with a subject, not how many times it was asked.
-ASK_CAUTION <- paste0(
-  "Plenty of answers hold more than one question. Each is counted once, ",
-  "under the question it leads with, so these are counts of people rather ",
-  "than counts of questions."
-)
 # The order here is the order the Show menu lists them in, after the word
 # associations the front end puts first. Support before uncertainty before
 # opposition rather than the routing's own order: the menu is read top to
 # bottom and the three why-items are one scale, so they run down it.
 verbatim_items <- tribble(
-  ~id,          ~variable,              ~label,                        ~gated, ~theme_noun, ~caution,
-  "ask",        "fusion_question",      "Questions for fusion experts", FALSE, "question",  ASK_CAUTION,
-  "support",    "fusion_support_why",   "Reasons for support",         TRUE,   "reason",    SITING_CAUTION,
-  "uncertain",  "fusion_uncertain_why", "Reasons for uncertainty",     TRUE,   "reason",    SITING_CAUTION,
-  "oppose",     "fusion_oppose_why",    "Reasons for opposition",      TRUE,   "concern",   SITING_CAUTION
+  ~id,          ~variable,              ~label,                        ~gated, ~theme_noun, ~excluded_noun, ~caution,
+  "ask",        "fusion_question",      "Questions for fusion experts", FALSE, "question",  "question",     NA_character_,
+  "support",    "fusion_support_why",   "Reasons for support",         TRUE,   "reason",    "reason",       SITING_CAUTION,
+  "uncertain",  "fusion_uncertain_why", "Reasons for uncertainty",     TRUE,   "reason",    "reason",       SITING_CAUTION,
+  "oppose",     "fusion_oppose_why",    "Reasons for opposition",      TRUE,   "concern",   "concern",      SITING_CAUTION
 )
 
 held_back <- list()
 
 verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
-                                          theme_noun, caution) {
+                                          theme_noun, excluded_noun, caution) {
   ref <- reference |> filter(variable == !!variable)
   contexts <- if (gated) GATE_CONTEXTS else GATE_CONTEXTS[0, ]
 
@@ -478,23 +461,35 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     # The last sentence is why this is written here: it names the one bar list
     # on the public site that is not a population estimate. On the expert page
     # nothing is weighted, so the same sentence would be false.
-    theme_caption = paste0(
-      "Each response carries one theme - the ", theme_noun, " it leads with ",
-      "or dwells on, where it raises more than one. Themes were drafted by ",
-      "reading the whole set, assigned by reading each response, and checked ",
-      "by reading each theme's responses together. Click a theme below to ",
-      "filter the responses to it. Bars are the plain share of responses, ",
-      "unweighted - unlike the word associations and the survey questions ",
-      "elsewhere on this site, which are weighted to the population."
+    # The question as it was put, in quotes, so a reader is looking at the
+    # wording rather than at a paraphrase of it.
+    asked_line = paste0("Respondents were asked: \u201c",
+                        str_squish(ref$question_text), "\u201d"),
+    # What the page below shows, and what a click does. Written here rather
+    # than composed in the engine, which cannot know whether the item has a
+    # chart under it.
+    theme_caption = if (!has_themes) NA else paste0(
+      "The chart below groups responses into common themes. Click any theme ",
+      "to view the original responses, shown exactly as they were submitted."
     ),
     theme_dist = theme_dist,
     # A list so an item can carry more than one caveat, each its own
     # paragraph. auto_unbox would collapse a single one to a bare string.
+    #
+    # The item-level ones - what the theme counts are counts of, what was held
+    # back from the chart, and that every response was read - were taken off
+    # the page on 2026-08-25. The checks behind the last two are untouched and
+    # still stop the build: an item nobody has read does not publish, a corpus
+    # that has grown since it was read does not publish, and a withhold naming
+    # a response the corpus does not contain does not publish.
+    # Its own key rather than a caution: the page shows it behind a
+    # disclosure, so a reader who wants the counting rule can have it and one
+    # who does not is not made to read past it.
+    theme_note = if (!has_themes) NA else
+      theme_note(answered, nrow(rows), theme_noun, excluded_noun,
+                 "respondent"),
     cautions = as.list(c(caution, routing_caution(withheld),
-                         unpublished_caution(unpublished, has_themes),
-                         small_group_caution(dropped_groups),
-                         review_caution(seen$reviewed, nrow(held_content),
-                                        seen$reviewed_on, HELD_WHY))) |>
+                         small_group_caution(dropped_groups))) |>
       discard(is.na),
     n = nrow(rows),
     answered = answered,

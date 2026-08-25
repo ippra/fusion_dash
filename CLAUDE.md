@@ -823,6 +823,30 @@ to the predicted-words caption**, which had never carried one: the intro was
 the only place it was said, and the count of what was read has to sit with the
 thing it was read from.
 
+The caption over an item is two lines — **`asked_line`**, the question in
+quotes so a reader sees the wording rather than a paraphrase, and
+**`theme_caption`**, what the chart groups and what a click does — followed by
+**`theme_note`** behind a *Note* disclosure. Both lines and the note are
+written by the script that built the item; the engine composed them from parts
+and could not know whether it was addressing respondents or experts, or
+whether the item had a chart under it at all.
+
+**The note is built from the counts, not written**: how many answered, how
+many were excluded for not answering, and the one-theme-per-response rule that
+makes the bars counts of people rather than counts of things said. It takes
+the item's own nouns — a question, a reason, a concern — and drops the
+"excluded" sentence where nothing was. `excluded_noun` is a second noun for
+the one slot the theme noun does not fit: "did not include a substantive
+misunderstanding" is why the expert items say "answer" there.
+
+**What used to sit on the page and no longer does**: the count of what was
+held back from the chart, and the statement that every response was read
+before publication. Removed 2026-08-25 at Joe's request. **The checks behind
+them are untouched** and still stop the build — an item nobody has read does
+not publish, a corpus that has grown since it was read does not publish, and a
+withhold naming a response the corpus does not contain does not publish. What
+went is the disclosure, not the property.
+
 - **The captions are written by the script that did the counting.** Both
   surveys have a words question and they are not the same question — the
   public gave associations and rated how each felt, experts predicted what the
