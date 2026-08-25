@@ -228,7 +228,15 @@ split-sample one.
 ## Splits are declared once## Splits are declared once
 
 The roster lives in the `splits` tribble at the top of `02`, and reaches the
-front end through `splits.json` → `config.groupings`. wxdash declares its
+front end through `splits.json` → `config.groupings`.
+
+**`category` groups the menu** into Demographics, Politics & Values, Science &
+Energy and Survey. Sixteen options in one flat list is a list a reader scans
+rather than one they read. The engine builds an `<optgroup>` per **consecutive
+run** of one category rather than by lookup, so the roster's order is the
+menu's order, headings included — which also means a category appearing twice
+would render as two headings with the same name, and `06` halts on that. A
+roster whose splits carry no category renders flat; the expert page's five do. wxdash declares its
 thirteen splits four times across two languages and nothing catches a missed
 edit; this project does not repeat that.
 
@@ -239,6 +247,13 @@ Three things in that block are easy to undo:
   not FU26's self-reported `gend` / `race` / `edu` / `income` / `party` items.
   FU25 has no self-reported demographics at all. Switching to the FU26 items
   would drop 2025 from every demographic split without saying so.
+- **`phrase`** reads after "by" in a chart caption — *"the weighted
+  distribution of responses by age group"* — so it is a noun phrase rather
+  than a label, and it is not the label. `Race/Ethnicity` is labelled that and
+  phrased "race and ethnicity"; `AWARE_GROUP` is labelled "Fusion awareness"
+  and phrased "whether they had heard of fusion before". The `dropped` clause
+  deliberately does **not** use it: "reported no whether they had heard of
+  fusion before" is what that costs.
 - **`group_order`** fixes the order of ordinal splits. Without an entry there
   the front end sorts labels alphabetically, which scrambles income, education
   and ideology. A group in the data that is missing from `group_order` stops

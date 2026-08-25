@@ -80,28 +80,39 @@ if (nrow(inconsistent) > 0) {
 # nuclear-support banding, which rests on an item FU26 asked and FU25 did not:
 # a split covering one wave has to say so, or a chart drawn on 1,244 people
 # sits under a caption that counts 2,444.
+# `category` groups the menu. Sixteen options in one flat list is a list a
+# reader scans rather than one they read, and the four headings say what kind
+# of cut each one is. The order here is the order the menu shows, headings
+# included, so re-ordering the menu is re-ordering this block.
+#
+# `phrase` reads after "by" in a chart caption - "the weighted distribution of
+# responses by age group" - so it is a noun phrase, not a label.
 splits <- tribble(
-  ~id,             ~label,                  ~phrase,                     ~source,          ~waves,
-  "All",           "Everyone",              NA_character_,               NA_character_,    "both",
-  "Age",           "Age",                   "age group",                 NA_character_,    "both",
-  "Gender",        "Gender",                "gender",                    NA_character_,    "both",
-  "Race",          "Race and ethnicity",    "race and ethnicity group",  NA_character_,    "both",
-  "Education",     "Education",             "education group",           NA_character_,    "both",
-  "Income",        "Income",                "income group",              NA_character_,    "both",
-  "Region",        "Census region",         "census region",             NA_character_,    "both",
-  "Metro",         "Metropolitan status",   "community type",            NA_character_,    "both",
-  "Party_ID",      "Party identification",  "party group",               NA_character_,    "both",
-  "Vote_2024",     "2024 presidential vote", "vote group",               NA_character_,    "both",
-  "IDEOL_GROUP",   "Ideology",              "ideology group",            "ideol",          "both",
-  "GCC_GROUP",     "Climate change belief", "belief group",              "gcc",            "both",
-  # The four the expert survey asked about that were not already here. They are
-  # the strongest correlates of support in the data, so a reader who has just
-  # been told that on the findings page can now cut every question by them.
-  "NUCLEAR_GROUP", "Views on nuclear power", "view of nuclear power",    "nuclear_support", "fu26",
-  "SCITRUST_GROUP", "Trust in scientists",  "trust group",               "univ_trust",     "both",
-  "AWARE_GROUP",   "Heard of fusion before", "awareness group",          "fusion_know",    "both",
-  "ENVCON_GROUP",  "Environmental concern", "concern group",             "worry_enviro",   "both",
-  "survey_year",   "Survey year",           "survey year's respondents", NA_character_,    "both"
+  ~id,             ~label,        ~category,  ~phrase,                ~source,  ~waves,
+  "All",           "Everyone",    "Demographics", NA_character_,      NA_character_, "both",
+  "Age",           "Age",         "Demographics", "age group",        NA_character_, "both",
+  "Gender",        "Gender",      "Demographics", "gender",           NA_character_, "both",
+  "Race",          "Race/Ethnicity", "Demographics", "race and ethnicity", NA_character_, "both",
+  "Education",     "Education",   "Demographics", "education group",  NA_character_, "both",
+  "Income",        "Income",      "Demographics", "income group",     NA_character_, "both",
+  "Region",        "Census region", "Demographics", "census region",  NA_character_, "both",
+  "Metro",         "Community type", "Demographics", "community type", NA_character_, "both",
+
+  "Party_ID",      "Political party", "Politics & Values", "political party", NA_character_, "both",
+  "Vote_2024",     "2024 presidential vote", "Politics & Values", "2024 presidential vote", NA_character_, "both",
+  "IDEOL_GROUP",   "Ideology",    "Politics & Values", "ideology",    "ideol",  "both",
+  "GCC_GROUP",     "Beliefs about climate change", "Politics & Values", "belief about climate change", "gcc", "both",
+  "ENVCON_GROUP",  "Environmental concern", "Politics & Values", "level of environmental concern", "worry_enviro", "both",
+
+  # Three of the four the expert survey pointed at - they are the strongest
+  # correlates of support in the data, so a reader who has just been told that
+  # on the findings page can cut every question by them. Environmental concern
+  # is the fourth and sits above, with the other values items.
+  "AWARE_GROUP",   "Fusion awareness", "Science & Energy", "whether they had heard of fusion before", "fusion_know", "both",
+  "NUCLEAR_GROUP", "Views on nuclear power", "Science & Energy", "view of nuclear power", "nuclear_support", "fu26",
+  "SCITRUST_GROUP", "Trust in scientists", "Science & Energy", "level of trust in scientists", "univ_trust", "both",
+
+  "survey_year",   "Survey year", "Survey",   "survey year",          NA_character_, "both"
 )
 
 # Two splits are built rather than read. The banding follows the instrument's

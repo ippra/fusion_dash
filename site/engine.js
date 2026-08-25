@@ -445,8 +445,23 @@ function groupingSelect(onChange, initial, labelText = "Select a grouping",
   const wrap = el("div");
   wrap.append(el("label", { class: "field-label", for: "grouping-sel" }, labelText));
   const sel = el("select", { class: "grouping", id: "grouping-sel", onchange: () => onChange(sel.value) });
+  // Grouped into <optgroup> where the roster gives each split a category.
+  // Sixteen options in one flat list is a list a reader scans rather than one
+  // they read. Consecutive runs, not a lookup: the roster's order is the
+  // menu's order, headings included, so a category may not appear twice.
+  let group = null, groupName = null;
   for (const g of roster) {
-    sel.append(el("option", { value: g.id }, g.label));
+    if (g.category) {
+      if (g.category !== groupName) {
+        groupName = g.category;
+        group = el("optgroup", { label: groupName });
+        sel.append(group);
+      }
+      group.append(el("option", { value: g.id }, g.label));
+    } else {
+      groupName = null;
+      sel.append(el("option", { value: g.id }, g.label));
+    }
   }
   sel.value = initial || roster[0].id;
   wrap.append(sel);

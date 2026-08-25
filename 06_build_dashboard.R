@@ -144,10 +144,13 @@ INSTITUTE_LINK <- paste0(
   "Institute for Public Policy Research and Analysis</a>")
 
 groupings_cfg <- splits |>
-  transmute(id, label, phrase = if_else(is.na(phrase), list(NULL), as.list(phrase))) |>
-  pmap(function(id, label, phrase) {
-    if (is.null(phrase) || is.na(phrase)) list(id = id, label = label)
-    else list(id = id, label = label, phrase = phrase)
+  transmute(id, label, category,
+            phrase = if_else(is.na(phrase), list(NULL), as.list(phrase))) |>
+  pmap(function(id, label, category, phrase) {
+    out <- list(id = id, label = label)
+    if (!is.na(category)) out$category <- category
+    if (!is.null(phrase) && !is.na(phrase)) out$phrase <- phrase
+    out
   })
 
 wave_line <- meta$waves |>
@@ -255,8 +258,8 @@ config <- list(
     waves_many = "across the {years} survey waves",
     split_clause = " by {group_phrase}",
     smallest = " The smallest group, {smallest}, has {smallest_n} respondents.",
-    dropped = paste0(" A further {dropped} answered the question but reported ",
-                     "no {group_phrase}, and are not shown."),
+    dropped = paste0(" A further {dropped} answered the question but are not ",
+                     "shown, having no value for this grouping."),
     multi_response = paste0("Respondents could select more than one answer, ",
                             "so each bar is the share who chose that option ",
                             "and the bars do not sum to 100%."),
@@ -495,6 +498,15 @@ config <- list(
                      "supported by the U.S. Department of Energy.")
   )
 )
+
+# The split menu groups consecutive runs of one category, so a category that
+# appears twice in the roster renders as two headings with the same name.
+cats <- splits$category[!is.na(splits$category)]
+if (any(duplicated(rle(cats)$values))) {
+  print(rle(cats)$values)
+  stop("Split categories above are not contiguous in the roster; the menu ",
+       "would show a heading twice.")
+}
 
 # A page opening on a question that does not exist falls back to row 1 without
 # saying so, which reads as the setting having been ignored.
