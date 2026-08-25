@@ -919,13 +919,20 @@ its own: `hero` (eyebrow, headline, lede paragraphs, actions) and `sections`
 (each a `lead`, a `body` of paragraphs, and optional numbered `points`). One
 section is used — why public acceptance matters.
 
-The page is **the headline, the summary's opening paragraph, two calls to
-action, the provenance line and that one section**, and nothing else. An
-Observatory block with the four objectives, a colophon naming the
-investigators, and a directory of the other pages were each written and each
-removed. The directory in particular duplicated the nav bar, which is on every
-page anyway. `directory_lead`, `colophon` and `points` still render if a page
+The page is **the headline, the summary's opening paragraph, three tabs, the
+provenance line and that one section**, and nothing else. An Observatory block
+with the four objectives, a colophon naming the investigators, and a five-row
+directory of the other pages were each written and each removed.
+`directory_lead`, `colophon` and a section's `points` still render if a page
 supplies them; the landing page supplies none of them.
+
+**`hero$actions` is what is here**, in three: the public survey, the expert
+survey, and the comparison. Rendered as a connected row rather than three
+loose buttons, so they read as the whole of the site and not as three
+suggestions, and each carries the line the directory row used to. They stack
+below 900px — three across leaves each about 230px, which wraps its note to
+five lines. The open-response pages are not tabs; they sit in the nav
+dropdowns, which is where the directory was duplicating.
 
 Two things in it are easy to undo:
 

@@ -1178,12 +1178,18 @@ components.fu_landing = async function (page, container) {
   for (const para of (Array.isArray(h.lede) ? h.lede : [h.lede]).filter(Boolean))
     body.append(el("p", { class: "fu-hero-sub" }, para));
   content.append(lead, body);
-  const ctas = el("p", { class: "fu-hero-cta" });
+  // What is here, as three tabs rather than a list of five rows. The two
+  // groups plus the comparison is the whole shape of the site, and each tab
+  // carries the line that told a reader what it holds.
+  const ctas = el("nav", { class: "fu-hero-tabs",
+                           "aria-label": "What is here" });
   for (const c of (h.actions || [])) {
     const target = CONFIG.pages.find(p => p.id === c.page);
-    if (target) ctas.append(el("a", {
-      class: "fu-cta-button" + (c.quiet ? " fu-cta-quiet" : ""),
-      href: "#" + target.id }, c.label));
+    if (!target) continue;
+    const tab = el("a", { class: "fu-tab", href: "#" + target.id });
+    tab.append(el("span", { class: "fu-tab-label" }, c.label));
+    if (c.note) tab.append(el("span", { class: "fu-tab-note" }, c.note));
+    ctas.append(tab);
   }
   if (ctas.children.length) body.append(ctas);
   const metaLine = el("p", { class: "fu-meta-line" });

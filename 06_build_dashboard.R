@@ -324,11 +324,20 @@ config <- list(
                     "failure to understand and address the social challenges ",
                     "to the development and adoption of fusion energy risks ",
                     "delay and increased costs.")),
+           # What is here, in three: the two surveys and the comparison of
+           # them. This replaced a five-row directory that listed the same
+           # destinations as the nav bar sitting directly above it.
            actions = list(
-             list(label = "Where experts and the public diverge",
-                  page = "sme-compare"),
-             list(label = "Browse the survey data", page = "explore",
-                  quiet = TRUE))),
+             list(label = "The public", page = "explore",
+                  note = paste0("What US adults report about fusion energy, ",
+                                "and what they say in their own words.")),
+             list(label = "Experts", page = "sme-survey",
+                  note = paste0("What 153 people who research, build, ",
+                                "regulate and fund fusion energy report.")),
+             list(label = "Public vs. Experts", page = "sme-compare",
+                  note = paste0("Where expert expectations about public ",
+                                "opinion match the survey, and where they ",
+                                "miss.")))),
          sections = list(
            list(lead = "Why public acceptance matters",
                 body = list(
