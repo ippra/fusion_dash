@@ -404,12 +404,11 @@ config <- list(
          index = "data/open/index.json",
          words = "data/open/words.json",
          verbatims = "data/open/verbatims/{id}.json",
-         intro = paste0("What people said in their own words. Words are ",
-                        "counted exactly as they were typed and answers are ",
-                        "shown whole. Where the responses have been read and ",
-                        "coded, each carries one theme you can filter by; ",
-                        "where they have not, no theme is shown rather than ",
-                        "a guessed one."),
+         intro = paste0("Click an option in the menu below to explore ",
+                        "responses written in respondents\u2019 own words. ",
+                        "Responses are shown exactly as they were submitted ",
+                        "and can be filtered by theme where thematic coding ",
+                        "is available."),
          blurb = "Responses written in participants\u2019 own words."),
     # The expert survey reuses the explore component - the question files have
     # the same shape - but reads its own directory and its own caption
