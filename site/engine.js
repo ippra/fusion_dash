@@ -1185,43 +1185,31 @@ components.fu_landing = async function (page, container) {
       class: "fu-cta-button" + (c.quiet ? " fu-cta-quiet" : ""),
       href: "#" + target.id }, c.label));
   }
-  if (ctas.children.length) lead.append(ctas);
+  if (ctas.children.length) body.append(ctas);
   const metaLine = el("p", { class: "fu-meta-line" });
-  lead.append(metaLine);
+  body.append(metaLine);
   hero.append(content);
 
-  // The argument, in steps. Each block is a claim and the sentence that
-  // supports it; the copy is authored in the builder so the engine carries no
-  // prose of its own.
-  const argument = el("section", { class: "fu-argument" });
-  for (const blk of (page.argument || [])) {
-    const card = el("article", { class: "fu-arg" });
-    if (blk.step) card.append(el("span", { class: "fu-arg-step" }, blk.step));
-    card.append(el("h2", {}, blk.heading));
-    for (const para of (Array.isArray(blk.body) ? blk.body : [blk.body]))
-      card.append(el("p", {}, para));
-    argument.append(card);
-  }
-
-  // What the Observatory is and what it is for, in its own terms. Descriptive
-  // rather than declamatory: this is a research programme, and the page should
-  // read like one.
-  const obs = page.observatory;
-  let observatory = null;
-  if (obs) {
-    observatory = el("section", { class: "fu-obs" });
-    observatory.append(el("p", { class: "fu-obs-lead" }, obs.lead));
-    const cols = el("div", { class: "fu-obs-cols" });
-    const prose = el("div", { class: "fu-obs-prose" });
-    for (const para of (Array.isArray(obs.body) ? obs.body : [obs.body]))
+  // The body: a short label and its prose, optionally beside a list. Two
+  // sections use it - why the work is done, and what the Observatory is - and
+  // both are the project's own summary rather than copy written for a site.
+  const sections = [];
+  for (const sec of (page.sections || [])) {
+    const wrap = el("section", { class: "fu-sec" });
+    if (sec.lead) wrap.append(el("p", { class: "fu-sec-lead" }, sec.lead));
+    const points = Array.isArray(sec.points) && sec.points.length;
+    const cols = el("div", { class: "fu-sec-cols" + (points ? "" : " fu-sec-wide") });
+    const prose = el("div", { class: "fu-sec-prose" });
+    for (const para of (Array.isArray(sec.body) ? sec.body : [sec.body]))
       prose.append(el("p", {}, para));
     cols.append(prose);
-    if (Array.isArray(obs.points) && obs.points.length) {
-      const ol = el("ol", { class: "fu-obs-points" });
-      for (const pt of obs.points) ol.append(el("li", {}, pt));
+    if (points) {
+      const ol = el("ol", { class: "fu-sec-points" });
+      for (const pt of sec.points) ol.append(el("li", {}, pt));
       cols.append(ol);
     }
-    observatory.append(cols);
+    wrap.append(cols);
+    sections.push(wrap);
   }
 
   const directory = el("section", { class: "fu-directory-card" });
@@ -1242,7 +1230,7 @@ components.fu_landing = async function (page, container) {
 
   container.append(el("div", { class: "page fu-landing-page" },
     el("div", { class: "content" },
-      ...[hero, argument, observatory, directory, colophon].filter(Boolean))));
+      ...[hero, ...sections, directory, colophon].filter(Boolean))));
 
   // Scale, not findings: what the argument above rests on, so a reader can
   // judge whether it is worth their time before clicking anything.

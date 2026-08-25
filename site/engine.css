@@ -322,20 +322,20 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
   background: none; border: none; box-shadow: none; border-radius: 0;
   padding: 60px 44px 52px;
 }
-.fu-hero .fu-hero-content {
-  max-width: none; padding: 0;
-  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: 16px 56px; align-items: start;
-}
+/* One column, like the sections under it. Two columns balanced only while the
+   headline was a six-line slogan and the lede three paragraphs; with the
+   project's own summary the halves never match, and the whole page reads
+   better as a single left-aligned measure. */
+.fu-hero .fu-hero-content { max-width: none; padding: 0; display: block; }
 .fu-hero .fu-hero-content h1 {
-  font-size: clamp(27px, 3.2vw, 40px); margin: 0;
+  font-size: clamp(27px, 3.2vw, 40px); margin: 0 0 20px; max-width: 26ch;
   /* Balanced so the last line is not one orphaned word under a full one. */
   text-wrap: balance;
 }
-.fu-hero-body { padding-top: 4px; }
-.fu-hero-lead .fu-hero-cta { margin-top: 26px; }
+.fu-hero-body { padding-top: 0; }
+.fu-hero-cta { margin-top: 26px; }
 .fu-hero .fu-hero-sub {
-  font-size: 16.5px; line-height: 1.62; max-width: 52ch; margin: 0 0 16px;
+  font-size: 17px; line-height: 1.65; max-width: 68ch; margin: 0 0 16px;
 }
 .fu-hero .fu-hero-sub:last-of-type { margin-bottom: 26px; }
 .fu-hero-cta { margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 12px; }
@@ -355,51 +355,32 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 }
 .fu-cta-quiet:hover { background: var(--row-hover); filter: none; }
 
-/* The argument. Three steps, numbered, because the reader is being walked
-   from a problem to a measurement to the turn - and a reader who lands
-   mid-page needs to see that it is a sequence. */
-.fu-argument {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0; margin-top: 0;
+/* The body sections. Prose at a readable measure, with an optional numbered
+   list beside it where the source is itself a list. Nothing here is a card:
+   the page is a summary, and boxing its paragraphs made it look like a
+   dashboard with the charts taken out. */
+.fu-sec {
+  padding: 34px 44px 32px;
   border-top: 1px solid var(--panel-border);
-  border-bottom: 1px solid var(--panel-border);
 }
-.fu-arg { padding: 30px 34px 32px; }
-.fu-arg + .fu-arg { border-left: 1px solid var(--panel-border); }
-.fu-arg-step {
-  display: block; font-family: var(--mono, monospace);
-  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--text-muted); margin-bottom: 12px;
-}
-.fu-arg h2 {
-  font-family: var(--font-display); font-size: 19px; line-height: 1.25;
-  font-weight: 700; letter-spacing: -0.01em; margin: 0 0 10px;
-  color: var(--display-ink, var(--text));
-}
-.fu-arg p { margin: 0; font-size: 14.5px; line-height: 1.62;
-            color: var(--text-muted); }
-
-/* The Observatory: what the programme is and what it is for, set as two
-   columns - the description beside its objectives - because a numbered list
-   of four is what the proposal itself uses and it reads faster than prose. */
-.fu-obs { padding: 38px 44px 34px; }
-.fu-obs-lead {
+.fu-sec-lead {
   font-family: var(--mono, monospace); font-size: 11px; letter-spacing: .1em;
   text-transform: uppercase; color: var(--text-muted); margin: 0 0 16px;
 }
-.fu-obs-cols {
+.fu-sec-cols {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px 56px; align-items: start;
 }
-.fu-obs-prose p {
-  margin: 0 0 14px; font-size: 15px; line-height: 1.65; max-width: 56ch;
+.fu-sec-wide { grid-template-columns: minmax(0, 1fr); }
+.fu-sec-prose p {
+  margin: 0 0 14px; font-size: 15.5px; line-height: 1.68; max-width: 68ch;
 }
-.fu-obs-prose p:last-child { margin-bottom: 0; }
-.fu-obs-points {
+.fu-sec-prose p:last-child { margin-bottom: 0; }
+.fu-sec-points {
   margin: 0; padding-left: 20px; display: grid; gap: 10px;
   font-size: 14px; line-height: 1.55; color: var(--text-muted);
 }
-.fu-obs-points li::marker { font-family: var(--mono, monospace);
+.fu-sec-points li::marker { font-family: var(--mono, monospace);
                             color: var(--text-muted); font-size: 12px; }
 
 .fu-dir-lead {
@@ -414,13 +395,8 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 }
 @media (max-width: 900px) {
   .fu-hero { padding: 30px 18px 26px; }
-  .fu-hero .fu-hero-content { grid-template-columns: 1fr; gap: 18px; }
-  .fu-hero-body { padding-top: 0; }
-  .fu-argument { grid-template-columns: 1fr; }
-  .fu-arg + .fu-arg { border-left: none; border-top: 1px solid var(--panel-border); }
-  .fu-arg { padding: 24px 18px 26px; }
-  .fu-obs, .fu-colophon { padding-left: 18px; padding-right: 18px; }
-  .fu-obs-cols { grid-template-columns: 1fr; gap: 18px; }
+  .fu-sec, .fu-colophon { padding-left: 18px; padding-right: 18px; }
+  .fu-sec-cols { grid-template-columns: 1fr; gap: 18px; }
   .fu-dir-lead { padding: 0 18px; }
 }
 }

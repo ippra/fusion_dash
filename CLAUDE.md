@@ -891,50 +891,41 @@ swapping `component` in `06` — the page, its nav position and its landing-page
 blurb stay put. `sme-qual` was the last one; it is now the `open_responses`
 component pointed at the expert survey's files.
 
-## The landing page argues; it shows nothing
+## The landing page is the project summary
 
 `fu_landing` no longer resembles wxdash's `wx_landing` it was forked from.
 **There is no chart and no headline figure**, and both absences are the point:
 
 - A teaser plot invited a reader to judge the whole project on whichever
-  question happened to be on it, and said nothing about why someone who works
-  in fusion should care what the public thinks.
-- A big number on the way in gives away a finding before the reader has any
-  reason to want it. The page's job is to make an expert want the finding; the
-  findings deck's job is to deliver it.
+  question happened to be on it, and said nothing about why the work is being
+  done.
+- A finding on the way in is spent before the reader knows what it bears on.
+  The findings deck delivers those; the landing page says what the programme
+  is.
 
 The only figures on it are provenance — how many adults, how many experts,
-which years — so a reader can judge whether the argument is worth their time.
+which years.
+
+**The words are the proposal's**, from `submission materials/`
+`project_summary.docx`, close to verbatim: fusion's promise and the social
+challenges alongside the technical ones, the fission precedent, the short-term
+and long-term acceptance argument, the multiplier sentence, and the
+Observatory's four objectives as it states them. Two earlier versions were
+written for the site instead and read like marketing. **If this is revised,
+revise it from the summary rather than rewriting it.**
 
 **The copy is authored in `06`**, not in the engine, which carries no prose of
-its own: `hero` (eyebrow, headline, a list of lede paragraphs, actions),
-`argument` (three `step`/`heading`/`body` blocks), `observatory` (lead, body,
-and the four objectives), `directory_lead` and `colophon`.
-
-**It is the proposal's language, not copy written for a website.** The source
-is `project_summary.docx` from the submission materials, and the register is
-the one the project already uses to describe itself: fusion's promise, the
-social challenges alongside the technical ones, and the fission precedent —
-*public risk perceptions combined with distrust of developers, operators and
-regulators can undercut the potential of a technology*. An earlier version
-argued the same points in a pitch voice and read like marketing; if this copy
-is revised, revise it from the project's own writing.
-
-The three argument blocks are a sequence: **why it is measured** (acceptance
-sustains investment in the short term and siting in the long term),
-**what is measured** (two surveys, the same questions wherever possible), and
-**what the expert survey adds** (the prediction items, and what a miss is
-evidence for). The third is the one that says why this survey is worth a
-fusion researcher's attention, and it says it by describing the design rather
-than by promising a surprise.
+its own: `hero` (eyebrow, headline, lede paragraphs, actions), `sections`
+(each a `lead`, a `body` of paragraphs, and optional numbered `points`),
+`directory_lead` and `colophon`. Two sections are used — why public acceptance
+matters, and what the Observatory is.
 
 Two things in it are easy to undo:
 
-- **The hero is two columns** — headline, actions and provenance on the left,
-  the case on the right. One column left half the band empty once the chart
-  came out. The actions sit under the headline rather than under the prose
-  because a descriptive headline is three lines rather than six, and the two
-  columns have to end at roughly the same place.
+- **It is one left-aligned column.** Two columns balanced only while the
+  headline was a six-line slogan and the lede ran three paragraphs; against
+  the project's own summary the halves never match, and the page was rebuilt
+  twice chasing that before the column won.
 - **`home` carries no `blurb`, and it is absent rather than `NULL`.** `list()`
   keeps a `NULL` element, `jsonlite` writes it as `{}`, and `{}` is truthy —
   the landing page listed itself in its own directory with "[object Object]"
