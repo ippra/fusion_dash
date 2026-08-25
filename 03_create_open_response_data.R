@@ -304,12 +304,16 @@ ASK_CAUTION <- paste0(
   "under the question it leads with, so these are counts of people rather ",
   "than counts of questions."
 )
+# The order here is the order the Show menu lists them in, after the word
+# associations the front end puts first. Support before uncertainty before
+# opposition rather than the routing's own order: the menu is read top to
+# bottom and the three why-items are one scale, so they run down it.
 verbatim_items <- tribble(
-  ~id,          ~variable,              ~label,                          ~gated, ~theme_noun, ~caution,
-  "oppose",     "fusion_oppose_why",    "Why people oppose",             TRUE,   "concern",   SITING_CAUTION,
-  "support",    "fusion_support_why",   "Why people support",            TRUE,   "reason",    SITING_CAUTION,
-  "uncertain",  "fusion_uncertain_why", "Why people are unsure",         TRUE,   "reason",    SITING_CAUTION,
-  "ask",        "fusion_question",      "Questions for a fusion expert", FALSE,  "question",  ASK_CAUTION
+  ~id,          ~variable,              ~label,                        ~gated, ~theme_noun, ~caution,
+  "ask",        "fusion_question",      "Questions for fusion experts", FALSE, "question",  ASK_CAUTION,
+  "support",    "fusion_support_why",   "Reasons for support",         TRUE,   "reason",    SITING_CAUTION,
+  "uncertain",  "fusion_uncertain_why", "Reasons for uncertainty",     TRUE,   "reason",    SITING_CAUTION,
+  "oppose",     "fusion_oppose_why",    "Reasons for opposition",      TRUE,   "concern",   SITING_CAUTION
 )
 
 held_back <- list()
