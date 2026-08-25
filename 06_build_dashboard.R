@@ -384,11 +384,9 @@ config <- list(
          nav_group = "Public Perspectives",
          label = "Survey Results",
          questions = "data/questions.json", default_grouping = "All",
-         intro = paste0("Click a question in the table below to see the ",
-                        "weighted distribution of responses, split by the ",
-                        "group you choose. Search matches question wording, ",
-                        "the shared stem above a battery of items, the ",
-                        "variable name and the topic tags."),
+         intro = paste0("Click a question in the table below to view the ",
+                        "weighted distribution of responses by the group you ",
+                        "select."),
          # x_label titles the category axis and y_label the value axis, which
          # the horizontal layout swaps on screen but not in meaning.
          chart = list(x_label = "Response", y_label = "Respondents (%)"),
