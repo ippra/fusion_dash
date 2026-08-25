@@ -114,6 +114,25 @@ small_group_caution <- function(dropped) {
   )
 }
 
+# Reported, never silent - the same rule the identifier screen and the content
+# withhold follow. A response held back from the page is one the reader will
+# never know existed unless the number is here, and the wording says which kind
+# it was rather than lumping a non-answer together with a real one.
+unpublished_caution <- function(unpublished, has_themes) {
+  if (!has_themes || nrow(unpublished) == 0) return(NULL)
+  # The theme's own label, quoted rather than reworded into a clause: the
+  # non-answers and `ask`'s statements are held back for different reasons,
+  # and one sentence covering both would have to overstate one of them.
+  parts <- paste0(format(unpublished$n, big.mark = ","), " coded “",
+                  unpublished$theme, "”")
+  paste0(
+    "Read and coded, but not shown below: ",
+    paste(parts, collapse = ", and "),
+    ". The chart and the table cover the remaining ",
+    format(unpublished$total[1], big.mark = ","), "."
+  )
+}
+
 # The count of what was withheld is stated beside every item, the same rule the
 # identifier screen follows: a response the reader will never know existed
 # unless the number is there. `why` names what the withholding was for, in two
@@ -135,4 +154,22 @@ review_caution <- function(reviewed, n_held, reviewed_on, why) {
       paste0(n_held, " were withheld, ", why[["many"]], ".")
     }
   )
+}
+
+# `published` marks a coded theme that the page does not draw. Declared in the
+# label sheet rather than filtered in code, because whether a response answered
+# the question is a judgement someone may want to overturn and they can only
+# overturn what they can see. Checked on load: a sheet without the column would
+# silently draw everything.
+check_published_column <- function(roster, path) {
+  if (!"published" %in% names(roster)) {
+    stop(basename(path), " has no `published` column. Every theme must say ",
+         "whether the page draws it.")
+  }
+  bad <- roster |> dplyr::filter(!published %in% c("yes", "no"))
+  if (nrow(bad) > 0) {
+    print(bad)
+    stop("`published` must be yes or no for every theme in ", basename(path))
+  }
+  invisible(roster)
 }

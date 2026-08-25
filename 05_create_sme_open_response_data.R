@@ -48,7 +48,8 @@ stoplist <- read_csv(word_stoplist, col_types = cols(.default = col_character())
 theme_rows <- read_csv(sme_themes, col_types = cols(.default = col_character()))
 theme_roster <- read_csv(sme_theme_labels,
                          col_types = cols(theme_order = col_integer(),
-                                          .default = col_character()))
+                                          .default = col_character())) |>
+  check_published_column(sme_theme_labels)
 review <- read_csv(sme_verbatim_review,
                    col_types = cols(reviewed = col_integer(),
                                     reviewed_on = col_date(),
@@ -216,6 +217,7 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) 
 
   item_themes <- theme_rows |> filter(item == id)
   has_themes <- nrow(item_themes) > 0
+  unpublished <- tibble(theme = character(), n = integer(), total = integer())
   if (has_themes) {
     rows <- rows |> left_join(item_themes |> select(case_id, theme),
                               by = "case_id")
@@ -229,11 +231,18 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) 
       stop("'", id, "' uses themes missing from sme_theme_labels.csv: ",
            paste(unknown, collapse = ", "))
     rows <- rows |>
-      left_join(roster |> select(theme, label), by = "theme") |>
+      left_join(roster |> select(theme, label, published), by = "theme") |>
       mutate(theme = label) |>
       select(-label)
-    theme_order <- roster$label
+    # After the review check and the content withhold, so `reviewed` still
+    # means the whole corpus was read - these were read and coded, they are
+    # simply not drawn.
+    unpublished <- rows |> filter(published == "no") |> count(theme, name = "n")
+    rows <- rows |> filter(published == "yes") |> select(-published)
+    unpublished <- unpublished |> mutate(total = nrow(rows))
+    theme_order <- roster |> filter(published == "yes") |> pull(label)
   }
+  answered <- nrow(rows) + sum(unpublished$n)
 
   candidate_splits <- list(
     list(id = "all", label = "Everyone", key = "all", groups = "Everyone"),
@@ -278,16 +287,19 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) 
       "having relevant expertise is not a sample of any population."
     ),
     cautions = as.list(c(
+      unpublished_caution(unpublished, has_themes),
       small_group_caution(dropped_groups),
       review_caution(seen$reviewed, nrow(held_content), seen$reviewed_on,
                      HELD_WHY)
     )) |> discard(is.na),
     n = nrow(rows),
+    answered = answered,
     # case_id identifies a person and has no business in a published file.
     rows = rows |> select(-case_id, -all, -exp)
   ), file.path("verbatims", paste0(id, ".json")))
 
   list(id = id, label = label, n = nrow(rows),
+       not_shown = sum(unpublished$n),
        question = ref$question_text,
        reviewed = seen$reviewed,
        held_content = nrow(held_content))
@@ -302,7 +314,8 @@ wjson(list(
 for (v in verbatims_cfg) {
   message("  ", v$label, ": ", v$n, " responses")
   message("      read for content: ", v$reviewed, "; withheld by that ",
-          "reading: ", v$held_content)
+          "reading: ", v$held_content,
+          "; coded but not drawn: ", v$not_shown)
 }
 
 if (length(held_back) > 0) {

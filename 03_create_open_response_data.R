@@ -68,16 +68,8 @@ themes <- read_csv(themes_reference, col_types = cols(
 # whether they reach the page.
 theme_roster <- read_csv(theme_labels, col_types = cols(
   item = col_character(), theme = col_character(), label = col_character(),
-  theme_order = col_integer(), published = col_character()))
-if (!"published" %in% names(theme_roster)) {
-  stop("theme_labels.csv has no `published` column. Every theme must say ",
-       "whether the page draws it.")
-}
-bad <- theme_roster |> filter(!published %in% c("yes", "no"))
-if (nrow(bad) > 0) {
-  print(bad)
-  stop("`published` must be yes or no for every theme.")
-}
+  theme_order = col_integer(), published = col_character())) |>
+  check_published_column(theme_labels)
 
 unlabelled <- themes |> anti_join(theme_roster, by = c("item", "theme"))
 if (nrow(unlabelled) > 0) {
@@ -303,25 +295,6 @@ HELD_WHY <- c(
   one = "for content directed at a group of people rather than at fusion energy",
   many = "for content directed at groups of people rather than at fusion energy"
 )
-
-# Reported, never silent - the same rule the identifier screen and the content
-# withhold follow. A response held back from the page is one the reader will
-# never know existed unless the number is here, and the wording says which kind
-# it was rather than lumping a non-answer together with a real one.
-unpublished_caution <- function(unpublished, has_themes) {
-  if (!has_themes || nrow(unpublished) == 0) return(NULL)
-  # The theme's own label, quoted rather than reworded into a clause: the
-  # non-answers and `ask`'s statements are held back for different reasons,
-  # and one sentence covering both would have to overstate one of them.
-  parts <- paste0(format(unpublished$n, big.mark = ","), " coded “",
-                  unpublished$theme, "”")
-  paste0(
-    "Read and coded, but not shown below: ",
-    paste(parts, collapse = ", and "),
-    ". The chart and the table cover the remaining ",
-    format(unpublished$total[1], big.mark = ","), "."
-  )
-}
 
 # Many people asked several questions at once - one wrote five, numbered. The
 # coding records the one they lead with, so a reader ranking the themes is

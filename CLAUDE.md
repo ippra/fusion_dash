@@ -472,7 +472,8 @@ shown.
 on `case_id`; `theme_labels.csv` holds the roster, the order the filter menu
 reads in, and whether the page draws each theme at all. Coded so far:
 `oppose` (183 responses read, 174 drawn), `support` (377 / 317), `uncertain`
-(1,630 / 1,481) and `ask` (1,170 / 1,083). An item with no coding gets no
+(1,630 / 1,481) and `ask` (1,170 / 1,083); on the expert side
+`misunderstood` (122 / 122) and `change` (115 / 113). An item with no coding gets no
 theme column; nothing is guessed.
 
 **`published` is what makes those two numbers differ**, and it is a column in
@@ -490,6 +491,12 @@ overturn what they can see. Five themes are marked `no`:
   questions for a fusion expert and these are not questions, not because they
   are unwelcome — the line the content review draws is elsewhere and stays
   there. Putting them back is one cell in the sheet.
+
+The expert sheet carries the same column, with *No answer given* on `change`
+marked `no` — one response, "I don't know". `check_published_column()` and
+`unpublished_caution()` live in `00_open_responses.R` so both pages hold the
+same line, and a label sheet without the column stops the build rather than
+quietly drawing everything.
 
 The drop happens **after** the review check and the content withhold, so
 `reviewed` still means the whole corpus was read. The count is printed beside
