@@ -3,6 +3,7 @@ library(srvyr)
 library(jsonlite)
 
 source(here::here("00_paths.R"))
+source(here::here("00_rcode.R"))
 
 # Question Data ----------------------------------------------------------------
 # The statistics half of the pipeline. Reads the two weighted survey files and
@@ -442,28 +443,6 @@ order_rows <- function(out, split_id, resp_order) {
 #
 # Checked against this script's own output below - see `verify_r_code`.
 
-r_quote <- function(x) paste0('"', gsub('([\\\\"])', '\\\\\\1', x), '"')
-
-# c("a", "b", ...) wrapped to fit. Breaks between elements only: strwrap()
-# breaks at any whitespace, which puts a newline inside a response label and
-# quietly changes the string. The verification below caught that.
-r_vec <- function(x, indent) {
-  pad <- strrep(" ", indent)
-  parts <- paste0(r_quote(x), c(rep(",", length(x) - 1), ""))
-  lines <- character(0)
-  cur <- ""
-  for (piece in parts) {
-    if (!nzchar(cur)) {
-      cur <- piece
-    } else if (indent + nchar(cur) + 1 + nchar(piece) > 78) {
-      lines <- c(lines, cur)
-      cur <- piece
-    } else {
-      cur <- paste(cur, piece)
-    }
-  }
-  paste0("c(", paste(c(lines, cur), collapse = paste0("\n", pad)), ")")
-}
 
 # The two derived splits, written out where they are used. A reader with this
 # script and the CSV has everything; a reader sent to look up derive_groups()
@@ -506,14 +485,6 @@ r_derive <- list(
     "      ),")
 )
 
-# A question stem runs to 539 characters in this survey. One string literal
-# that long is a line nobody can read, so it is broken into fragments.
-r_title <- function(title) {
-  if (nchar(title) <= 60) return(r_quote(title))
-  parts <- strwrap(title, 60)
-  paste0("paste(\n      ",
-         paste(r_quote(parts), collapse = ",\n      "), "\n    )")
-}
 
 r_script <- function(title, intro, asked, options, split, group_order = NULL,
                      items = NULL, multi = FALSE, arm_label = NULL,
@@ -652,58 +623,7 @@ wjson <- function(x, path, pretty = FALSE) {
              na = "null", digits = NA)
 }
 
-# Does the generated script actually rebuild the chart? Checked, not asserted.
-# Each script is run against the same CSVs a reader would download and its
-# estimates compared with the ones written to the question file. Publishing
-# code that does not reproduce the plot would be worse than publishing none,
-# and a generator is exactly the kind of thing that goes subtly wrong.
-#
-# read_csv is shimmed to a cache in the evaluation environment, so the build
-# does not read the two files a thousand times. Same arguments, same result.
-r_code_cache <- new.env(parent = emptyenv())
-cached_read_csv <- function(file, ...) {
-  key <- file.path(data_dir, file)
-  if (is.null(r_code_cache[[key]])) {
-    r_code_cache[[key]] <- readr::read_csv(key, ...)
-  }
-  r_code_cache[[key]]
-}
 
-r_code_checks <- 0L
-r_code_scripts <- 0L
-
-verify_r_code <- function(script, expect, options, label) {
-  e <- new.env(parent = globalenv())
-  assign("read_csv", cached_read_csv, envir = e)
-  ok <- try(suppressWarnings(suppressMessages(
-    eval(parse(text = script), envir = e))), silent = TRUE)
-  if (inherits(ok, "try-error")) {
-    cat(script)
-    stop("The generated R for ", label, " does not run: ",
-         conditionMessage(attr(ok, "condition")))
-  }
-
-  # The script labels its responses, so the published codes are labelled to
-  # match rather than the other way round: comparing on the codes would not
-  # notice a levels/labels pairing that had drifted.
-  got <- get("est", envir = e) |> as_tibble()
-  gcol <- setdiff(names(got), c("resp", "p", "p_low", "p_upp", "p_se"))
-  got <- got |>
-    transmute(group = if (length(gcol) == 1) as.character(.data[[gcol]])
-                      else "All",
-              resp = as.character(resp), gen = round(p, 2))
-  want <- expect |>
-    left_join(options, by = c("resp" = "value")) |>
-    transmute(group = as.character(group), resp = label, pub = round(p, 2))
-
-  cmp <- full_join(want, got, by = c("group", "resp"))
-  if (any(is.na(cmp$pub)) || any(is.na(cmp$gen)) ||
-      max(abs(cmp$pub - cmp$gen)) > 0.011) {
-    print(cmp |> filter(is.na(pub) | is.na(gen) | abs(pub - gen) > 0.011))
-    stop("The generated R for ", label, " does not reproduce its chart.")
-  }
-  r_code_checks <<- r_code_checks + 1L
-}
 
 # Which (arm, split) pairs get run. Every question is checked, and within it
 # every shape the generator can produce - no grouping, a plain column, a
@@ -721,6 +641,8 @@ verify_pairs <- function(arm_ids, split_ids) {
   c(map(shapes, ~list(arm = arm_ids[1], split = .x)),
     map(arm_ids[-1], ~list(arm = .x, split = "All")))
 }
+
+rcode <- new_rcode_tally()
 
 dropped_report <- list()
 boundary_report <- list()
@@ -897,13 +819,13 @@ for (i in seq_len(nrow(questions))) {
           arms_cfg$label[match(ak, arms_cfg$arm_id)])
     }
     r_code[[ak]] <- per_split
-    r_code_scripts <- r_code_scripts + length(per_split)
+    rcode$scripts <- rcode$scripts + length(per_split)
   }
 
   for (pair in verify_pairs(arm_keys, names(arm_splits[[1]]))) {
     verify_r_code(r_code[[pair$arm]][[pair$split]],
                   arm_splits[[pair$arm]][[pair$split]], options,
-                  paste(q$variable, pair$arm, pair$split))
+                  paste(q$variable, pair$arm, pair$split), rcode)
   }
 
   wjson(list(
@@ -1090,10 +1012,10 @@ for (b in batteries) {
              split_label = splits$label[match(sp, splits$id)],
              split_waves = splits$waves[match(sp, splits$id)])))
 
-  r_code_scripts <- r_code_scripts + length(r_code[["all"]])
+  rcode$scripts <- rcode$scripts + length(r_code[["all"]])
   for (pair in verify_pairs("all", names(splits_out))) {
     verify_r_code(r_code[["all"]][[pair$split]], splits_out[[pair$split]],
-                  options, paste(bid, pair$split))
+                  options, paste(bid, pair$split), rcode)
   }
 
   wjson(list(
@@ -1155,8 +1077,8 @@ wjson(list(
 message("Written to ", out)
 message("  ", nrow(catalog), " questions, ",
         sum(map_int(waves_data$raw, nrow)), " respondents")
-message("  reproduction scripts: ", r_code_scripts, " written, ",
-        r_code_checks, " run and checked against their own chart")
+message("  reproduction scripts: ", rcode$scripts, " written, ",
+        rcode$checks, " run and checked against their own chart")
 
 # Respondents lost to a missing grouping value, reported rather than absorbed:
 # a split whose caption says 2,444 answered while the bars rest on 1,900 is the

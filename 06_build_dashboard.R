@@ -104,6 +104,14 @@ if (!file.exists(file.path(sme_in, "questions.json"))) {
 dir.create(file.path(out, "data", "sme", "q"), recursive = TRUE)
 invisible(file.copy(list.files(file.path(sme_in, "q"), full.names = TRUE),
                     file.path(out, "data", "sme", "q")))
+# The expert survey's reproduction scripts, carried the same way and kept in
+# their own directory: 04 wrote them, and a page reads the ones belonging to
+# the survey it is showing.
+dir.create(file.path(out, "data", "sme", "rcode"), recursive = TRUE,
+           showWarnings = FALSE)
+invisible(file.copy(list.files(file.path(sme_in, "rcode"), pattern = "\\.json$",
+                               full.names = TRUE),
+                    file.path(out, "data", "sme", "rcode")))
 invisible(file.copy(
   list.files(sme_in, pattern = "\\.json$", full.names = TRUE),
   file.path(out, "data", "sme")))
@@ -333,6 +341,7 @@ config <- list(
          label = "Explore Survey Data",
          questions = "data/sme/questions.json",
          question_dir = "data/sme/q",
+         rcode_dir = "data/sme/rcode",
          groupings = sme_groupings,
          caption = sme_caption,
          default_grouping = "All",

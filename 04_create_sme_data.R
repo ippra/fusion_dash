@@ -3,6 +3,7 @@ library(srvyr)
 library(jsonlite)
 
 source(here::here("00_paths.R"))
+source(here::here("00_rcode.R"))
 
 # SME Question Data ------------------------------------------------------------
 # The subject-matter-expert survey: 153 people identified as having relevant
@@ -30,6 +31,7 @@ source(here::here("00_paths.R"))
 out <- file.path(outputs, "04_sme_data")
 unlink(out, recursive = TRUE)
 dir.create(file.path(out, "q"), recursive = TRUE)
+dir.create(file.path(out, "rcode"), recursive = TRUE)
 
 reference <- read_csv(sme_reference, guess_max = Inf, show_col_types = FALSE)
 public_reference <- read_csv(variable_reference, guess_max = Inf,
@@ -184,6 +186,160 @@ summarise_group <- function(frame, split_id, base_n) {
        smallest_n = smallest$n, dropped = base_n - nrow(have))
 }
 
+# The R that rebuilds each chart -------------------------------------------------
+# The same promise the public page makes: every chart carries a script that
+# rebuilds *that* plot from the released CSV and nothing else, and the script
+# that computed the estimate is the one that writes it. Three rules, and they
+# are the point of it:
+#
+#   - no helper functions - every step is a call the reader can run on its own;
+#   - column names written where they are used, never through .data[[ ]];
+#   - only the columns this plot needs.
+#
+# One script per (question, split). There are no arms here: the expert survey
+# split-sampled nothing.
+#
+# Checked against this script's own output below - see `verify_r_code`.
+
+rcode <- new_rcode_tally()
+
+# The one derived split, written out where it is used. A reader with this
+# script and the CSV has everything; a reader sent to look up how the six
+# bands became three does not.
+R_EXP_GROUP <- paste0(
+  "    EXP_GROUP = case_when(\n",
+  "      exp_years %in% c(\"1\", \"2\") ~ \"Under 10 years\",\n",
+  "      exp_years %in% c(\"3\", \"4\") ~ \"10 to 19 years\",\n",
+  "      exp_years %in% c(\"5\", \"6\") ~ \"20 years or more\"\n",
+  "    ),")
+
+# `kind` is the question file's own value_kind, so the script estimates what
+# the chart shows: a distribution, one proportion per item, or a mean.
+sme_r_script <- function(title, intro, asked_if, kind, options, split,
+                         multi = FALSE, variable = NULL) {
+  grp <- if (split == "All") NULL else split
+  items <- options$value
+
+  cols <- c("    weight = 1")
+  if (!is.null(grp)) cols <- c(cols, sub(",$", "", R_EXP_GROUP))
+  cols <- c(cols, if (kind == "share" && !multi)
+                    paste0("    resp = ", variable)
+                  else paste0("    ", items, " = ", items))
+
+  # What each estimator drops. A select-all battery drops nobody: its items are
+  # 0/1 for everyone shown it, and the denominator is the whole group - which
+  # is why the bars do not sum to 100. A ranking or an allocation drops the
+  # people who left that item blank, one item at a time.
+  drops <- c(if (kind == "share" && !multi) "!is.na(resp)",
+             if (!is.null(grp)) "!is.na(EXP_GROUP)")
+
+  est <- if (kind == "share" && !multi) paste0(
+      "est <- d |>\n",
+      "  as_survey_design(weights = weight) |>\n",
+      "  group_by(", paste(c(grp, "resp"), collapse = ", "), ") |>\n",
+      "  summarise(p = survey_prop(proportion = TRUE, vartype = \"ci\"),\n",
+      "            .groups = \"drop\")\n")
+    else if (multi) paste0(
+      "# Each item is its own proportion - the share of the experts shown the\n",
+      "# battery who ticked that box - so the bars do not sum to 100. Where the\n",
+      "# battery capped the picks, they sum to about the cap instead.\n",
+      "design <- as_survey_design(d, weights = weight)\n\n",
+      "est <- bind_rows(\n",
+      paste(paste0(
+        "  design |>\n",
+        if (is.null(grp)) "" else paste0("    group_by(", grp, ") |>\n"),
+        "    summarise(p = survey_mean(", items, " == \"1\",\n",
+        "                              proportion = TRUE, vartype = \"ci\")) |>\n",
+        "    mutate(resp = ", r_quote(items), ")"), collapse = ",\n"),
+      "\n)\n")
+    else paste0(
+      "# A mean, not a share, so the interval is a normal interval on the mean\n",
+      "# rather than the logit interval a proportion gets.\n",
+      "design <- as_survey_design(d, weights = weight)\n\n",
+      "est <- bind_rows(\n",
+      paste(paste0(
+        "  design |>\n",
+        "    filter(!is.na(", items, ")) |>\n",
+        if (is.null(grp)) "" else paste0("    group_by(", grp, ") |>\n"),
+        "    summarise(p = survey_mean(as.numeric(", items, "),\n",
+        "                              vartype = \"ci\")) |>\n",
+        "    mutate(resp = ", r_quote(items), ")"), collapse = ",\n"),
+      "\n)\n")
+
+  # Order. The item order is the one the chart draws - ranked on the Everyone
+  # result, with any residual "Other" last - so the script reproduces the plot
+  # rather than a re-sorted version of it.
+  scale_to_pct <- kind == "share"
+  order_block <- paste0(
+    "est <- est |>\n",
+    "  mutate(\n",
+    if (scale_to_pct)
+      "    p = 100 * p, p_low = 100 * p_low, p_upp = 100 * p_upp,\n" else "",
+    "    resp = factor(\n",
+    "      resp,\n",
+    "      levels = ", r_vec(options$value, 17), ",\n",
+    "      labels = ", r_vec(options$label, 17), "\n",
+    "    )",
+    if (is.null(grp)) "" else paste0(",\n    EXP_GROUP = factor(\n",
+      "      EXP_GROUP,\n      levels = ", r_vec(EXP_GROUPS_R, 17), "\n    )"),
+    "\n  )\n")
+
+  x_lab <- if (kind == "mean_rank") "Mean placing (1 = highest)"
+           else if (kind == "mean_pct") "Mean percentage given"
+           else if (multi) "Share of experts who picked it (%)"
+           else "Share of experts (%)"
+
+  fill <- if (is.null(grp)) "" else ", fill = EXP_GROUP"
+  dodge <- if (is.null(grp)) "" else
+    "\n                position = position_dodge2(reverse = TRUE),"
+  plot <- paste0(
+    "ggplot(est, aes(x = p, y = fct_rev(resp)", fill, ")) +\n",
+    "  geom_col(", if (is.null(grp)) "" else
+      "position = position_dodge2(reverse = TRUE), ", "width = 0.8) +\n",
+    "  geom_errorbar(aes(xmin = p_low, xmax = p_upp),", dodge, "\n",
+    "                width = 0.2, linewidth = 0.3) +\n",
+    "  labs(\n",
+    "    title = str_wrap(", r_title(title), ", 70),\n",
+    "    x = ", r_quote(x_lab), ",\n",
+    "    y = NULL",
+    if (is.null(grp)) "" else ",\n    fill = \"Years in fusion work\"", "\n",
+    "  ) +\n",
+    "  theme_minimal()\n")
+
+  paste0(
+    paste(strwrap(title, 76, prefix = "# "), collapse = "\n"), "\n",
+    if (!is.na(intro) && nzchar(intro))
+      paste0("#\n", paste(strwrap(intro, 76, prefix = "# "), collapse = "\n"),
+             "\n") else "",
+    if (!is.na(asked_if) && nzchar(asked_if))
+      paste0("#\n# Not everyone was asked: ",
+             paste(strwrap(asked_if, 74), collapse = "\n#   "), "\n") else "",
+    "#\n",
+    "# IPPRA Fusion Energy Survey, expert study. Rebuilds this plot from the\n",
+    "# released data file and nothing else.\n",
+    if (split == "All") "" else
+      "# Split by years in fusion work, banded from the `exp_years` column.\n",
+    "#\n",
+    "# These are 153 people identified as having relevant expertise, not a\n",
+    "# sample of any population, and the file carries no weights. The design\n",
+    "# below uses a weight of 1 so the interval and the shape of the result\n",
+    "# match the public side - that is a convenience, not a claim that these\n",
+    "# numbers generalise.\n",
+    "\n",
+    "library(tidyverse)\n",
+    "library(srvyr)\n\n",
+    "# Read as character: response codes are codes, and reading them as\n",
+    "# numbers puts 10 between 1 and 2 on every scale that has one.\n",
+    "d <- read_csv(\"FU26_SME_data.csv\",\n",
+    "              col_types = cols(.default = col_character())) |>\n",
+    "  transmute(\n", paste(cols, collapse = ",\n"), "\n  )",
+    if (length(drops) == 0) "\n\n" else
+      paste0(" |>\n  filter(", paste(drops, collapse = ", "), ")\n\n"),
+    est, "\n", order_block, "\n", plot)
+}
+
+EXP_GROUPS_R <- group_order$EXP_GROUP
+
 # Charts -----------------------------------------------------------------------
 # One per single-response question and one per battery, the same rule the public
 # page follows, minus the background block: sector, field, role, experience and
@@ -226,12 +382,25 @@ for (i in seq_len(nrow(singles))) {
   # the question itself rather than with a response.
   if (kind == "mean_pct") options <- tibble(value = q$variable, label = q$question_text)
 
+  r_code <- map(names(splits_out), function(sp)
+    sme_r_script(q$question_text, q$question_intro, q$asked_if_plain, kind,
+                 options, sp, multi = FALSE, variable = q$variable))
+  names(r_code) <- names(splits_out)
+  rcode$scripts <- rcode$scripts + length(r_code)
+  # Every one of them, not a sample: there are 50 scripts here against the
+  # public side's 1,416, so the coverage argument that justifies sampling
+  # there does not arise.
+  for (sp in names(r_code))
+    verify_r_code(r_code[[sp]], splits_out[[sp]], options,
+                  paste(q$variable, sp), rcode)
+  wjson(list(all = r_code), file.path("rcode", paste0(q$variable, ".json")))
+
   wjson(list(
     id = q$variable, variable = q$variable, topic = q$topic,
     question = q$question_text, intro = q$question_intro,
     response_scale = q$response_scale, experimental = FALSE,
     asked_if = q$asked_if_plain, multi_response = FALSE,
-    value_kind = kind,
+    value_kind = kind, has_r_code = TRUE,
     waves = as.list("2026"), options = options,
     arms = NA, arm_prompt = NA_character_,
     splits = list(all = splits_out), summaries = list(all = summaries_out)
@@ -286,12 +455,22 @@ for (bid in names(batteries)) {
     summaries_out[[s]] <- summarise_group(base, s, nrow(base))
   }
 
+  r_code <- map(names(splits_out), function(sp)
+    sme_r_script(parent$question_text, NA_character_, b$asked_if_plain[1],
+                 kind, options, sp, multi = kind == "share"))
+  names(r_code) <- names(splits_out)
+  rcode$scripts <- rcode$scripts + length(r_code)
+  for (sp in names(r_code))
+    verify_r_code(r_code[[sp]], splits_out[[sp]], options,
+                  paste(bid, sp), rcode)
+  wjson(list(all = r_code), file.path("rcode", paste0(bid, ".json")))
+
   wjson(list(
     id = bid, variable = bid, topic = b$topic[1],
     question = parent$question_text, intro = NA_character_,
     response_scale = b$response_scale[1], experimental = FALSE,
     asked_if = b$asked_if_plain[1], multi_response = kind == "share",
-    value_kind = kind,
+    value_kind = kind, has_r_code = TRUE,
     waves = as.list("2026"), options = options,
     arms = NA, arm_prompt = NA_character_,
     splits = list(all = splits_out), summaries = list(all = summaries_out)
@@ -308,6 +487,8 @@ for (bid in names(batteries)) {
 catalog <- bind_rows(catalog) |> arrange(ref_row)
 wjson(catalog, "questions.json", pretty = TRUE)
 message("SME charts: ", nrow(catalog))
+message("  reproduction scripts: ", rcode$scripts, " written, ",
+        rcode$checks, " run and checked against their own chart")
 # Expert against public --------------------------------------------------------
 # The point of the survey, and the page that carries it is a set of findings in
 # two parts, because the survey asks two different kinds of question and

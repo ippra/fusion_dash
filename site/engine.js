@@ -756,6 +756,10 @@ components.explore = async function (page, container) {
     ? page.groupings : CONFIG.groupings;
   const CAPTION = page.caption || CONFIG.explore_caption;
   const QDIR = page.question_dir || "data/q";
+  // Each survey's reproduction scripts live beside its question files. Hard-
+  // coding the public directory would have the expert page offer a download
+  // that rebuilds someone else's chart.
+  const RDIR = page.rcode_dir || "data/rcode";
   let grouping = urlGrouping(GROUPINGS) || page.default_grouping || "All";
   let showCI = getParam("ci") === "1";   // ?ci=1 deep-links the CI view
   let currentArm = getParam("arm");      // ?arm= deep-links a split-sample arm
@@ -834,7 +838,7 @@ components.explore = async function (page, container) {
   async function rcodeFor(v, g, armKey) {
     let all = rcodeCache.get(v.id);
     if (!all) {
-      all = await fetchJSON(`data/rcode/${v.id}.json`);
+      all = await fetchJSON(`${RDIR}/${v.id}.json`);
       rcodeCache.set(v.id, all);
     }
     return ((all[armKey] || all.all || {})[g]) || "";
