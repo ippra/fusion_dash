@@ -771,15 +771,27 @@ Seven, declared in `06`'s `config$pages`:
 | `home` | `fu_landing` | Home |
 | `explore` | `explore` | Public → Explore Survey Data |
 | `public-qual` | `open_responses` | Public → Explore Open Responses |
-| `sme-survey` | `explore` | SMEs → Explore Survey Data |
-| `sme-compare` | `comparison` | SMEs → Experts vs the Public |
-| `sme-qual` | `open_responses` | SMEs → Explore Qualitative Data |
+| `sme-survey` | `explore` | Experts → Explore Survey Data |
+| `sme-qual` | `open_responses` | Experts → Explore Open Responses |
+| `sme-compare` | `comparison` | Public vs. Experts |
 | `about` | `static_page` | About |
 
+**The two groups offer the same two things, named the same way**, so a reader
+who has learned the Public menu already knows the Experts one. The comparison
+is not one of them: it belongs to neither survey, and burying it under Experts
+made it read as an expert-survey page rather than the thing the two surveys
+are for.
+
 A page carrying `nav_group` folds into a dropdown at the position of its
-group's first member; that machinery came from the fork untouched. The survey
-page keeps the id `explore` rather than taking a name matching its new label,
-because `#explore?q=…` links are already in circulation.
+group's first member, and a page without one renders as a plain link where it
+sits — which is why `sme-compare` had to move *after* `sme-qual` in
+`config$pages` to become a tab of its own rather than splitting the Experts
+menu in two.
+
+**Ids are not labels and do not follow them.** `explore`, `sme-survey`,
+`sme-qual` and `sme-compare` keep the names they were given because
+`#explore?q=…` and `?q=…#sme-compare` links are already in circulation — the
+findings deck's own links are the latter.
 
 There are no `placeholder` pages left. The component says what will go there
 and what is missing, and filling one in means writing its component and

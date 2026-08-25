@@ -283,10 +283,15 @@ config <- list(
            eyebrow = "IPPRA Fusion Energy Survey - University of Oklahoma",
            headline = paste0("What do Americans know, expect and want from ",
                              "fusion energy?"),
+           # The companion expert study is published, so the line no longer
+           # promises it. A landing page saying "to come" about something a
+           # reader can click on in the nav is the kind of small untruth that
+           # makes them doubt the rest.
            sub = paste0("Nationally representative survey data on awareness, ",
                         "risk and benefit perceptions, siting, trust and ",
-                        "regulation - with a companion study of subject ",
-                        "matter experts to come."),
+                        "regulation - beside a companion study of ",
+                        sme_meta$respondents, " fusion experts, and what ",
+                        "each group gets right about the other."),
            cta_label = "Explore the survey questions",
            # The flagship chart: support for building fusion plants, asked in
            # both waves, on a scale a reader takes in at a glance.
@@ -324,7 +329,7 @@ config <- list(
     # templates, because 153 unweighted experts are not a population estimate
     # and the caption must not say they are.
     list(id = "sme-survey", component = "explore",
-         nav_group = "SMEs",
+         nav_group = "Experts",
          label = "Explore Survey Data",
          questions = "data/sme/questions.json",
          question_dir = "data/sme/q",
@@ -345,9 +350,29 @@ config <- list(
                             "intervals."),
          blurb = paste0("What ", sme_meta$respondents, " fusion experts think ",
                         "about timelines, barriers, risks and benefits.")),
+    # The same component the public page uses, pointed at the expert survey's
+    # files. One code path rather than two: what differs between the surveys -
+    # whether there is a valence scale, whether anything is weighted, whether
+    # there is more than one fielding - is carried in the data, not in a second
+    # copy of the component.
+    list(id = "sme-qual", component = "open_responses",
+         nav_group = "Experts",
+         label = "Explore Open Responses",
+         index = "data/sme-open/index.json",
+         words = "data/sme-open/words.json",
+         verbatims = "data/sme-open/verbatims/{id}.json",
+         intro = paste0("What experts said in their own words: what they ",
+                        "think non-experts most misunderstand about fusion, ",
+                        "what they would change about how it is discussed, ",
+                        "and the words they expected the public to reach for. ",
+                        "Every response was read before publication. Nothing ",
+                        "here is weighted: these are counts of the ",
+                        sme_meta$respondents, " experts who answered, not ",
+                        "estimates for any population."),
+         blurb = paste0("What experts think the public misunderstands, and ",
+                        "what they would change about the conversation.")),
     list(id = "sme-compare", component = "comparison",
-         nav_group = "SMEs",
-         label = "Findings: Experts and the Public",
+         label = "Public vs. Experts",
          source = "data/sme/comparisons.json",
          intro = paste0("Slide through the findings below. They come in ",
                         "three parts, and the difference matters. Part one ",
@@ -365,27 +390,6 @@ config <- list(
                         "population."),
          blurb = paste0("Where expert expectations about public opinion match ",
                         "the survey, and where they miss.")),
-    # The same component the public page uses, pointed at the expert survey's
-    # files. One code path rather than two: what differs between the surveys -
-    # whether there is a valence scale, whether anything is weighted, whether
-    # there is more than one fielding - is carried in the data, not in a second
-    # copy of the component.
-    list(id = "sme-qual", component = "open_responses",
-         nav_group = "SMEs",
-         label = "Explore Qualitative Data",
-         index = "data/sme-open/index.json",
-         words = "data/sme-open/words.json",
-         verbatims = "data/sme-open/verbatims/{id}.json",
-         intro = paste0("What experts said in their own words: what they ",
-                        "think non-experts most misunderstand about fusion, ",
-                        "what they would change about how it is discussed, ",
-                        "and the words they expected the public to reach for. ",
-                        "Every response was read before publication. Nothing ",
-                        "here is weighted: these are counts of the ",
-                        sme_meta$respondents, " experts who answered, not ",
-                        "estimates for any population."),
-         blurb = paste0("What experts think the public misunderstands, and ",
-                        "what they would change about the conversation.")),
     list(id = "about", component = "static_page", label = "About",
          html = about_html)
   ),
