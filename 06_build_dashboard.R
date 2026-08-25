@@ -484,14 +484,10 @@ config <- list(
     links_html = paste0(
       "<a href=\"#about\">About &amp; methods</a>",
       "<a href=\"https://ou.edu/ippra\">OU IPPRA</a>",
-      "<a href=\"https://www.llnl.gov\">Lawrence Livermore</a>",
       "<a href=\"mailto:kuhikagupta@ou.edu\">Contact</a>"),
-    funding = paste0("A collaboration between the University of Oklahoma's ",
-                     "Institute for Public Policy Research and Analysis and ",
-                     "Lawrence Livermore National Laboratory, with funding ",
-                     "from the U.S. Department of Energy. Hank Jenkins-Smith ",
-                     "(principal investigator), Kuhika Gupta, Joseph ",
-                     "Ripberger and Maggie Leon-Corwin.")
+    funding = paste0("A project of the University of Oklahoma\u2019s ",
+                     "Institute for Public Policy Research and Analysis, ",
+                     "supported by the U.S. Department of Energy.")
   )
 )
 
