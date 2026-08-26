@@ -961,7 +961,11 @@ add_finding("views_balance", 1L, "The overall balance",
     "just ", b(paste0(rb$experts[2], "%")), " of experts. Consistent with the ",
     "previous findings, the largest differences between experts and the ",
     "public concern the expected benefits of fusion energy rather than its ",
-    "risks."))
+    "risks."),
+  implication = paste0(
+    "When communicating about fusion energy, explain why many experts ",
+    "conclude that the expected benefits outweigh the risks and costs rather ",
+    "than assuming those conclusions are self-evident."))
 
 # ==============================================================================
 # PART TWO. Experts asked to predict what the public said.
