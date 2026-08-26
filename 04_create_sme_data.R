@@ -980,8 +980,7 @@ sup$guess <- c(round(mean(as.numeric(d$fusion_pub_opp), na.rm = TRUE)),
                round(mean(as.numeric(d$fusion_pub_mid), na.rm = TRUE)),
                round(mean(as.numeric(d$fusion_pub_sup), na.rm = TRUE)))
 add_finding("guess_support", 2L, "Support",
-  paste0("Experts underestimate public support by ",
-         sup$publics[3] - sup$guess[3], " points."),
+  "Experts underestimate public support for fusion energy.",
   paste0("Asked to split a hundred people into opposed, neither and ",
          "supportive, experts put ", sup$guess[3],
          " in the supportive column. The real figure is ", sup$publics[3],
@@ -990,8 +989,8 @@ add_finding("guess_support", 2L, "Support",
          " - so the error is not that they think the public is hostile. It ",
          "is that they expect it to be undecided. The people experts placed ",
          "on the fence are, in fact, already in favour."),
-  list(stat(paste0(sup$guess[3], "%"), "experts' guess"),
-       stat(paste0(sup$publics[3], "%"), "the public, actually")),
+  list(stat(paste0(sup$guess[3], "%"), "experts\u2019 estimate of public support"),
+       stat(paste0(sup$publics[3], "%"), "the public who actually support it")),
   compare_block(c("Experts' guess", "Actually"),
                 pmap(list(sup$label, sup$guess, sup$publics), crow)),
   paste0("The expert figures are the mean of what ",
@@ -1000,10 +999,13 @@ add_finding("guess_support", 2L, "Support",
          "collapsed here to the same three bands."),
   list(link("See public support", "explore", "new_fusion"),
        link("See the expert guesses", "sme-survey", "fusion_pub_sup")),
+  # Two rows here, unlike part one: these genuinely are two different
+  # questions, one answered and one estimated.
   questions = asked(
     qq("The public was asked", pub_q("new_fusion")),
     qq("Experts were asked", sme_q("fusion_pub_sup"),
-       highlight = "What percentage of respondents do you think")))
+       highlight = "What percentage of respondents do you think"),
+    lead = "The questions"))
 
 # 5. Awareness --------------------------------------------------------------------
 heard <- pub_pct("fusion_know", "1")
