@@ -962,9 +962,10 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
            "questions differed only in whether they referred to risks, ",
            "costs, or benefits.")
   }),
-  list(link("See the public on risk", "explore", "fusion_risk"),
-       link("See the public on benefit", "explore", "fusion_ben"),
-       link("See the expert answers", "sme-survey", "fusion_ben")),
+  # One link a side, as on every other card. Risk is the first of the three
+  # questions; the explore page's own menu reaches the other two.
+  list(link("See the public answers", "explore", "fusion_risk"),
+       link("See the expert answers", "sme-survey", "fusion_risk")),
   # One stem standing for three. The risk, cost and benefit items differ only
   # in that one word, so the slash is built by substitution and then checked
   # against the other two rather than asserted - a wording change to any of
@@ -1086,8 +1087,8 @@ add_finding("guess_support", 2L, "Support",
          sme_n("fusion_pub_sup"), " experts typed; they were asked to make ",
          "the three add to 100. The public answered a seven-point scale, ",
          "collapsed here to the same three bands."),
-  list(link("See public support", "explore", "new_fusion"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_sup")),
+  list(link("See the public answers", "explore", "new_fusion"),
+       link("See the expert answers", "sme-survey", "fusion_pub_sup")),
   # Two rows here, unlike part one: these genuinely are two different
   # questions, one answered and one estimated.
   # Two rows here, unlike part one: these genuinely are two different
@@ -1156,8 +1157,8 @@ add_finding("guess_aware", 2L, "Awareness",
            "of the public who answered Yes by selecting one of ",
            spell_out(nrow(bands)) |> str_to_lower(), " percentage ranges.")
   }),
-  list(link("See public awareness", "explore", "fusion_know"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_know")),
+  list(link("See the public answers", "explore", "fusion_know"),
+       link("See the expert answers", "sme-survey", "fusion_pub_know")),
   questions = asked(
     qq("The public was asked", pub_q("fusion_know")),
     qq("Experts were asked", sme_q("fusion_pub_know", full = TRUE)),
@@ -1200,7 +1201,7 @@ add_finding("guess_balance", 2L, "The overall balance",
          "categories. The public answered the same seven-point scale shown ",
          "in Part One, collapsed here into the same three categories."),
   list(link("See the public answers", "explore", "fusion_risk_ben"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_rb_ben")),
+       link("See the expert answers", "sme-survey", "fusion_pub_rb_ben")),
   # The expert side is three questions, one per band, as on the support card -
   # but they cannot be shown as one stem the way that card's are. The
   # midpoint item drops "of fusion energy in the United States" and puts a
@@ -1374,7 +1375,8 @@ add_finding("guess_drivers", 2L, "What drives support",
          "correlates of public support for fusion energy. Public rankings ",
          "reflect the observed strength of those relationships after ",
          "adjusting for differences in the number of response categories."),
-  list(link("See what experts picked", "sme-survey", "fusion_sup_cor")),
+  list(link("See the public answers", "explore", "new_fusion"),
+       link("See the expert answers", "sme-survey", "fusion_sup_cor")),
   # The expert stem opens with a sentence of framing - "There are many factors
   # that may be associated with public views on fusion energy" - before the
   # question itself. Cut at the question, the way part three's stems are, and
@@ -1697,6 +1699,19 @@ for (v in c("new_fusion", "fusion_time", "fusion_risk_ben", "fusion_know",
   check_against_02(v)
 }
 message("Public sides checked against 02: 7 questions")
+
+# Every card offers the same two ways back to the data, in the same words and
+# the same order. A card that named its own - "See public awareness", "See
+# what experts picked" - made the reader read the link before knowing it was
+# the link they had already used on the card before.
+for (f in findings) {
+  labels <- vapply(f$links, function(l) l$label, character(1))
+  if (!identical(labels,
+                 c("See the public answers", "See the expert answers"))) {
+    stop("Card ", f$id, " offers ", paste(labels, collapse = " / "),
+         " rather than the public answers and the expert answers.")
+  }
+}
 
 comparisons <- findings
 wjson(comparisons, "comparisons.json", pretty = TRUE)
