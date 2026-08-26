@@ -1442,7 +1442,16 @@ components.open_responses = async function (page, container) {
     // written by the script that built the item - the engine composed them
     // from parts and could not know whether it was addressing respondents or
     // experts, or whether there was a chart under the caption at all.
-    if (v.asked_line) card.append(el("p", { class: "fu-caption" }, v.asked_line));
+    // The question as it was put, set apart from the prose about the page.
+    // It ran as another grey caption line and read as one more sentence of
+    // apparatus rather than as the thing everything below it answers.
+    if (v.question) {
+      const asked = el("div", { class: "fu-asked-q" });
+      if (v.asked_by)
+        asked.append(el("p", { class: "fu-asked-q-label" }, v.asked_by));
+      asked.append(el("blockquote", { class: "fu-asked-q-text" }, v.question));
+      card.append(asked);
+    }
     if (v.asked_if) card.append(el("p", { class: "fu-caption" },
       `Not everyone was asked: ${v.asked_if}`));
     const ctx = Array.isArray(v.contexts) ? v.contexts : [];
@@ -1504,7 +1513,14 @@ components.open_responses = async function (page, container) {
         if (id === "theme" && bars) bars.setSelected(value);
       }
     });
-    if (bars) card.append(bars);
+    // Two sections under one card, each with its own heading: the chart
+    // summarises, the table is the responses themselves, and without the
+    // headings the second reads as a continuation of the first.
+    if (bars) {
+      card.append(el("h4", { class: "fu-subhead" }, "Themes"));
+      card.append(bars);
+    }
+    card.append(el("h4", { class: "fu-subhead" }, "Original responses"));
     card.append(table);
     host.append(card);
   }

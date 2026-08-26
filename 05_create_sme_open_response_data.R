@@ -279,10 +279,9 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) 
     themes = if (!has_themes) NA else as.list(theme_order),
     theme_noun = theme_noun,
     theme_dist = theme_dist,
-    # "Experts were asked", not "Respondents were asked": this survey's
-    # respondents are the experts, and the page says so everywhere else.
-    asked_line = paste0("Experts were asked: \u201c",
-                        str_squish(ref$question_text), "\u201d"),
+    # The label over the quoted question. The question itself is already
+    # in the file as `question`, so it is not repeated here.
+    asked_by = "Experts were asked",
     theme_caption = if (!has_themes) NA else paste0(
       "The chart below groups responses into common themes. Click any theme ",
       "to view the original responses, shown exactly as they were submitted."

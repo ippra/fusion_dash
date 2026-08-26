@@ -823,11 +823,14 @@ to the predicted-words caption**, which had never carried one: the intro was
 the only place it was said, and the count of what was read has to sit with the
 thing it was read from.
 
-The caption over an item is two lines — **`asked_line`**, the question in
-quotes so a reader sees the wording rather than a paraphrase, and
-**`theme_caption`**, what the chart groups and what a click does — followed by
-**`theme_note`** on a "?", the same `infoTip` the explore page hangs its
-weighting note on. Both lines and the note are
+An open-response card is **the question, then Themes, then Original
+responses**. The question sits in a rule-led block — `asked_by` over the stem,
+which is already in the file as `question` — rather than as another grey
+caption line, because as a caption it read as one more piece of apparatus
+instead of as the thing everything below it answers. `theme_caption` says what
+the chart groups and what a click does, with **`theme_note`** on a "?", the
+same `infoTip` the explore page hangs its weighting note on. The two `h4`
+subheads are what stop the table reading as a continuation of the chart. Both lines and the note are
 written by the script that built the item; the engine composed them from parts
 and could not know whether it was addressing respondents or experts, or
 whether the item had a chart under it at all.

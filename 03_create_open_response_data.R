@@ -458,13 +458,9 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     context_order = as.list(SUPPORT_BANDS),
     themes = if (!has_themes) NA else as.list(theme_labels_ordered),
     theme_noun = theme_noun,
-    # The last sentence is why this is written here: it names the one bar list
-    # on the public site that is not a population estimate. On the expert page
-    # nothing is weighted, so the same sentence would be false.
-    # The question as it was put, in quotes, so a reader is looking at the
-    # wording rather than at a paraphrase of it.
-    asked_line = paste0("Respondents were asked: \u201c",
-                        str_squish(ref$question_text), "\u201d"),
+    # The label over the quoted question. The question itself is already
+    # in the file as `question`, so it is not repeated here.
+    asked_by = "Respondents were asked",
     # What the page below shows, and what a click does. Written here rather
     # than composed in the engine, which cannot know whether the item has a
     # chart under it.

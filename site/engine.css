@@ -1408,6 +1408,33 @@ table.data th select {
   .fu-asked-row { grid-template-columns: 1fr; gap: 2px; }
 }
 
+/* The question as it was put. Set in a tinted rule-led block rather than as
+   another caption line, so a reader can see at a glance what everything under
+   it is an answer to. Same treatment the findings deck gives the stems it
+   compares. */
+.fu-asked-q {
+  margin: 10px 0 14px; padding: 12px 0 12px 18px;
+  border-left: 3px solid var(--accent);
+}
+.fu-asked-q-label {
+  margin: 0 0 6px; font-family: var(--mono, monospace); font-size: 11px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted);
+}
+.fu-asked-q-text {
+  margin: 0; font-family: var(--font-display); font-weight: 500;
+  font-size: 16.5px; line-height: 1.45; letter-spacing: -0.01em;
+  color: var(--display-ink, var(--text)); max-width: 74ch;
+}
+
+/* Headings for the two halves of an open-response card - the chart that
+   summarises, and the responses themselves. */
+.fu-subhead {
+  margin: 26px 0 10px; font-family: var(--mono, monospace); font-size: 11px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted);
+  font-weight: 600; padding-bottom: 6px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
 /* The options whose wording differs, in full, behind a disclosure. */
 .fu-mark { cursor: help; }
 .fu-wording {
