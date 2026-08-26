@@ -810,6 +810,19 @@ combined_stem <- function(vars, phrases, q, allow_trailing = FALSE) {
   sub(phrases[1], paste(phrases, collapse = " / "), template, fixed = TRUE)
 }
 
+# A stem that opens with framing before the question. Cut at the marker and
+# capitalise; stop if the marker is absent rather than printing the preamble
+# as though it were the question.
+from_marker <- function(text, marker) {
+  at <- str_locate(str_to_lower(text), fixed(marker))[, "start"]
+  if (is.na(at)) {
+    stop("The stem does not contain '", marker, "', so the preamble cannot ",
+         "be cut from it:\n  ", text)
+  }
+  cut <- str_sub(text, at)
+  paste0(str_to_upper(str_sub(cut, 1, 1)), str_sub(cut, 2))
+}
+
 qq <- function(who, text, highlight = NULL) {
   list(who = who, text = text,
        highlight = if (is.null(highlight)) NA else highlight)
@@ -1254,14 +1267,21 @@ add_finding("guess_drivers", 2L, "What drives support",
          " to 0.15, and environmental concern as perceived climate risk from ",
          "0.00 to 0.10 - neither moves it across the table."),
   list(link("See what experts picked", "sme-survey", "fusion_sup_cor")),
+  # The expert stem opens with a sentence of framing - "There are many factors
+  # that may be associated with public views on fusion energy" - before the
+  # question itself. Cut at the question, the way part three's stems are, and
+  # the build stops if the marker is not there rather than printing the
+  # preamble as though it were the question.
+  #
+  # The second row is not a question anyone answered: the ranking is scored
+  # against the public's own support item, which is quoted rather than named.
   questions = asked(
-    qq("Experts were asked", sme_q("fusion_sup_cor"),
-       highlight = "the strongest correlates of public support"),
-    # The second row is the public question the ranking is scored against,
-    # quoted like the first rather than described, so both rows read the same
-    # way. How it is scored is the note's job.
-    qq("Measured against", pub_q("new_fusion")),
-    lead = "What was asked, and what it is measured against"),
+    qq("Experts were asked", from_marker(sme_q("fusion_sup_cor"),
+                                        "which of the following")),
+    qq("Compared with",
+       paste0("Actual correlates of responses to the question: \u201c",
+              pub_q("new_fusion"), "\u201d")),
+    lead = "The questions"),
   factor_links = list(
     label = "Every one of these is now a split on the public page. Cut support by:",
     items = pmap(list(calibration$label, calibration$explore_split),
