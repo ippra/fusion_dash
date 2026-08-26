@@ -1480,8 +1480,10 @@ risk_tab <- agenda_card("fusion_risk_topics", "Risks",
   })
 
 cost_tab <- agenda_card("fusion_cost_topics", "Costs",
-  function(t) paste0("Experts think about building it. The public thinks ",
-                     "about running it, and cleaning it up."),
+  function(t) paste0("The public wants to understand costs across the full ",
+                     "lifecycle of fusion energy. Experts think non-experts ",
+                     "most need to understand the costs of developing and ",
+                     "constructing fusion energy technologies."),
   function(t) {
     rd <- t[t$label == "Research and development", ]
     dec <- t[t$label == "Decommissioning and cleanup", ]
