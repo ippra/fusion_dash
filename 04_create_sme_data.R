@@ -1074,7 +1074,11 @@ add_finding("guess_aware", 2L, "Awareness",
     "only ", b(paste0(know_rows$guess[know_rows$label == right_band], "%")),
     " correctly identified the ", b(right_band), " range. The results ",
     "suggest that many experts underestimate how familiar the public already ",
-    "is with fusion energy."))
+    "is with fusion energy."),
+  implication = paste0(
+    "Although public awareness remains modest, a substantial share of the ",
+    "public has already heard of fusion energy. Communication should build ",
+    "on that awareness rather than simply introduce the technology."))
 
 # 6. Timelines, predicted ----------------------------------------------------------
 tlg <- map_dfr(TL, function(b) tibble(
