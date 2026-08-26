@@ -1451,15 +1451,14 @@ components.open_responses = async function (page, container) {
     // the item's own unit ("the concern it leads with" against "the question")
     // and say whether anything on the page is weighted, and only the script
     // knows which survey it is describing.
-    if (v.theme_caption)
-      card.append(el("p", { class: "fu-caption" }, v.theme_caption));
-    // How the counting works, behind a disclosure. A reader who wants the
-    // rule can have it; one who does not is not made to read past it to
-    // reach the chart.
-    if (v.theme_note) {
-      const note = el("details", { class: "fu-note-disclosure" });
-      note.append(el("summary", {}, "Note"), el("p", {}, v.theme_note));
-      card.append(note);
+    // How the counting works, on the same "?" the explore page uses for its
+    // weighting note. A reader who wants the rule can have it; one who does
+    // not is not made to read past it to reach the chart.
+    if (v.theme_caption) {
+      const cap = el("p", { class: "fu-caption" }, v.theme_caption);
+      if (v.theme_note) cap.append(" ", infoTip(esc(v.theme_note),
+        { label: "How the themes are counted" }));
+      card.append(cap);
     }
     // A list, one paragraph each: an item can rest on more than one caveat.
     (Array.isArray(v.cautions) ? v.cautions : [])

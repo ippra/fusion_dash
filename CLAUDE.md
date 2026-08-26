@@ -826,7 +826,8 @@ thing it was read from.
 The caption over an item is two lines — **`asked_line`**, the question in
 quotes so a reader sees the wording rather than a paraphrase, and
 **`theme_caption`**, what the chart groups and what a click does — followed by
-**`theme_note`** behind a *Note* disclosure. Both lines and the note are
+**`theme_note`** on a "?", the same `infoTip` the explore page hangs its
+weighting note on. Both lines and the note are
 written by the script that built the item; the engine composed them from parts
 and could not know whether it was addressing respondents or experts, or
 whether the item had a chart under it at all.
