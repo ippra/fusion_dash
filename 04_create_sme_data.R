@@ -1052,7 +1052,10 @@ add_finding("guess_aware", 2L, "Awareness",
                        label = if (identical(l, right_band))
                                  paste0(l, " (actual)") else l,
                        values = list(paste0(g, "%")),
-                       lead = -1L))),
+                       # The band the public's figure actually falls in, marked
+                       # the same way the paired tables mark the larger of a
+                       # pair - accent and weight on the figure itself.
+                       lead = if (identical(l, right_band)) 0L else -1L))),
   paste0("Experts picked a band; the public answered yes or no, so the truth ",
          "is a single number rather than a distribution. ",
          sme_n("fusion_pub_know"), " experts answered."),
@@ -1060,8 +1063,7 @@ add_finding("guess_aware", 2L, "Awareness",
        link("See the expert guesses", "sme-survey", "fusion_pub_know")),
   questions = asked(
     qq("The public was asked", pub_q("fusion_know")),
-    qq("Experts were asked", sme_q("fusion_pub_know", full = TRUE),
-       highlight = "What percentage of the public do you think"),
+    qq("Experts were asked", sme_q("fusion_pub_know", full = TRUE)),
     lead = "The questions"),
   lede_html = paste0(
     b(paste0(spell_out(heard), " percent")), " of the public reported having ",
