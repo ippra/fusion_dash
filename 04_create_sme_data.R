@@ -1202,8 +1202,9 @@ under <- gap |> slice_max(miss, n = 1, with_ties = FALSE)
 over <- gap |> slice_min(miss, n = 1, with_ties = FALSE)
 
 add_finding("guess_drivers", 2L, "What drives support",
-  paste0("Experts looked for the driver of support in politics and climate. ",
-         "It is mostly ", str_to_lower(calibration$label[1]), "."),
+  paste0("Experts overestimate the importance of climate concerns and ",
+         "underestimate the importance of views toward traditional nuclear ",
+         "energy."),
   paste0("The strongest thing that goes with public support for fusion is ",
          "what people already think about nuclear fission; experts placed it ",
          scales::ordinal(calibration$expert_rank[1]), " of ten. The biggest ",
