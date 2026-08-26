@@ -402,7 +402,10 @@ config <- list(
          nav_group = "Public Perspectives",
          label = "Open Responses",
          index = "data/open/index.json",
-         words = "data/open/words.json",
+         # Word associations are hidden for now. The file is still
+         # built and still shipped - restoring this line brings the
+         # view back with it.
+         # words = "data/open/words.json",
          verbatims = "data/open/verbatims/{id}.json",
          intro = paste0("Click an option in the menu below to explore public ",
                         "responses written in respondents\u2019 own words. ",
@@ -447,7 +450,10 @@ config <- list(
          nav_group = "Expert Perspectives",
          label = "Open Responses",
          index = "data/sme-open/index.json",
-         words = "data/sme-open/words.json",
+         # Word associations are hidden for now. The file is still
+         # built and still shipped - restoring this line brings the
+         # view back with it.
+         # words = "data/sme-open/words.json",
          verbatims = "data/sme-open/verbatims/{id}.json",
          # The two claims this used to carry - that every response was read
          # before publication, and that nothing here is weighted - are in the

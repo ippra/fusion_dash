@@ -823,6 +823,13 @@ to the predicted-words caption**, which had never carried one: the intro was
 the only place it was said, and the count of what was read has to sit with the
 thing it was read from.
 
+**The word associations are hidden on both pages**, since 2026-08-26. The
+view renders only where the page config gives it a `words` file, and both have
+that line commented out. `03` and `05` still build `words.json` and `06` still
+ships it, so restoring the view is restoring the line — which is why it is
+commented rather than deleted. A stale `?view=words` link falls through to the
+first item.
+
 An open-response card is **the question, then Themes, then Original
 responses**. The question sits in a rule-led block — `asked_by` over the stem,
 which is already in the file as `question` — rather than as another grey

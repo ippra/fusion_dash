@@ -1309,7 +1309,10 @@ const RDBU_STOPS = [
 
 components.open_responses = async function (page, container) {
   const index = await fetchJSON(page.index);
-  const views = [{ id: "words", label: "Word associations" }]
+  // The word list shows only where the page gives it a file. Hiding it is
+  // dropping `words` from the page config; the data is still built and still
+  // shipped, so putting it back is putting the line back.
+  const views = (page.words ? [{ id: "words", label: "Word associations" }] : [])
     .concat(index.verbatims.map(v => ({ id: v.id, label: v.label, n: v.n })));
 
   let current = getParam("view");
