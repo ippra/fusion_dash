@@ -1075,6 +1075,20 @@ sup <- map_dfr(SUP, function(b) tibble(label = b[1],
 sup$guess <- c(round(mean(as.numeric(d$fusion_pub_opp), na.rm = TRUE)),
                round(mean(as.numeric(d$fusion_pub_mid), na.rm = TRUE)),
                round(mean(as.numeric(d$fusion_pub_sup), na.rm = TRUE)))
+# The paragraph says support is where the estimate misses by most, and that
+# the other two miss by around half as much. Both are claims about the table,
+# so both are checked: they were not, and the card said the largest difference
+# was the undecided share when it is half the size of the support gap.
+local({
+  miss <- abs(sup$guess - sup$publics)
+  if (which.max(miss) != 3 || max(miss[1:2]) > miss[3] * 0.7) {
+    print(tibble(band = sup$label, expert = sup$guess, public = sup$publics,
+                 miss = miss))
+    stop("The support paragraph says support is the widest miss and the ",
+         "other two are around half as wide; the table no longer says so.")
+  }
+})
+
 add_finding("guess_support", 2L, "Support",
   "Experts underestimate public support for fusion energy.",
   NA_character_,
@@ -1097,8 +1111,8 @@ add_finding("guess_support", 2L, "Support",
       stop("The support note quotes new_fusion running from Strongly oppose ",
            "to Strongly support; the sheet no longer says so.")
     }
-    paste0("Experts allocated 100 percentage points across the three ",
-           "response categories. The public answered a seven-point support ",
+    paste0("Experts were asked to allocate 100 percentage points across the ",
+           "three response categories. The public answered a seven-point support ",
            "scale running from 1, \u201c", ends[1], "\u201d, to 7, \u201c",
            ends[2], "\u201d. The results shown here collapse responses into ",
            "three categories: opposed (", SUP[[1]][2], "\u2013",
@@ -1132,10 +1146,12 @@ add_finding("guess_support", 2L, "Support",
     "estimated that ", b(paste0(sup$guess[3], "%")), " of the public ",
     "supported the construction and use of fusion power plants, compared ",
     "with the observed level of ", b(paste0(sup$publics[3], "%")),
-    ". Experts also slightly overestimated opposition (",
+    ". Experts also overestimated opposition (",
     b(paste0(sup$guess[1], "%")), " versus ", b(paste0(sup$publics[1], "%")),
-    "), but the largest difference was their estimate of the number of ",
-    "people who were undecided."),
+    ") and the share who were undecided (", b(paste0(sup$guess[2], "%")),
+    " versus ", b(paste0(sup$publics[2], "%")),
+    "), but by around half as much in each case. Support is where their ",
+    "estimate is furthest from what the public said."),
   implication = paste0(
     "Do not assume that public support for fusion energy is lower than it ",
     "is. Although many people remain uncertain, support is higher and ",
@@ -1216,8 +1232,8 @@ add_finding("guess_balance", 2L, "The overall balance",
                    "and costs"))),
   compare_block(c("Experts\u2019 estimate", "The public"),
                 pmap(list(rbg$label, rbg$guess, rbg$publics), crow)),
-  paste0("Experts distributed 100 percentage points across the three ",
-         "response categories. The public answered the same seven-point ",
+  paste0("Experts were asked to distribute 100 percentage points across the ",
+         "three response categories. The public answered the same seven-point ",
          "balance scale shown in Part One, collapsed here into the same ",
          "three categories."),
   list(link("See the public answers", "explore", "fusion_risk_ben"),
