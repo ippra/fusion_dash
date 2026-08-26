@@ -1424,14 +1424,14 @@ agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
            "answered in 2026 and ", nrow(base_sme), " experts. ", note_extra),
     list(link("See the public answers", "explore", battery_id),
          link("See the expert answers", "sme-survey", battery_id)),
-    # The two marked phrases stay: they are what makes these two different
-    # questions rather than one, which is the whole point of part three.
+    # No emphasis marks. Bold in a stem now means one thing across the whole
+    # deck - the element that varies where a single stem stands for several
+    # questions - and these two stems are quoted whole. What differs between
+    # them is what the part three divider says, and the stems show it.
     questions = asked(
-      qq("The public was asked", str_squish(unique(pub_ref$question_intro)[1]),
-         highlight = "would you most want to understand"),
+      qq("The public was asked", str_squish(unique(pub_ref$question_intro)[1])),
       qq("Experts were asked",
-         question_only(str_squish(unique(sme_ref$question_intro)[1])),
-         highlight = "non-experts most need to understand"),
+         question_only(str_squish(unique(sme_ref$question_intro)[1]))),
       lead = "The questions"),
     lede_html = if (is.null(lede_html)) NULL else lede_html(tab),
     implication = if (is.null(implication)) NULL else implication(tab),
