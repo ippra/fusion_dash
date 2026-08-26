@@ -256,25 +256,6 @@ GATE_CONTEXTS <- tribble(
   "new_fusion",  "Fusion power plants",
   "fusion_host", "A facility nearby"
 )
-
-#
-#
-# The second half of the caution is filled in per item with that item's own
-# withheld count, because "some responses are not shown" without a number is
-# the kind of caveat a reader cannot act on.
-# Reported, never silent, and the same rule as the identifier screen: a
-# response withheld from the page is one the reader will never know existed
-# unless the number is here.
-routing_caution <- function(withheld) {
-  n <- sum(withheld)
-  if (n == 0) return(NULL)
-  paste0(
-    "The condition above is 2026's. In 2025 it was looser - either question ",
-    "was enough, rather than both - so 2025 asked this of people 2026 would ",
-    "not have. Holding both years to the same condition makes them ",
-    "comparable and withholds ", n, " responses from 2025."
-  )
-}
 #
 # The order here is the order the Show menu lists them in, after the word
 # associations the front end puts first. Support before uncertainty before
@@ -319,8 +300,10 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     bind_rows() |>
     filter(!is.na(text), text != "")
 
-  # What the rule withheld, by wave, so the number is on the page and in this
-  # log rather than inferred from a total that quietly shrank.
+  # What the rule withheld, by wave, so the number is in the build log rather
+  # than inferred from a total that quietly shrank. It used to be on the page
+  # too; that note came off on 2026-08-26 and the log is now the only place a
+  # reader of the build sees it.
   withheld <- if (!gated) integer(0) else
     map2_int(waves_data$raw, waves_data$year, function(d, year) {
       field <- waves$column[waves$year == year]
@@ -485,9 +468,10 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     theme_note = if (!has_themes) NA else
       theme_note(answered, nrow(rows), theme_noun, excluded_noun,
                  "respondent"),
-    # Only the routing note is left, on `oppose`: it says why 2025 contributes
-    # fewer responses than its own fielding produced.
-    cautions = as.list(c(routing_caution(withheld))) |> discard(is.na),
+    # Nothing left: the siting note, the routing note, the count of what was
+    # held back and the review statement all came off the page. The build
+    # checks behind the last two are untouched - see the review block above.
+    cautions = list(),
     n = nrow(rows),
     answered = answered,
     rows = rows
