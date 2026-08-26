@@ -1811,6 +1811,19 @@ components.comparison = async function (page, container) {
 
     if (f.note) card.append(el("p", { class: "fu-caption" }, f.note));
 
+    // The implication: what the reader should take from the card. It follows
+    // the evidence rather than leading it, because it is a conclusion drawn
+    // from the figures above and not a claim the card is about to support.
+    // Set apart because it is a different kind of statement from everything
+    // else here - forward-looking rather than descriptive - and tinted with
+    // the part's own colour so it stays tied to the card it belongs to.
+    if (f.implication) {
+      const box = el("div", { class: "fu-implication" });
+      box.append(el("p", { class: "fu-implication-label" }, "Implication"),
+                 el("p", { class: "fu-implication-body", html: f.implication }));
+      card.append(box);
+    }
+
     if (f.factor_links && Array.isArray(f.factor_links.items)) {
       const box = el("div", { class: "fu-factor-links" });
       box.append(el("span", { class: "fu-factor-lead" }, f.factor_links.label || ""));

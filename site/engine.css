@@ -1375,6 +1375,29 @@ table.data th select {
   font-size: 14.5px; line-height: 1.6; margin: 0 0 16px;
 }
 
+/* The implication: the one forward-looking sentence on a card, after the
+   evidence it rests on. A left rule in the part's own colour rather than a
+   filled box, so it does not compete with the tinted question block above it
+   while still reading as a different kind of statement. */
+.fu-implication {
+  margin: 18px 0 4px; padding: 2px 0 2px 16px;
+  border-left: 3px solid var(--panel-border);
+}
+.fu-implication-label {
+  margin: 0 0 5px; font-family: var(--mono, monospace); font-size: 10.5px;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted);
+  font-weight: 600;
+}
+.fu-implication-body {
+  margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--text);
+}
+.fu-part-1 .fu-implication { border-left-color: #1f5fa9; }
+.fu-part-2 .fu-implication { border-left-color: #8a6508; }
+.fu-part-3 .fu-implication { border-left-color: #146856; }
+.fu-part-1 .fu-implication-label { color: #1f5fa9; }
+.fu-part-2 .fu-implication-label { color: #8a6508; }
+.fu-part-3 .fu-implication-label { color: #146856; }
+
 /* Which part a card belongs to, marked on the card rather than only in the
    text: part one is a difference of view, part two is a right-or-wrong
    prediction, and a reader who lands mid-deck needs to know which. */

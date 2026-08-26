@@ -745,6 +745,13 @@ card.
   stale the first time the data moved — "by 12 points" is computed, not
   written. `scales::ordinal` turns a rank into "3rd" so even that follows the
   table.
+- **`implication` is the one forward-looking sentence on a card**, and it sits
+  after the evidence rather than before it: it is a conclusion drawn from the
+  figures above, not a claim the card is about to support. Set off by a left
+  rule in the part's own colour rather than a filled box, so it does not
+  compete with the tinted question block higher up while still reading as a
+  different kind of statement. It takes HTML, so a figure inside it can be
+  emphasised with `b()` like the lede's are.
 - **`lede_html` emphasises figures inside a paragraph**, with `b()` wrapping
   the computed value rather than a numeral typed into markup — a card cannot
   end up showing a bold figure its own table disagrees with. `spell_out()` is

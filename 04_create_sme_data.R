@@ -721,10 +721,14 @@ spell_out <- function(n) {
 
 add_finding <- function(id, part, kicker, headline, lede, stats, compare,
                         note, links, factor_links = NULL, questions = NULL,
-                        wording = NULL, lede_html = NULL) {
+                        wording = NULL, lede_html = NULL,
+                        implication = NULL) {
   findings[[length(findings) + 1]] <<- list(
     id = id, part = part, kicker = kicker, headline = headline, lede = lede,
     lede_html = if (is.null(lede_html)) NA else lede_html,
+    # What the reader should take from the card. HTML, so a figure inside it
+    # can be emphasised with b() like the lede's are.
+    implication = if (is.null(implication)) NA else implication,
     stats = stats,
     # What each side was actually asked. On part three the two questions are
     # different, and that difference IS the finding, so the stems go on the
@@ -830,7 +834,11 @@ add_finding("views_time", 1L, "Timelines",
     " believe it will never be ready for widespread use. Compared with ",
     "experts, the public is both more optimistic about near-term deployment ",
     "and more likely to doubt that fusion will ever become commercially ",
-    "viable."))
+    "viable."),
+  implication = paste0(
+    "Expectations about the pace of fusion development differ substantially ",
+    "between experts and the public, making timelines an important topic for ",
+    "engagement and communication."))
 
 # 2. Risk, cost and benefit ----------------------------------------------------
 LV <- list(c("Risk", "fusion_risk"), c("Cost", "fusion_cost"),
