@@ -1435,8 +1435,9 @@ agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
 }
 
 risk_tab <- agenda_card("fusion_risk_topics", "Risks",
-  function(t) paste0("Experts want to explain whether it works. The public ",
-                     "wants to know whether it is safe."),
+  function(t) paste0("The public wants to understand health and environmental ",
+                     "risks. Experts think non-experts most need to ",
+                     "understand technological reliability."),
   function(t) {
     tech <- t[t$label == "Technological reliability", ]
     health <- t[t$label == "Public health and safety", ]
