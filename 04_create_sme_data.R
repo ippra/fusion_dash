@@ -1083,10 +1083,30 @@ add_finding("guess_support", 2L, "Support",
        stat(paste0(sup$publics[3], "%"), "the public who actually support it")),
   compare_block(c("Experts\u2019 estimate", "The public"),
                 pmap(list(sup$label, sup$guess, sup$publics), crow)),
-  paste0("The expert figures are the mean of what ",
-         sme_n("fusion_pub_sup"), " experts typed; they were asked to make ",
-         "the three add to 100. The public answered a seven-point scale, ",
-         "collapsed here to the same three bands."),
+  # The ends are quoted off the sheet. Unlike the balance scale, this one
+  # labels nothing but its two ends - point 4 carries no wording of its own -
+  # so the three categories below are a reading of the scale rather than the
+  # instrument's own words, and the note names the ends so a reader can see
+  # what is being read.
+  local({
+    opts <- parse_options(public_reference$response_options[
+      public_reference$variable == "new_fusion"])
+    ends <- opts$label[opts$value %in% c("1", "7")]
+    if (nrow(opts) != 7 || !identical(ends, c("Strongly oppose",
+                                              "Strongly support"))) {
+      print(opts)
+      stop("The support note quotes new_fusion running from Strongly oppose ",
+           "to Strongly support; the sheet no longer says so.")
+    }
+    paste0("Experts allocated 100 percentage points across the three ",
+           "response categories. The public answered a seven-point support ",
+           "scale running from 1, \u201c", ends[1], "\u201d, to 7, \u201c",
+           ends[2], "\u201d. The results shown here collapse responses into ",
+           "three categories: opposed (", SUP[[1]][2], "\u2013",
+           SUP[[1]][length(SUP[[1]])], "), neither support nor oppose (",
+           SUP[[2]][2], "), and support (", SUP[[3]][2], "\u2013",
+           SUP[[3]][length(SUP[[3]])], ").")
+  }),
   list(link("See the public answers", "explore", "new_fusion"),
        link("See the expert answers", "sme-survey", "fusion_pub_sup")),
   # Two rows here, unlike part one: these genuinely are two different
