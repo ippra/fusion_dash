@@ -1090,30 +1090,45 @@ rbg <- tibble(
 add_finding("guess_balance", 2L, "The overall balance",
   paste0("Experts recognize that the public is less convinced that the ",
          "benefits outweigh the risks and costs."),
-  paste0("On how the public weighs risks against benefits the experts were ",
-         "within a few points on all three answers - ", rbg$guess[3],
-         "% guessed against ", rbg$publics[3],
-         "% actual for benefits outweighing. It is worth saying plainly ",
-         "because it bounds the rest of this page: expert intuition about ",
-         "the public is not uniformly poor. It fails on how much the public ",
-         "knows and how warm it is, and holds on how the public reasons ",
-         "about trade-offs."),
+  NA_character_,
   list(stat(paste0(rbg$guess[3], "%"),
             paste0("estimated the public would say the benefits outweigh the ",
                    "risks and costs")),
        stat(paste0(rbg$publics[3], "%"),
             paste0("the public actually said the benefits outweigh the risks ",
                    "and costs"))),
-  compare_block(c("Experts' guess", "Actually"),
+  compare_block(c("Experts\u2019 estimate", "The public"),
                 pmap(list(rbg$label, rbg$guess, rbg$publics), crow)),
-  paste0("Experts split 100 points across the three. The public answered the ",
-         "same seven-point balance scale as in part one."),
+  paste0("Three questions, one for each answer, which experts were asked to ",
+         "make add to 100; the one quoted above is the benefits question. The ",
+         "public answered the same seven-point balance scale as in part one."),
   list(link("See the public answers", "explore", "fusion_risk_ben"),
        link("See the expert guesses", "sme-survey", "fusion_pub_rb_ben")),
+  # The expert side is three questions, one per band, as on the support card -
+  # but they cannot be shown as one stem the way that card's are. The
+  # midpoint item drops "of fusion energy in the United States" and puts a
+  # parenthetical in its place, so the three do not share a tail; combining
+  # them would run to 250 characters. The stem shown is the one the card
+  # leads with, and the note under the table says there were three.
   questions = asked(
     qq("The public was asked", pub_q("fusion_risk_ben")),
-    qq("Experts were asked", sme_q("fusion_pub_rb_ben"),
-       highlight = "What percentage of respondents do you think")))
+    qq("Experts were asked", sme_q("fusion_pub_rb_ben")),
+    lead = "The questions"),
+  lede_html = paste0(
+    "Experts estimated public views on the overall balance of risks and ",
+    "benefits with considerable accuracy. ",
+    b(paste0(spell_out(rbg$guess[3]), " percent")), " estimated that the ",
+    "public would conclude the benefits outweigh the risks, compared with an ",
+    "observed value of ", b(paste0(rbg$publics[3], "%")),
+    ". Estimates for the other two response categories were similarly close. ",
+    "This finding provides an important contrast with the other comparisons ",
+    "in Part Two. Experts do not consistently misjudge public opinion. Their ",
+    "estimates are much more accurate for some topics than for others."),
+  implication = paste0(
+    "Experts appear to understand that the public is less convinced than ",
+    "they are that the benefits of fusion energy outweigh its risks and ",
+    "costs. Build on that understanding by communicating more clearly about ",
+    "the expected costs and benefits of fusion energy."))
 
 # 7. What actually drives support --------------------------------------------------
 # Experts named up to three factors they thought were the strongest correlates
