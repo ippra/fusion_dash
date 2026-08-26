@@ -662,7 +662,7 @@ things follow:
 
 ## The findings deck
 
-`sme-compare` is not a stack of charts — it has none. It is twelve cards you
+`sme-compare` is not a stack of charts — it has none. It is ten cards you
 slide left and right: a headline, the numbers, a paragraph saying what they
 mean, and links to the explore pages. Nine small bar charts were what made an
 earlier version read like a dataset rather than like findings.
@@ -687,6 +687,10 @@ figures are unweighted counts of 153 people, public figures are weighted
 estimates. Removed 2026-08-26 with the rest of that paragraph. It is still on
 each survey's own page, in the caption under every chart, but not on the deck
 that puts the two side by side.
+
+Part two dropped its predicted-timelines and word-associations cards on
+2026-08-26. `fusion_pub_time` and `fusion_pub_feel` are still in the expert
+survey and still on its explore page; they are simply not compared here.
 
 Part three is the three risk/cost/benefit batteries — the pair `NOTES` warns
 about, where the two surveys reuse the same column names for different stems.

@@ -1080,36 +1080,7 @@ add_finding("guess_aware", 2L, "Awareness",
     "public has already heard of fusion energy. Communication should build ",
     "on that awareness rather than simply introduce the technology."))
 
-# 6. Timelines, predicted ----------------------------------------------------------
-tlg <- map_dfr(TL, function(b) tibble(
-  label = b[1], guess = sme_pct("fusion_pub_time", b[-1]),
-  publics = pub_pct("fusion_time", b[-1])))
-add_finding("guess_time", 2L, "Timelines",
-  "Experts expected the public to be as cautious as they are.",
-  paste0("Asked which answer the public gave most often, ", tlg$guess[1],
-         "% of experts said within ten years. ", tlg$publics[1],
-         "% of the public actually did. The guess tracks the experts' own ",
-         "view from part one far more closely than it tracks the public - ",
-         "which is what projecting your own frame onto an audience looks ",
-         "like in data."),
-  list(stat(paste0(tlg$publics[1], "%"), "of the public say within ten years"),
-       stat(paste0(tlg$guess[1], "%"), "of experts expected that"),
-       stat(paste0(tl$experts[tl$label == "Within 10 years"], "%"),
-            "of experts believe it themselves",
-            "from part one, for comparison")),
-  compare_block(c("Experts' guess", "Actually"),
-                pmap(list(tlg$label, tlg$guess, tlg$publics), crow)),
-  paste0("The expert prediction item repeats the 2025 wording of these bands, ",
-         "which overlap at the edges; the public answered the 2026 wording, ",
-         "which does not. The bands still line up one to one in order."),
-  list(link("See public timelines", "explore", "fusion_time"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_time")),
-  questions = asked(
-    qq("The public was asked", pub_q("fusion_time")),
-    qq("Experts were asked", sme_q("fusion_pub_time", full = TRUE),
-       highlight = "Which of the following do you think was the most common response?")))
-
-# 7. The balance, predicted --------------------------------------------------------
+# 6. The balance, predicted --------------------------------------------------------
 rbg <- tibble(
   label = c("Risks outweigh benefits", "About equal", "Benefits outweigh risks"),
   guess = c(round(mean(as.numeric(d$fusion_pub_rb_risk), na.rm = TRUE)),
@@ -1141,44 +1112,7 @@ add_finding("guess_balance", 2L, "The overall balance",
     qq("Experts were asked", sme_q("fusion_pub_rb_ben"),
        highlight = "What percentage of respondents do you think")))
 
-# 8. Word associations -------------------------------------------------------------
-feel_opts <- parse_options(reference$response_options[reference$variable == "fusion_pub_feel"])
-pub_feel_mean <- public_answers("word_1_feel") |>
-  as_survey_design(weights = weight) |>
-  summarise(m = survey_mean(as.numeric(resp))) |> pull(m)
-exp_feel_mean <- sme_avg("fusion_pub_feel")
-feel_rows <- map_dfr(seq_len(nrow(feel_opts)), function(i) tibble(
-  label = feel_opts$label[i],
-  guess = sme_pct("fusion_pub_feel", feel_opts$value[i])))
-add_finding("guess_feeling", 2L, "Word associations",
-  "The words fusion brings to mind leave the public flat, and experts knew it.",
-  paste0("Asked how the public felt about the first three words fusion ",
-         "energy brought to mind, experts averaged ",
-         format(round(exp_feel_mean, 2), nsmall = 2),
-         " on a five-point scale. The public's own average was ",
-         format(round(pub_feel_mean, 2), nsmall = 2),
-         ". Both sit just above the midpoint: the public is not hostile to ",
-         "the words, it is indifferent to them, and experts saw that."),
-  list(stat(format(round(exp_feel_mean, 2), nsmall = 2), "experts' average guess"),
-       stat(format(round(pub_feel_mean, 2), nsmall = 2), "the public's actual average",
-            "3 is neither positive nor negative")),
-  compare_block(c("Experts guessing this"),
-                pmap(list(feel_rows$label, feel_rows$guess,
-                          rep(NA_integer_, nrow(feel_rows))),
-                     function(l, g, x) list(label = l,
-                                            values = list(paste0(g, "%")),
-                                            lead = -1L))),
-  paste0("The public scale labels 2 and 4 “Negative” and ",
-         "“Positive”; the expert scale says “Somewhat”, so ",
-         "the two are not quite the same ruler."),
-  list(link("See the words the public gave", "public-qual"),
-       link("See the expert guesses", "sme-survey", "fusion_pub_feel")),
-  questions = asked(
-    qq("The public was asked", pub_q("word_1_feel", full = TRUE)),
-    qq("Experts were asked", sme_q("fusion_pub_feel"),
-       highlight = "how do you think the public felt")))
-
-# 9. What actually drives support --------------------------------------------------
+# 7. What actually drives support --------------------------------------------------
 # Experts named up to three factors they thought were the strongest correlates
 # of public support, and the correlates can be computed. Strength is eta,
 # bias-corrected: the share of the variation in support that lies between a
