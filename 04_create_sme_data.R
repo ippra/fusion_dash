@@ -978,15 +978,15 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
   lede_html = paste0(
     "Experts and the public report similar perceptions of the risks ",
     "associated with fusion energy. ",
-    b(paste0(spell_out(lv$experts[lv$label == "Risk"]), " percent")),
-    " of experts and ", b(paste0(lv$publics[lv$label == "Risk"], "%")),
-    " of the public rate the risks as high or very high. Differences emerge, ",
-    "however, in perceptions of cost and especially benefit. Experts are ",
-    "substantially more likely than the public to rate both the costs (",
-    b(paste0(lv$experts[lv$label == "Cost"], "%")), " versus ",
-    b(paste0(lv$publics[lv$label == "Cost"], "%")), ") and the benefits (",
-    b(paste0(lv$experts[lv$label == "Benefit"], "%")), " versus ",
-    b(paste0(lv$publics[lv$label == "Benefit"], "%")),
+    b(paste0(spell_out(lv$publics[lv$label == "Risk"]), " percent")),
+    " of the public and ", b(paste0(lv$experts[lv$label == "Risk"], "%")),
+    " of experts rate the risks as high or very high. Differences emerge, ",
+    "however, in perceptions of cost and especially benefit. The public is ",
+    "substantially less likely than experts to rate both the costs (",
+    b(paste0(lv$publics[lv$label == "Cost"], "%")), " versus ",
+    b(paste0(lv$experts[lv$label == "Cost"], "%")), ") and the benefits (",
+    b(paste0(lv$publics[lv$label == "Benefit"], "%")), " versus ",
+    b(paste0(lv$experts[lv$label == "Benefit"], "%")),
     ") of fusion energy as high or very high."),
   implication = paste0(
     "When communicating about fusion energy, devote as much attention to its ",
@@ -1149,14 +1149,14 @@ add_finding("guess_support", 2L, "Support",
     lead = "The questions"),
   lede_html = paste0(
     "Experts underestimated public support for fusion energy by ",
-    b(sup$publics[3] - sup$guess[3]), " percentage points. On average, they ",
-    "estimated that ", b(paste0(sup$guess[3], "%")), " of the public ",
-    "supported the construction and use of fusion power plants, compared ",
-    "with the observed level of ", b(paste0(sup$publics[3], "%")),
-    ". Experts also overestimated opposition (",
-    b(paste0(sup$guess[1], "%")), " versus ", b(paste0(sup$publics[1], "%")),
-    ") and the share who were undecided (", b(paste0(sup$guess[2], "%")),
-    " versus ", b(paste0(sup$publics[2], "%")),
+    b(sup$publics[3] - sup$guess[3]), " percentage points. ",
+    b(paste0(spell_out(sup$publics[3]), " percent")), " of the public ",
+    "supported the construction and use of fusion power plants; on average, ",
+    "experts estimated ", b(paste0(sup$guess[3], "%")),
+    ". The public's opposition and undecided shares were also lower than ",
+    "experts estimated (", b(paste0(sup$publics[1], "%")), " versus ",
+    b(paste0(sup$guess[1], "%")), ", and ", b(paste0(sup$publics[2], "%")),
+    " versus ", b(paste0(sup$guess[2], "%")),
     "), but by around half as much in each case. Support is where their ",
     "estimate is furthest from what the public said."),
   implication = paste0(
@@ -1741,9 +1741,9 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
       "(", b(paste0(v("Clean energy", "experts"), "% each")),
       "). Safety advantages, economic benefits, and grid reliability receive ",
       "broadly similar levels of attention from both groups. The largest ",
-      "difference concerns energy security, which experts select more often ",
-      "than the public (", b(paste0(v("Energy security", "experts"), "%")),
-      " versus ", b(paste0(v("Energy security", "publics"), "%")),
+      "difference concerns energy security, which the public selects less ",
+      "often than experts (", b(paste0(v("Energy security", "publics"), "%")),
+      " versus ", b(paste0(v("Energy security", "experts"), "%")),
       "). Overall, communication priorities are much more closely aligned ",
       "for benefits than they are for risks or costs.")
   },
@@ -1771,6 +1771,28 @@ for (f in findings) {
     if (str_detect(st$value, " vs. ") && str_starts(st$who, "Expert")) {
       stop("Card ", f$id, " reads '", st$who, "' under a paired figure; the ",
            "public's side comes first.")
+    }
+  }
+}
+
+# A pair inside a paragraph runs the same way round as the table under it.
+# "(58% versus 80%)" is right where the row reads 58 then 80 and wrong where
+# it reads 80 then 58, and the sentence around it has to be rewritten rather
+# than the figures swapped - which is why this is checked rather than fixed.
+for (f in findings) {
+  if (is.na(f$lede_html) || length(f$compare$columns) != 2) next
+  rows <- map(f$compare$items, ~unlist(.x$values))
+  # The tags come out first: b() wraps each figure, so the two numbers of a
+  # pair are never adjacent in the markup and the pattern would never match.
+  plain <- str_remove_all(f$lede_html, "<[^>]+>")
+  pairs <- str_match_all(plain, "(\\d+)% (?:versus|vs\\.) (\\d+)%")[[1]]
+  for (i in seq_len(nrow(pairs))) {
+    fwd <- paste0(pairs[i, 2:3], "%")
+    rev <- rev(fwd)
+    if (any(map_lgl(rows, ~identical(.x, rev))) &&
+        !any(map_lgl(rows, ~identical(.x, fwd)))) {
+      stop("Card ", f$id, " writes ", pairs[i, 1], " in its paragraph while ",
+           "the table reads ", paste(rev, collapse = " then "), ".")
     }
   }
 }
