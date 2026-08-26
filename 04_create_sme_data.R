@@ -871,9 +871,31 @@ add_finding("views_time", 1L, "Timelines",
   }),
   compare_block(c("Experts", "The public"),
                 pmap(list(tl$label, tl$experts, tl$publics), crow)),
-  # No note. The bands are visible in the table and the two denominators are
-  # on the explore pages this card links to.
-  NA_character_,
+  # Two of the six categories collapse at each end, and the note names both:
+  # the ranges come off the sheet rather than being retyped, since 51 to 100
+  # is easy to write as 50 to 100 and the note would then describe a scale
+  # the survey did not offer.
+  local({
+    opts <- parse_options(public_reference$response_options[
+      public_reference$variable == "fusion_time"])
+    sizes <- lengths(TL) - 1
+    if (nrow(opts) != 6 || !identical(as.integer(sizes), c(2L, 1L, 2L, 1L))) {
+      print(opts)
+      stop("The timelines note says six categories combine two at each end; ",
+           "they no longer do.")
+    }
+    lab <- function(codes) {
+      out <- opts$label[match(codes, opts$value)]
+      if (anyNA(out)) stop("The timelines note quotes categories the sheet ",
+                           "does not carry: ", paste(codes, collapse = ", "))
+      paste(out, collapse = " and ")
+    }
+    paste0("Both groups answered the same question using the same six ",
+           "response categories. The results shown here combine the two ",
+           "shortest timeline categories (", lab(TL[[1]][-1]), ") into ",
+           str_to_lower(TL[[1]][1]), ", and the two longest (",
+           lab(TL[[3]][-1]), ") into ", str_to_lower(TL[[3]][1]), ".")
+  }),
   list(link("See the public answers", "explore", "fusion_time"),
        link("See the expert answers", "sme-survey", "fusion_time")),
   # One stem, not two. The two instruments differ only in "US" against
@@ -1125,9 +1147,17 @@ add_finding("guess_aware", 2L, "Awareness",
                        # the same way the paired tables mark the larger of a
                        # pair - accent and weight on the figure itself.
                        lead = if (identical(l, right_band)) 0L else -1L))),
-  paste0("Experts picked a band; the public answered yes or no, so the truth ",
-         "is a single number rather than a distribution. ",
-         sme_n("fusion_pub_know"), " experts answered."),
+  # "Five percentage ranges" is a claim about the expert instrument, so it is
+  # counted off the sheet rather than typed, and so is the number who answered.
+  local({
+    bands <- parse_options(reference$response_options[
+      reference$variable == "fusion_pub_know"])
+    paste0("The public answered Yes or No. Experts estimated what percentage ",
+           "of the public answered Yes by selecting one of ",
+           spell_out(nrow(bands)) |> str_to_lower(), " percentage ranges. ",
+           "The results shown here are based on the responses of ",
+           sme_n("fusion_pub_know"), " experts.")
+  }),
   list(link("See public awareness", "explore", "fusion_know"),
        link("See the expert guesses", "sme-survey", "fusion_pub_know")),
   questions = asked(
@@ -1168,9 +1198,11 @@ add_finding("guess_balance", 2L, "The overall balance",
                    "and costs"))),
   compare_block(c("Experts\u2019 estimate", "The public"),
                 pmap(list(rbg$label, rbg$guess, rbg$publics), crow)),
-  paste0("Three questions, one for each answer, which experts were asked to ",
-         "make add to 100; the one quoted above is the benefits question. The ",
-         "public answered the same seven-point balance scale as in part one."),
+  paste0("Experts estimated the percentage of the public selecting each of ",
+         "the three response categories, with their estimates constrained to ",
+         "sum to 100%. The public answered the same seven-point balance ",
+         "scale shown in Part One, collapsed here into the same three ",
+         "labeled categories."),
   list(link("See the public answers", "explore", "fusion_risk_ben"),
        link("See the expert guesses", "sme-survey", "fusion_pub_rb_ben")),
   # The expert side is three questions, one per band, as on the support card -
@@ -1336,17 +1368,15 @@ add_finding("guess_drivers", 2L, "What drives support",
                      function(l, e, a) list(label = l,
                        values = as.list(c(scales::ordinal(e), scales::ordinal(a))),
                        lead = if (a < e) 1L else if (e < a) 0L else -1L))),
-  paste0("Strength is the share of the variation in support lying between a ",
-         "factor's groups rather than within them, corrected for the fact ",
-         "that a factor with more categories scores higher by chance. Two ",
-         "caveats: views on nuclear power were asked in 2026 only, so that ",
-         "one rests on half the sample; and trust is trust in scientists as a ",
-         "source of information about fusion, which is partly downstream of ",
-         "fusion attitudes. Measuring partisanship as ideology rather than ",
-         "party lifts it from ",
-         format(round(calibration$eta_adj[calibration$sme_item == "fusion_sup_cor_party"], 2), nsmall = 2),
-         " to 0.15, and environmental concern as perceived climate risk from ",
-         "0.00 to 0.10 - neither moves it across the table."),
+  # The two alternative measures are still computed - partisanship scores
+  # higher on ideology than on party, environmental concern higher on
+  # perceived climate risk than on worry - but they are no longer printed
+  # here, and nor are the caveats about the nuclear item resting on one wave
+  # and trust being partly downstream of fusion attitudes. All four are in
+  # CLAUDE.md. Removed 2026-08-26 with the rest of the deck's caveats.
+  paste0("Strength represents the share of variation in public support ",
+         "associated with each factor after adjusting for the number of ",
+         "categories."),
   list(link("See what experts picked", "sme-survey", "fusion_sup_cor")),
   # The expert stem opens with a sentence of framing - "There are many factors
   # that may be associated with public views on fusion energy" - before the

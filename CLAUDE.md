@@ -797,11 +797,15 @@ factors run from two categories to eleven.
 
 `sme_correlates.csv` declares which public measure stands for each expert
 factor, because half of them are the vendor's derived columns rather than
-reference variables. Two carry an `alternative_column` that is computed and
-shown beside the first: partisanship scores 0.05 on `Party_ID` and 0.15 on
-`ideol`, environmental concern 0.00 on `worry_enviro` and 0.10 on `gccrsk`.
-Showing only the primary number would make a measure-sensitive result look
-settled.
+reference variables. Two carry an `alternative_column`, still computed:
+partisanship scores 0.05 on `Party_ID` and 0.15 on `ideol`, environmental
+concern 0.00 on `worry_enviro` and 0.10 on `gccrsk`. Neither moves the factor
+across the table, but both results are measure-sensitive, and that is now
+recorded only here - **the card stopped printing them on 2026-08-26**, along
+with two caveats on the same note: that views on nuclear power were asked in
+2026 only, so that factor rests on half the sample, and that trust is trust in
+scientists as a source of information about fusion, which is partly downstream
+of fusion attitudes. Nothing about the computation changed.
 
 Three response types the public pipeline never had, and the question file
 carries `value_kind` so the front end labels the axis rather than assuming a
