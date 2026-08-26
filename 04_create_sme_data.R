@@ -871,9 +871,9 @@ add_finding("views_time", 1L, "Timelines",
   }),
   compare_block(c("Experts", "The public"),
                 pmap(list(tl$label, tl$experts, tl$publics), crow)),
-  paste0("The same six bands were offered to both. ", sme_n("fusion_time"),
-         " experts and ", format(pub_n("fusion_time"), big.mark = ","),
-         " members of the public answered."),
+  # No note. The bands are visible in the table and the two denominators are
+  # on the explore pages this card links to.
+  NA_character_,
   list(link("See the public answers", "explore", "fusion_time"),
        link("See the expert answers", "sme-survey", "fusion_time")),
   # One stem, not two. The two instruments differ only in "US" against
@@ -977,7 +977,33 @@ add_finding("views_balance", 1L, "The overall balance",
             who = "Public vs. experts")),
   compare_block(c("Experts", "The public"),
                 pmap(list(rb$label, rb$experts, rb$publics), crow)),
-  "A seven-point balance scale, collapsed to three.",
+  # The collapse, spelled out. The labels come off the sheet and the bands off
+  # RB, so the note cannot describe a cut the card does not make. The cut
+  # points are the instrument's own - 1, 4 and 7 are the only points it
+  # labels - which is the same rule the qualitative pages band on.
+  local({
+    opts <- parse_options(public_reference$response_options[
+      public_reference$variable == "fusion_risk_ben"])
+    lab <- function(v) {
+      out <- opts$label[opts$value == v]
+      if (length(out) != 1 || is.na(out)) {
+        stop("The balance note quotes the label on point ", v,
+             " of fusion_risk_ben; the sheet no longer carries one.")
+      }
+      out
+    }
+    span <- function(b) {
+      pts <- b[-1]
+      if (length(pts) == 1) pts else paste0(pts[1], " to ", pts[length(pts)])
+    }
+    paste0("Both groups answered on a seven-point scale, labelled only at ",
+           "its ends and its midpoint: 1, \u201c", lab("1"), "\u201d; 4, \u201c",
+           lab("4"), "\u201d; and 7, \u201c", lab("7"),
+           "\u201d. The three rows above collapse the scale at those labels - ",
+           "points ", span(RB[[1]]), ", point ", span(RB[[2]]), ", and points ",
+           span(RB[[3]]), " - because they are the only cut points the ",
+           "instrument itself asserts.")
+  }),
   list(link("See the public answers", "explore", "fusion_risk_ben"),
        link("See the expert answers", "sme-survey", "fusion_risk_ben")),
   # One stem, like the two cards before it: the two instruments differ only
