@@ -1489,7 +1489,7 @@ top_picks <- function(t, noun = "") {
          "Largest public priority", who = "Public vs. experts"))
 }
 
-agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
+agenda_card <- function(battery_id, kicker, headline, lede,
                         stats_fn, lede_html = NULL, implication = NULL) {
   items <- agenda |> filter(battery == battery_id)
   base_pub <- public |>
@@ -1521,10 +1521,12 @@ agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
     compare_block(c("Experts", "The public"),
                   pmap(list(tab$label, tab$experts, tab$publics, tab$differs),
                        function(l, a, b, m) crow(l, a, b, mark = m))),
-    paste0("Both groups picked two of the same six options, so the shares sum ",
-           "to about 200 rather than 100. ",
-           format(nrow(base_pub), big.mark = ","), " members of the public ",
-           "answered in 2026 and ", nrow(base_sme), " experts. ", note_extra),
+    # The two denominators are on the explore pages this card links to, and
+    # the options whose wording differs are in the disclosure below the
+    # figures, so the note carries only what the figures cannot show: that
+    # each respondent picked two, which is why the column does not sum to 100.
+    paste0("Both groups selected two of the same six response options, so ",
+           "the percentages sum to approximately 200 rather than 100."),
     list(link("See the public answers", "explore", battery_id),
          link("See the expert answers", "sme-survey", battery_id)),
     # No emphasis marks. Bold in a stem now means one thing across the whole
@@ -1554,9 +1556,6 @@ risk_tab <- agenda_card("fusion_risk_topics", "Risks",
   # Technological reliability and public health and safety, but taken from the
   # table rather than named, so "largest priority" stays the arithmetic answer.
   function(t) top_picks(t),
-  note_extra = paste0("Two options are worded slightly differently between ",
-                      "the surveys; the labels here are short forms that fit ",
-                      "both."),
   lede_html = function(t) {
     tech <- t[t$label == "Technological reliability", ]
     health <- t[t$label == "Public health and safety", ]
@@ -1591,7 +1590,6 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
   # public's list and third on the gap. "Other" is a residual, not a
   # priority, so it cannot win either column.
   function(t) top_picks(t, "costs"),
-  note_extra = "",
   lede_html = function(t) {
     v <- function(l, who) t[[who]][t$label == l]
     # "More than three-quarters", "two-thirds" and "roughly one-third to one-
@@ -1656,9 +1654,6 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
            paste0("selected ", str_to_lower(gap$label)),
            "Largest difference", who = "Experts vs. public"))
   },
-  note_extra = paste0("Three options are worded slightly differently between ",
-                      "the surveys; the labels here are short forms that fit ",
-                      "both."),
   lede_html = function(t) {
     v <- function(l, who) t[[who]][t$label == l]
     pool <- t[t$label != "Other", ]
