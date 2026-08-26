@@ -475,6 +475,15 @@ rather than in either script. It withholds 220 of FU25's 297 oppose
 responses, and `03` prints the number rather than letting a total quietly
 shrink. `support` and `uncertain` lose nothing. Full account in `NOTES.md`.
 
+**No item carries a caution any more.** The siting note, the routing note, the
+count of what was held back from the chart and the review statement all came
+off the page over 2026-08-25 and 26. What each of them asserted is still
+enforced in the build — an unread item does not publish, a corpus that grew
+since it was read does not publish, a stale withhold does not publish, and the
+routing restriction still applies and still prints its count. What went is the
+disclosure to a reader, not the property, and the facts now live here.
+
+
 The three why-items show **both** gate variables beside each response —
 `new_fusion` (fusion power plants) and `fusion_host` (a facility nearby) —
 because a person reached the question through either one and the two often
