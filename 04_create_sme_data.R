@@ -1125,7 +1125,7 @@ add_finding("guess_balance", 2L, "The overall balance",
     "in Part Two. Experts do not consistently misjudge public opinion. Their ",
     "estimates are much more accurate for some topics than for others."),
   implication = paste0(
-    "Experts appear to understand that the public is less convinced than ",
+    "Many experts understand that the public is less convinced than ",
     "they are that the benefits of fusion energy outweigh its risks and ",
     "costs. Build on that understanding by communicating more clearly about ",
     "the expected costs and benefits of fusion energy."))
