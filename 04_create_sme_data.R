@@ -849,10 +849,26 @@ tl <- map_dfr(TL, function(b) tibble(
 add_finding("views_time", 1L, "Timelines",
   "The public expects shorter fusion development timelines than experts.",
   NA_character_,
-  list(stat(paste0(tl$publics[tl$label == "Within 10 years"], "%"),
-            "of the public think fusion will be ready within 10 years"),
-       stat(paste0(tl$experts[tl$label == "Within 10 years"], "%"),
-            "of experts think the same")),
+  # The two ends of the scale. Within 10 years is the widest gap of the four
+  # bands, which the caption says, so it is checked rather than assumed.
+  local({
+    gap <- abs(tl$experts - tl$publics)
+    if (which.max(gap) != which(tl$label == "Within 10 years")) {
+      print(tl)
+      stop("The timelines card calls within 10 years the largest difference; ",
+           tl$label[which.max(gap)], " is now wider.")
+    }
+    row <- function(l) tl[tl$label == l, ]
+    list(
+      stat(paste0(row("Within 10 years")$publics, "% vs. ",
+                  row("Within 10 years")$experts, "%"),
+           "expect fusion within 10 years", "Largest difference",
+           who = "Public vs. experts"),
+      stat(paste0(row("Never")$publics, "% vs. ", row("Never")$experts, "%"),
+           "believe fusion will never be ready for widespread use",
+           "Largest difference at the other extreme",
+           who = "Public vs. experts"))
+  }),
   compare_block(c("Experts", "The public"),
                 pmap(list(tl$label, tl$experts, tl$publics), crow)),
   paste0("The same six bands were offered to both. ", sme_n("fusion_time"),
