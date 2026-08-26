@@ -496,9 +496,11 @@ both — every one caused by a 5 or a 3, and every one a contradiction the
 coding did not contain. **Bands that disagree with the routing make the
 routing look broken.** Do not re-cut them without checking the routing first.
 
-They also carry a caution: the gate includes `fusion_host`, which randomized
-the distance to 10 or 50 miles, and 52 responses mention the distance they were
-shown.
+The gate includes `fusion_host`, which randomized the distance to 10 or 50
+miles, and **52 responses mention the distance they were shown**. The page
+carried a caution saying so; it was removed 2026-08-26 at Joe's request, so
+that fact now lives only here. A reader comparing the three items has no way
+to know some respondents were picturing a facility five times further away.
 
 ## Themes on open responses
 

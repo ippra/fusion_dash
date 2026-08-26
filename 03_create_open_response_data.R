@@ -258,17 +258,6 @@ GATE_CONTEXTS <- tribble(
 )
 
 #
-# `caution` is shown with the responses. The three why-items are gated on two
-# questions, and one of them - fusion_host - randomized the distance to 10 or
-# 50 miles. That reaches the answers themselves: 52 responses across the two
-# files mention the distance they were shown. A reader comparing them needs to
-# know that some were picturing a facility five times further away.
-SITING_CAUTION <- paste0(
-  "Who was asked this depends partly on how they answered a question about ",
-  "hosting a facility nearby - and that question randomly asked about 10 or ",
-  "50 miles. Some answers below refer to the distance that respondent was ",
-  "shown."
-)
 #
 # The second half of the caution is filled in per item with that item's own
 # withheld count, because "some responses are not shown" without a number is
@@ -292,17 +281,17 @@ routing_caution <- function(withheld) {
 # opposition rather than the routing's own order: the menu is read top to
 # bottom and the three why-items are one scale, so they run down it.
 verbatim_items <- tribble(
-  ~id,          ~variable,              ~label,                        ~gated, ~theme_noun, ~excluded_noun, ~caution,
-  "ask",        "fusion_question",      "Questions for fusion experts", FALSE, "question",  "question",     NA_character_,
-  "support",    "fusion_support_why",   "Reasons for support",         TRUE,   "reason",    "reason",       SITING_CAUTION,
-  "uncertain",  "fusion_uncertain_why", "Reasons for uncertainty",     TRUE,   "reason",    "reason",       SITING_CAUTION,
-  "oppose",     "fusion_oppose_why",    "Reasons for opposition",      TRUE,   "concern",   "concern",      SITING_CAUTION
+  ~id,          ~variable,              ~label,                        ~gated, ~theme_noun, ~excluded_noun,
+  "ask",        "fusion_question",      "Questions for fusion experts", FALSE, "question",  "question",
+  "support",    "fusion_support_why",   "Reasons for support",         TRUE,   "reason",    "reason",
+  "uncertain",  "fusion_uncertain_why", "Reasons for uncertainty",     TRUE,   "reason",    "reason",
+  "oppose",     "fusion_oppose_why",    "Reasons for opposition",      TRUE,   "concern",   "concern"
 )
 
 held_back <- list()
 
 verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
-                                          theme_noun, excluded_noun, caution) {
+                                          theme_noun, excluded_noun) {
   ref <- reference |> filter(variable == !!variable)
   contexts <- if (gated) GATE_CONTEXTS else GATE_CONTEXTS[0, ]
 
@@ -496,8 +485,9 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     theme_note = if (!has_themes) NA else
       theme_note(answered, nrow(rows), theme_noun, excluded_noun,
                  "respondent"),
-    cautions = as.list(c(caution, routing_caution(withheld))) |>
-      discard(is.na),
+    # Only the routing note is left, on `oppose`: it says why 2025 contributes
+    # fewer responses than its own fielding produced.
+    cautions = as.list(c(routing_caution(withheld))) |> discard(is.na),
     n = nrow(rows),
     answered = answered,
     rows = rows
