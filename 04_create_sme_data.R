@@ -927,18 +927,10 @@ RB <- list(c("Risks and costs outweigh benefits", "1", "2", "3"),
 rb <- map_dfr(RB, function(b) tibble(
   label = b[1], experts = sme_pct("fusion_risk_ben", b[-1]),
   publics = pub_pct("fusion_risk_ben", b[-1])))
-far_e <- sme_pct("fusion_risk_ben", "7")
-far_p <- pub_pct("fusion_risk_ben", "7")
 add_finding("views_balance", 1L, "The overall balance",
   paste0("Experts are more likely than the public to conclude that the ",
          "benefits outweigh the risks and costs."),
-  paste0(rb$experts[3], "% of experts say the benefits outweigh the risks and ",
-         "costs, against ", rb$publics[3], "% of the public - and ", far_e,
-         "% of experts pick the far end of the scale, where only ", far_p,
-         "% of the public does. The public's most common answer is that the ",
-         "two are about equal. Read with the card before it, the pattern is ",
-         "consistent: the public is not more frightened of fusion than ",
-         "experts are, it is less convinced that it will pay off."),
+  NA_character_,
   # The second pair reads public-first, because it is the public's figure
   # that is the larger one and the point of the stat.
   list(stat(paste0(rb$experts[3], "% vs. ", rb$publics[3], "%"),
@@ -957,7 +949,19 @@ add_finding("views_balance", 1L, "The overall balance",
   # in "U.S." against "United States".
   questions = asked(
     qq("Both groups were asked", pub_q("fusion_risk_ben")),
-    lead = "The question"))
+    lead = "The question"),
+  lede_html = paste0(
+    "Experts are much more likely than the public to conclude that the ",
+    "benefits of fusion energy outweigh its risks and costs. ",
+    b(paste0(spell_out(rb$experts[3]), " percent")),
+    " of experts select that side of the scale, compared with ",
+    b(paste0(rb$publics[3], "%")), " of the public. The public is much more ",
+    "likely to view the overall balance as neutral, with ",
+    b(paste0(rb$publics[2], "%")), " selecting the midpoint compared with ",
+    "just ", b(paste0(rb$experts[2], "%")), " of experts. Consistent with the ",
+    "previous findings, the largest differences between experts and the ",
+    "public concern the expected benefits of fusion energy rather than its ",
+    "risks."))
 
 # ==============================================================================
 # PART TWO. Experts asked to predict what the public said.
