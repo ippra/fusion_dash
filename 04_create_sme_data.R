@@ -798,7 +798,7 @@ tl <- map_dfr(TL, function(b) tibble(
   label = b[1], experts = sme_pct("fusion_time", b[-1]),
   publics = pub_pct("fusion_time", b[-1])))
 add_finding("views_time", 1L, "Timelines",
-  "The public expects fusion sooner than experts do.",
+  "The public expects shorter fusion development timelines than experts",
   NA_character_,
   list(stat(paste0(tl$publics[tl$label == "Within 10 years"], "%"),
             "of the public think fusion will be ready within 10 years"),
@@ -827,10 +827,10 @@ add_finding("views_time", 1L, "Timelines",
                             " percent")),
     " expect fusion within 10 years, while ",
     b(paste0(tl$publics[tl$label == "Never"], "%")),
-    " believe it will never be ready for widespread use. These results ",
-    "suggest that the public is both more optimistic about near-term ",
-    "deployment and more likely to doubt that fusion will ever become ",
-    "commercially viable."))
+    " believe it will never be ready for widespread use. Compared with ",
+    "experts, the public is both more optimistic about near-term deployment ",
+    "and more likely to doubt that fusion will ever become commercially ",
+    "viable."))
 
 # 2. Risk, cost and benefit ----------------------------------------------------
 LV <- list(c("Risk", "fusion_risk"), c("Cost", "fusion_cost"),
