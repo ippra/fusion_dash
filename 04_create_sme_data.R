@@ -1228,20 +1228,33 @@ if (!grepl("climate", over$label, ignore.case = TRUE)) {
        "largest is now '", over$label, "'.")
 }
 
+gender <- gap |> filter(str_detect(label, regex("gender", ignore_case = TRUE)))
+if (nrow(gender) != 1) stop("Expected exactly one gender row in the ranking.")
+if (gender$miss <= abs(calibration$expert_rank[1] - calibration$actual_rank[1])) {
+  stop("The card says gender is the wider underestimate than nuclear; it is ",
+       "no longer. Re-read the paragraph against the table.")
+}
+
+# Which factors are within a place, and which are two out - both taken from
+# the table so the closing sentence cannot name a factor that has moved.
+close_1 <- gap |> filter(abs(miss) <= 1, !str_detect(label, "Trust")) |>
+  arrange(actual_rank) |> pull(label) |> str_to_lower()
+close_2 <- gap |> filter(abs(miss) == 2) |> arrange(actual_rank) |>
+  pull(label) |> str_to_lower()
+and_list <- function(x) {
+  if (length(x) == 1) return(x)
+  paste0(paste(x[-length(x)], collapse = ", "), " and ", x[length(x)])
+}
+close_note <- paste0(
+  str_to_sentence(and_list(close_2)), " were each two places out. ",
+  str_to_sentence(and_list(close_1)),
+  " were ranked within a single place of their actual positions.")
+
 add_finding("guess_drivers", 2L, "What drives support",
   paste0("Experts overestimate the importance of climate concerns and ",
          "underestimate the importance of views toward traditional nuclear ",
          "energy."),
-  paste0("The strongest thing that goes with public support for fusion is ",
-         "what people already think about nuclear fission; experts placed it ",
-         scales::ordinal(calibration$expert_rank[1]), " of ten. The biggest ",
-         "miss in the other direction is ", str_to_lower(under$label), ", the ",
-         scales::ordinal(under$actual_rank), " strongest correlate, named by ",
-         "only ", under$picked, "% of experts - men sit ",
-         format(round(under$spread, 1), nsmall = 1),
-         " points above women on the seven-point support scale. And ",
-         over$picked, "% named ", str_to_lower(over$label),
-         ", which comes last of the ten on every measure tried."),
+  NA_character_,
   # "the strongest" and "the weakest" are claims about rank 1 and rank n, so
   # they are checked rather than asserted: if either factor moves in the
   # table the build stops instead of the caption going quietly wrong.
@@ -1263,7 +1276,7 @@ add_finding("guess_drivers", 2L, "What drives support",
                    scales::ordinal(over$actual_rank)),
             "Concern about climate change", "Largest overestimate",
             who = "Experts\u2019 ranking vs. actual ranking")),
-  compare_block(c("Experts' place", "Actual place"),
+  compare_block(c("Experts\u2019 estimate", "The public"),
                 pmap(list(calibration$label, calibration$expert_rank,
                           calibration$actual_rank),
                      function(l, e, a) list(label = l,
@@ -1302,6 +1315,25 @@ add_finding("guess_drivers", 2L, "What drives support",
     lead = "The questions",
     foot = paste0("Experts\u2019 responses were compared with the observed ",
                   "correlates of public support.")),
+  # Every rank in this paragraph is read off the table rather than typed, and
+  # the two claims that rank one factor against another - the widest
+  # underestimate, and which factors sit within a place - are computed too.
+  # An earlier draft called nuclear the largest underestimate; it is the most
+  # consequential one, but gender is the widest.
+  lede_html = paste0(
+    "Experts accurately identified trust in scientists as one of the ",
+    "strongest correlates of public support for fusion energy, but several ",
+    "other rankings differed substantially from the data. The most ",
+    "consequential underestimate was views toward traditional nuclear ",
+    "(fission) energy, which experts ranked ",
+    b(scales::ordinal(calibration$expert_rank[1])), " but which is in fact ",
+    "the strongest correlate of support. They underestimated gender by an ",
+    "even wider margin, ",
+    b(paste0(scales::ordinal(gender$expert_rank), " against ",
+             scales::ordinal(gender$actual_rank))),
+    ", while overestimating concern about climate change, which they placed ",
+    b(scales::ordinal(over$expert_rank)), " and which ranks last of the ten. ",
+    close_note),
   factor_links = list(
     label = "Every one of these is now a split on the public page. Cut support by:",
     items = pmap(list(calibration$label, calibration$explore_split),
