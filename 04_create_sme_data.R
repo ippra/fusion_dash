@@ -1039,8 +1039,8 @@ know_rows <- map_dfr(seq_len(nrow(know_opts)), function(i) tibble(
 low <- sme_pct("fusion_pub_know", c("1", "2"))
 right_band <- know_opts$label[findInterval(heard, c(0, 20.5, 40.5, 60.5, 80.5))]
 add_finding("guess_aware", 2L, "Awareness",
-  paste0("Nearly half the public had heard of fusion. Most experts guessed ",
-         "far fewer."),
+  paste0("Public awareness of fusion energy is modest, but higher than ",
+         "experts expect."),
   paste0(heard, "% said they had heard of fusion energy before the survey ",
          "described it - the ", right_band, " band. Only ",
          know_rows$guess[know_rows$label == right_band],
