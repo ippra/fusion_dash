@@ -1664,7 +1664,11 @@ components.open_responses = async function (page, container) {
 components.comparison = async function (page, container) {
   const data = await fetchJSON(page.source);
   const content = el("div", { class: "content" });
-  content.append(el("p", { class: "fu-explore-intro" }, page.intro || ""));
+  // intro_html where the lede needs emphasis, the same route about_html and
+  // the footer's links_html take. Authored in the builder, never from data.
+  content.append(page.intro_html
+    ? el("p", { class: "fu-explore-intro", html: page.intro_html })
+    : el("p", { class: "fu-explore-intro" }, page.intro || ""));
 
   const strip = el("div", { class: "fu-deck-strip", tabindex: "0",
                             role: "region", "aria-label": "Findings" });
@@ -1676,25 +1680,11 @@ components.comparison = async function (page, container) {
                               onclick: () => step(1) }, "›");
   const cards = [];
 
-  const PART = {
-    1: { label: "Part one", title: "What each group thinks",
-         blurb: "Both experts and the public were asked these questions, in " +
-                "the same words. A difference here is a difference of view — " +
-                "nobody is wrong." },
-    2: { label: "Part two", title: "What experts think the public thinks",
-         blurb: "Here experts were asked to predict what the public said. " +
-                "These answers can be right or wrong, and the public column " +
-                "is the answer." },
-    3: { label: "Part three", title: "What each side thinks needs explaining",
-         blurb: "These three cards compare two questions that are not the " +
-                "same. Both offered the same six options and both asked for " +
-                "two picks — but the public was asked what it would most " +
-                "want to understand, and experts were asked what non-experts " +
-                "most need to understand. Each card prints both questions in " +
-                "full. A gap between the columns is therefore neither a " +
-                "difference of view nor a wrong prediction: it is a mismatch " +
-                "of agenda, and it is the most directly usable thing here." }
-  };
+  // The part dividers, authored in the builder like every other sentence on
+  // the site. They were the last prose left in the engine.
+  const PART = {};
+  for (const p of (page.parts || []))
+    PART[p.part] = { label: p.label, title: p.title, blurb: p.blurb };
 
   // A card that introduces each part, so the change of question is announced
   // rather than left for the reader to infer from a kicker.

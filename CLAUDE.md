@@ -672,9 +672,21 @@ made the page hard to follow:
 
 | | what was asked | what a gap means |
 |---|---|---|
-| Part one | both groups answered the same question, in the same words | a difference of view — nobody is wrong |
-| Part two | experts were asked to predict what the public said | a mistake, and the public column is the answer |
-| Part three | a parallel question put to each side from its own position | a mismatch of agenda |
+| Part one | both groups answered the same question | a genuine difference of perspective; neither group is right |
+| Part two | experts were asked to predict what the public said | a gap in experts' understanding of public opinion |
+| Part three | a parallel question put to each side from its own position | a gap in communication priorities |
+
+**The three divider cards are authored in `06`**, as `page$parts`, along with
+the deck's `intro_html`. They were the last prose left in the engine, which
+otherwise carries none. `intro_html` renders as HTML so the lede can carry
+emphasis — the same route `about_html` and the footer's `links_html` take, and
+authored in the builder rather than coming from data.
+
+**The intro no longer says the two columns are computed differently** — expert
+figures are unweighted counts of 153 people, public figures are weighted
+estimates. Removed 2026-08-26 with the rest of that paragraph. It is still on
+each survey's own page, in the caption under every chart, but not on the deck
+that puts the two side by side.
 
 Part three is the three risk/cost/benefit batteries — the pair `NOTES` warns
 about, where the two surveys reuse the same column names for different stems.
