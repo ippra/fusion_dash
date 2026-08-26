@@ -745,6 +745,13 @@ card.
   stale the first time the data moved — "by 12 points" is computed, not
   written. `scales::ordinal` turns a rank into "3rd" so even that follows the
   table.
+- **`lede_html` emphasises figures inside a paragraph**, with `b()` wrapping
+  the computed value rather than a numeral typed into markup — a card cannot
+  end up showing a bold figure its own table disagrees with. `spell_out()` is
+  there for a figure that starts a sentence, where a numeral reads badly and
+  "Thirty-seven" hard-coded would go stale the first time the data moved. It
+  covers 0–99 and stops on anything larger rather than printing a digit where
+  a word belongs.
 - **The public side of every card is checked against `02`** in one pass over
   eight questions before any card is written. The cards collapse those
   distributions into bands, and a collapse can only be trusted if the thing

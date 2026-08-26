@@ -695,11 +695,36 @@ check_against_02 <- function(variable) {
 }
 
 findings <- list()
+# A figure inside a sentence, emphasised. Wrapped here rather than typed into
+# the string so the bolded number is the computed one - a card cannot end up
+# showing a bold figure its own table disagrees with.
+b <- function(x) paste0("<strong>", x, "</strong>")
+
+# Spelled out for the start of a sentence, since a numeral there reads badly
+# and hard-coding "Thirty-seven" would go stale the first time the data moved.
+spell_out <- function(n) {
+  ones <- c("one", "two", "three", "four", "five", "six", "seven", "eight",
+            "nine")
+  teens <- c("ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+             "sixteen", "seventeen", "eighteen", "nineteen")
+  tens <- c("twenty", "thirty", "forty", "fifty", "sixty", "seventy",
+            "eighty", "ninety")
+  n <- as.integer(round(n))
+  word <- if (n == 0) "zero"
+          else if (n < 10) ones[n]
+          else if (n < 20) teens[n - 9]
+          else if (n %% 10 == 0) tens[n %/% 10 - 1]
+          else paste0(tens[n %/% 10 - 1], "-", ones[n %% 10])
+  if (n > 99) stop("spell_out() is only written for 0-99; got ", n)
+  paste0(toupper(substr(word, 1, 1)), substr(word, 2, nchar(word)))
+}
+
 add_finding <- function(id, part, kicker, headline, lede, stats, compare,
                         note, links, factor_links = NULL, questions = NULL,
-                        wording = NULL) {
+                        wording = NULL, lede_html = NULL) {
   findings[[length(findings) + 1]] <<- list(
     id = id, part = part, kicker = kicker, headline = headline, lede = lede,
+    lede_html = if (is.null(lede_html)) NA else lede_html,
     stats = stats,
     # What each side was actually asked. On part three the two questions are
     # different, and that difference IS the finding, so the stems go on the
@@ -774,15 +799,7 @@ tl <- map_dfr(TL, function(b) tibble(
   publics = pub_pct("fusion_time", b[-1])))
 add_finding("views_time", 1L, "Timelines",
   "The public expects fusion sooner than experts do.",
-  paste0("Experts converge: ", tl$experts[tl$label == "11 to 25 years"],
-         "% put fusion between eleven and twenty-five years away, and just ",
-         tl$experts[tl$label == "Within 10 years"],
-         "% think it will be ready within ten. The public spreads out in both ",
-         "directions - ", tl$publics[tl$label == "Within 10 years"],
-         "% say within ten years, and ", tl$publics[tl$label == "Never"],
-         "% say never, against ", tl$experts[tl$label == "Never"],
-         "% of experts. Optimism about fusion is not something the public ",
-         "has to be given; on this question it already has more of it."),
+  NA_character_,
   list(stat(paste0(tl$publics[tl$label == "Within 10 years"], "%"),
             "of the public think fusion will be ready within 10 years"),
        stat(paste0(tl$experts[tl$label == "Within 10 years"], "%"),
@@ -800,7 +817,20 @@ add_finding("views_time", 1L, "Timelines",
   # was the same. The public wording is the one shown.
   questions = asked(
     qq("Both groups were asked", pub_q("fusion_time")),
-    lead = "The question"))
+    lead = "The question"),
+  lede_html = paste0(
+    "More than half of experts (", b(paste0(tl$experts[tl$label == "11 to 25 years"], "%")),
+    ") believe fusion energy will be ready for widespread use in 11 to 25 ",
+    "years, and only ", b(paste0(tl$experts[tl$label == "Within 10 years"], "%")),
+    " expect it within the next decade. Public expectations are much more ",
+    "dispersed. ", b(paste0(spell_out(tl$publics[tl$label == "Within 10 years"]),
+                            " percent")),
+    " expect fusion within 10 years, while ",
+    b(paste0(tl$publics[tl$label == "Never"], "%")),
+    " believe it will never be ready for widespread use. These results ",
+    "suggest that the public is both more optimistic about near-term ",
+    "deployment and more likely to doubt that fusion will ever become ",
+    "commercially viable."))
 
 # 2. Risk, cost and benefit ----------------------------------------------------
 LV <- list(c("Risk", "fusion_risk"), c("Cost", "fusion_cost"),

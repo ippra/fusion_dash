@@ -1757,7 +1757,12 @@ components.comparison = async function (page, container) {
       card.append(box);
     }
 
-    if (f.lede) card.append(el("p", { class: "fu-card-lede" }, f.lede));
+    // lede_html where a card wants its figures emphasised. Authored in 04
+    // with the figures themselves, so a bolded number is still the computed
+    // one rather than a second copy typed into markup.
+    if (f.lede_html)
+      card.append(el("p", { class: "fu-card-lede", html: f.lede_html }));
+    else if (f.lede) card.append(el("p", { class: "fu-card-lede" }, f.lede));
 
     // The aligned figures that replace the chart. `lead` marks the larger of
     // a pair so the shape of the comparison is legible without reading every
