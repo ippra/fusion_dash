@@ -773,7 +773,7 @@ tl <- map_dfr(TL, function(b) tibble(
   label = b[1], experts = sme_pct("fusion_time", b[-1]),
   publics = pub_pct("fusion_time", b[-1])))
 add_finding("views_time", 1L, "Timelines",
-  "The public is both more hopeful and more dismissive than the experts.",
+  "The public expects fusion sooner than experts do.",
   paste0("Experts converge: ", tl$experts[tl$label == "11 to 25 years"],
          "% put fusion between eleven and twenty-five years away, and just ",
          tl$experts[tl$label == "Within 10 years"],
@@ -784,9 +784,9 @@ add_finding("views_time", 1L, "Timelines",
          "% of experts. Optimism about fusion is not something the public ",
          "has to be given; on this question it already has more of it."),
   list(stat(paste0(tl$publics[tl$label == "Within 10 years"], "%"),
-            "of the public say within ten years"),
+            "of the public think fusion will be ready within 10 years"),
        stat(paste0(tl$experts[tl$label == "Within 10 years"], "%"),
-            "of experts say the same")),
+            "of experts think the same")),
   compare_block(c("Experts", "The public"),
                 pmap(list(tl$label, tl$experts, tl$publics), crow)),
   paste0("The same six bands were offered to both. ", sme_n("fusion_time"),
@@ -794,10 +794,13 @@ add_finding("views_time", 1L, "Timelines",
          " members of the public answered."),
   list(link("See the public answers", "explore", "fusion_time"),
        link("See the expert answers", "sme-survey", "fusion_time")),
+  # One stem, not two. The two instruments differ only in "US" against
+  # "United States" and "will be" against "is ready", which is not a
+  # difference worth two rows on a card whose whole point is that the question
+  # was the same. The public wording is the one shown.
   questions = asked(
-    qq("The public was asked", pub_q("fusion_time")),
-    qq("Experts were asked", sme_q("fusion_time")),
-    lead = "The same question, put to both groups"))
+    qq("Both groups were asked", pub_q("fusion_time")),
+    lead = "The question"))
 
 # 2. Risk, cost and benefit ----------------------------------------------------
 LV <- list(c("Risk", "fusion_risk"), c("Cost", "fusion_cost"),
