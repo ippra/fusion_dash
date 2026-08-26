@@ -1609,7 +1609,10 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
       " versus ", b(paste0(v("Energy security", "publics"), "%")),
       "). Overall, communication priorities are much more closely aligned ",
       "for benefits than they are for risks or costs.")
-  })
+  },
+  implication = function(t) paste0(
+    "Communication about the benefits of fusion energy can build on ",
+    "substantial agreement between experts and the public."))
 
 # Every public number on this page traces back to a question 02 published.
 for (v in c("new_fusion", "fusion_time", "fusion_risk_ben", "fusion_know",
