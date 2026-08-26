@@ -1180,6 +1180,18 @@ table.data th select {
   align-items: center; gap: 12px; font-size: 13.5px;
   border-radius: 4px; padding: 2px 4px;
 }
+/* The header over the two number columns: same grid as a row so the labels
+   land over the numbers they name, and "Responses" needs more than the 5ch a
+   count does. */
+.fu-theme-head {
+  font-family: var(--mono, monospace); font-size: 10.5px;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted);
+  padding-bottom: 4px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--panel-border);
+}
+.fu-theme-head .fu-theme-pct, .fu-theme-head .fu-theme-n {
+  font-family: inherit; font-size: inherit; color: inherit;
+}
 .fu-theme-row.dim { opacity: 0.42; }
 .fu-theme-row.on { background: var(--row-hover); }
 .fu-theme-name {
@@ -1189,9 +1201,14 @@ table.data th select {
 .fu-theme-name:hover { text-decoration: underline; }
 .fu-theme-row.on .fu-theme-name { font-weight: 600; }
 .fu-theme-bars { display: flex; flex-direction: column; gap: 2px; }
+/* Wide enough, and spaced enough, that the two header labels read as two
+   columns rather than as the phrase "Share responses".
+   In px, not ch: the header sets its own smaller font-size, and ch columns
+   resolve against it, so the header's columns came out narrower than the
+   rows' and the labels sat off their numbers in a split. */
 .fu-theme-bar {
-  display: grid; grid-template-columns: 1fr 5ch 5ch; align-items: center;
-  gap: 8px;
+  display: grid; grid-template-columns: 1fr 52px 86px; align-items: center;
+  gap: 18px;
 }
 .fu-theme-track {
   background: var(--row-hover); border-radius: 3px; height: 14px;

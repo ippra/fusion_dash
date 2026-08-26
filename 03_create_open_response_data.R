@@ -410,9 +410,21 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
   # survey year and each gate context only where the data actually holds more
   # than one group, so `ask` - fielded in 2026 only - does not offer a year
   # menu with one entry in it.
-  theme_labels_ordered <- theme_roster |> filter(item == id,
-                                                published == "yes") |>
-    arrange(theme_order) |> pull(label)
+  # Ranked by how many responses carry each theme across everyone, then used
+  # for every split, so changing the split recolours the chart rather than
+  # reshuffling it. Computed rather than read off `theme_order`: that column
+  # was set by hand when the item was coded and went stale the moment a
+  # third-pass correction moved two responses between themes. It survives as
+  # the tie-break, which is what keeps the order stable between builds.
+  theme_labels_ordered <- if (!has_themes) character(0) else
+    rows |>
+      count(theme, name = "n") |>
+      right_join(theme_roster |> filter(item == id, published == "yes") |>
+                   select(theme = label, theme_order),
+                 by = "theme") |>
+      mutate(n = coalesce(n, 0L)) |>
+      arrange(desc(n), theme_order) |>
+      pull(theme)
   candidate_splits <- c(
     list(list(id = "all", label = "Everyone", key = "all",
               groups = "Everyone")),

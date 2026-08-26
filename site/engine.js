@@ -1590,6 +1590,19 @@ components.open_responses = async function (page, container) {
       }
 
       list.textContent = "";
+      // A header over the two number columns. Without it a reader meets
+      // "18.0%" and "195" side by side with nothing saying which is a share
+      // of what, or what the second number counts.
+      const head = el("div", { class: "fu-theme-row fu-theme-head" });
+      head.append(el("span", {}, ""));
+      const headStack = el("div", { class: "fu-theme-bars" });
+      const headBar = el("div", { class: "fu-theme-bar" });
+      headBar.append(el("span", {}, ""),
+                     el("span", { class: "fu-theme-pct" }, "Share"),
+                     el("span", { class: "fu-theme-n" }, "Responses"));
+      headStack.append(headBar);
+      head.append(headStack);
+      list.append(head);
       for (const theme of v.themes) {
         const cells = byTheme.get(theme);
         if (!cells) continue;

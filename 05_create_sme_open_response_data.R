@@ -245,7 +245,16 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) 
     unpublished <- rows |> filter(published == "no") |> count(theme, name = "n")
     rows <- rows |> filter(published == "yes") |> select(-published)
     unpublished <- unpublished |> mutate(total = nrow(rows))
-    theme_order <- roster |> filter(published == "yes") |> pull(label)
+    # See 03: ranked by frequency across everyone, with the sheet's own
+    # theme_order as the tie-break rather than as the order.
+    theme_order <- rows |>
+      count(theme, name = "n") |>
+      right_join(roster |> filter(published == "yes") |>
+                   select(theme = label, theme_order),
+                 by = "theme") |>
+      mutate(n = coalesce(n, 0L)) |>
+      arrange(desc(n), theme_order) |>
+      pull(theme)
   }
   answered <- nrow(rows) + sum(unpublished$n)
 

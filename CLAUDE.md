@@ -585,12 +585,20 @@ are easy to undo:
   changes little either way: weighting moved nothing by more than 1.4 points
   on the two large items. The count sits on every bar so a two-response theme
   cannot be read as a rate.
-- **Theme order is 03's, in every split** — frequency across everyone.
-  Changing the split recolours the chart rather than reshuffling it, the same
-  rule the battery charts follow, so a reader comparing groups does not lose
-  the row they were looking at. Bars also share one scale across the whole
-  split. The themes marked `published = no` are not in the order because they
-  are not on the chart.
+- **Theme order is 03's, in every split** — ranked by frequency across
+  everyone, and **computed rather than read off `theme_order`**. That column
+  is set by hand when an item is coded and went stale on `change` the moment a
+  third-pass correction moved two responses between themes; nothing noticed
+  until the bars were read back. It survives as the tie-break, which is what
+  keeps the order stable between builds. Changing the split recolours the
+  chart rather than reshuffling it, the same rule the battery charts follow.
+  Bars share one scale across the whole split, and themes marked
+  `published = no` are not in the order because they are not on the chart.
+- **The two number columns carry a header** — Share and Responses — because
+  "18.0%" beside "195" says neither what the share is of nor what the count
+  counts. Its columns are px rather than `ch`: the header sets a smaller
+  font-size, `ch` resolves against it, and the labels sat off their numbers in
+  a split.
 - **A group under 30 responses is not drawn**, and the caption names it with
   its size. Eight people who oppose fusion plants outright and still landed in
   the unsure item are eight real people, but "12.5%" beside a group of 1,300
