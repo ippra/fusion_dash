@@ -1386,6 +1386,22 @@ question_only <- function(text) {
 # `lede`, `lede_html` and `implication` are functions of the table, so a card
 # can compute its own figures from the shares it is about to draw. Any of them
 # may be NULL.
+# The two stats every part three card carries: the option each side picked
+# most, with the other side's share of it beside it. Computed rather than
+# named, so "largest priority" is the arithmetic answer and stays that way.
+top_picks <- function(t, noun) {
+  pool <- t[t$label != "Other", ]
+  e <- pool[which.max(pool$experts), ]
+  p <- pool[which.max(pool$publics), ]
+  list(
+    stat(paste0(e$experts, "% vs. ", e$publics, "%"),
+         paste0("selected ", str_to_lower(e$label), " ", noun),
+         "Largest expert priority", who = "Experts vs. public"),
+    stat(paste0(p$publics, "% vs. ", p$experts, "%"),
+         paste0("selected ", str_to_lower(p$label), " ", noun),
+         "Largest public priority", who = "Public vs. experts"))
+}
+
 agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
                         stats_fn, lede_html = NULL, implication = NULL) {
   items <- agenda |> filter(battery == battery_id)
@@ -1485,19 +1501,11 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
                      "most need to understand the costs of developing and ",
                      "constructing fusion energy technologies."),
   NULL,
-  # "Largest public priority" on operations is Joe's wording and is not the
-  # arithmetic answer: the public's top pick is infrastructure (44% against
-  # 22%) and its widest gap over experts is decommissioning (36 against 9).
-  # Operations sits third on both counts. Raised and left as written.
-  function(t) list(
-    stat(paste0(t$experts[t$label == "Research and development"], "% vs. ",
-                t$publics[t$label == "Research and development"], "%"),
-         "selected research and development costs", "Largest expert priority",
-         who = "Experts vs. public"),
-    stat(paste0(t$publics[t$label == "Operations and maintenance"], "% vs. ",
-                t$experts[t$label == "Operations and maintenance"], "%"),
-         "selected operations and maintenance costs", "Largest public priority",
-         who = "Public vs. experts")),
+  # Each side's largest priority, taken from the table rather than named. The
+  # public's is infrastructure, not operations: operations is third on the
+  # public's list and third on the gap. "Other" is a residual, not a
+  # priority, so it cannot win either column.
+  function(t) top_picks(t, "costs"),
   note_extra = "",
   lede_html = function(t) {
     v <- function(l, who) t[[who]][t$label == l]
