@@ -1566,43 +1566,49 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
     list(
       stat(paste0(both$experts, "% vs. ", both$publics, "%"),
            paste0("selected ", str_to_lower(both$label)),
-           "Top priority for both", who = "Experts vs. public"),
+           "Top priority for both groups", who = "Experts vs. public"),
       stat(paste0(gap$experts, "% vs. ", gap$publics, "%"),
            paste0("selected ", str_to_lower(gap$label)),
-           "Largest difference (though still pretty small)",
-           who = "Experts vs. public"))
+           "Largest difference", who = "Experts vs. public"))
   },
   note_extra = paste0("Three options are worded slightly differently between ",
                       "the surveys; the labels here are short forms that fit ",
                       "both."),
   lede_html = function(t) {
-    sec <- t[t$label == "Energy security", ]
-    # "Similar rankings for safety, economic and grid" is a claim about the
-    # order of three rows, so it is checked against the order rather than
-    # taken on trust. Energy security is the row the sentence excepts.
-    rank <- function(who) {
-      pool <- t[!t$label %in% c("Other", "Energy security"), ]
-      pool$label[order(-pool[[who]])]
+    v <- function(l, who) t[[who]][t$label == l]
+    pool <- t[t$label != "Other", ]
+    # Two claims about the shape of the table rather than about a figure in
+    # it: that clean energy leads the public and ties the top among experts,
+    # and that the three middle options divide the two sides less than energy
+    # security does. Both are checked here.
+    if (v("Clean energy", "publics") < max(pool$publics) ||
+        v("Clean energy", "experts") < max(pool$experts) ||
+        v("Energy security", "experts") != max(pool$experts)) {
+      print(pool)
+      stop("The benefits paragraph says clean energy leads the public and ",
+           "ties energy security at the top among experts; it no longer does.")
     }
-    wanted <- c("Clean energy", "Safety advantages", "Economic",
-                "Grid reliability")
-    if (!identical(rank("experts"), wanted) ||
-        !identical(rank("publics"), wanted)) {
-      print(rank("experts")); print(rank("publics"))
-      stop("The benefits paragraph says the two sides rank clean energy, ",
-           "safety, economic benefits and grid reliability alike; they no ",
-           "longer do.")
+    gap <- function(l) abs(v(l, "experts") - v(l, "publics"))
+    middle <- c("Safety advantages", "Economic", "Grid reliability")
+    if (any(vapply(middle, gap, numeric(1)) >= gap("Energy security"))) {
+      print(vapply(middle, gap, numeric(1)))
+      stop("The benefits paragraph calls energy security the largest ",
+           "difference and the other three broadly similar; one of those ",
+           "three now divides the two sides at least as much.")
     }
     paste0(
       "Experts and the public prioritize many of the same benefits of fusion ",
-      "energy. Clean energy is the most frequently selected benefit for both ",
-      "groups, followed by similar rankings for safety advantages, economic ",
-      "benefits, and grid reliability. The largest difference concerns energy ",
-      "security, which experts selected more often than the public (",
-      b(paste0(sec$experts, "%")), " versus ", b(paste0(sec$publics, "%")),
-      "). Compared with the previous two cards, communication priorities are ",
-      "much more closely aligned when discussing the potential benefits of ",
-      "fusion energy.")
+      "energy. Clean energy is the most frequently selected benefit among ",
+      "the public (", b(paste0(v("Clean energy", "publics"), "%")),
+      ") and is tied with energy security for the top priority among experts ",
+      "(", b(paste0(v("Clean energy", "experts"), "% each")),
+      "). Safety advantages, economic benefits, and grid reliability receive ",
+      "broadly similar levels of attention from both groups. The largest ",
+      "difference concerns energy security, which experts select more often ",
+      "than the public (", b(paste0(v("Energy security", "experts"), "%")),
+      " versus ", b(paste0(v("Energy security", "publics"), "%")),
+      "). Overall, communication priorities are much more closely aligned ",
+      "for benefits than they are for risks or costs.")
   })
 
 # Every public number on this page traces back to a question 02 published.
