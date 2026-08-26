@@ -1356,7 +1356,10 @@ table.data th select {
   display: grid; grid-template-columns: minmax(0, max-content) 9ch 9ch;
   gap: 0 12px; align-items: baseline;
 }
-.fu-compare-1 { grid-template-columns: minmax(0, max-content) 9ch; }
+/* One value column can afford to be wider, and its header needs to be: a name
+   like "Experts' estimate of public awareness" wraps to four lines in the 9ch
+   a two-column table gives it. */
+.fu-compare-1 { grid-template-columns: minmax(0, max-content) 20ch; }
 .fu-compare-row { display: contents; }
 .fu-compare-row > * {
   padding: 9px 2px; border-bottom: 1px solid var(--border);

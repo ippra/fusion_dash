@@ -1041,23 +1041,18 @@ right_band <- know_opts$label[findInterval(heard, c(0, 20.5, 40.5, 60.5, 80.5))]
 add_finding("guess_aware", 2L, "Awareness",
   paste0("Public awareness of fusion energy is modest, but higher than ",
          "experts expect."),
-  paste0(heard, "% said they had heard of fusion energy before the survey ",
-         "described it - the ", right_band, " band. Only ",
-         know_rows$guess[know_rows$label == right_band],
-         "% of experts picked that band; ", low,
-         "% guessed 40% or fewer. Underrating what the public already knows ",
-         "is the sort of error that shapes how a field talks: an audience ",
-         "assumed to be starting from nothing gets explained to rather than ",
-         "argued with."),
+  NA_character_,
   list(stat(paste0(heard, "%"), "of the public had heard of fusion energy"),
        stat(paste0(low, "%"),
             "of experts thought awareness was 40% or lower")),
-  compare_block(c("Experts guessing this band"),
+  compare_block(c("Experts\u2019 estimate of public awareness"),
                 pmap(list(know_rows$label, know_rows$guess,
                           rep(NA_integer_, nrow(know_rows))),
-                     function(l, g, x) list(label = l,
-                                            values = list(paste0(g, "%")),
-                                            lead = -1L))),
+                     function(l, g, x) list(
+                       label = if (identical(l, right_band))
+                                 paste0(l, " (actual)") else l,
+                       values = list(paste0(g, "%")),
+                       lead = -1L))),
   paste0("Experts picked a band; the public answered yes or no, so the truth ",
          "is a single number rather than a distribution. ",
          sme_n("fusion_pub_know"), " experts answered."),
@@ -1066,7 +1061,18 @@ add_finding("guess_aware", 2L, "Awareness",
   questions = asked(
     qq("The public was asked", pub_q("fusion_know")),
     qq("Experts were asked", sme_q("fusion_pub_know", full = TRUE),
-       highlight = "What percentage of the public do you think")))
+       highlight = "What percentage of the public do you think"),
+    lead = "The questions"),
+  lede_html = paste0(
+    b(paste0(spell_out(heard), " percent")), " of the public reported having ",
+    "heard of fusion energy before reading the survey description. Most ",
+    "experts underestimated that level of awareness. ",
+    b(paste0(spell_out(low), " percent")), " estimated that no more than ",
+    b("40%"), " of the public had previously heard of fusion energy, while ",
+    "only ", b(paste0(know_rows$guess[know_rows$label == right_band], "%")),
+    " correctly identified the ", b(right_band), " range. The results ",
+    "suggest that many experts underestimate how familiar the public already ",
+    "is with fusion energy."))
 
 # 6. Timelines, predicted ----------------------------------------------------------
 tlg <- map_dfr(TL, function(b) tibble(
