@@ -783,29 +783,31 @@ sme_q <- function(v, full = FALSE) {
   str_squish(if (full) paste(na.omit(c(r$question_intro, r$question_text)),
                              collapse = " ") else r$question_text)
 }
-# One stem standing for a set that differs in a single word. Built from the
-# first item and verified against the rest: substituting each word back in has
-# to reproduce that item's own stem, in both surveys, or the build stops.
-three_way_stem <- function(words, vars) {
-  stopifnot(length(words) == length(vars), length(words) > 1)
-  template <- pub_q(vars[1])
+# One stem standing for a set of questions that differ in a single word or
+# phrase. Built from the first item and verified against the rest:
+# substituting each phrase back in has to reproduce that item's own stem, or
+# the build stops. A wording change to any of them then fails loudly instead
+# of quietly making the combined stem a lie.
+#
+# `q` is the accessor - pub_q or sme_q - so the same helper covers a set on
+# either survey. Some items carry a trailing clarification in brackets that
+# the others do not; `allow_trailing` permits it and nothing else.
+combined_stem <- function(vars, phrases, q, allow_trailing = FALSE) {
+  stopifnot(length(vars) == length(phrases), length(vars) > 1)
+  template <- q(vars[1])
+  strip_trailing <- function(x) sub(" \\([^()]*\\)\\?$", "?", x)
   for (i in seq_along(vars)) {
-    want_pub <- pub_q(vars[i])
-    got_pub <- sub(words[1], words[i], template, fixed = TRUE)
-    if (!identical(got_pub, want_pub)) {
-      stop("The public stem for ", vars[i], " is not the ", vars[1],
-           " stem with '", words[1], "' swapped for '", words[i],
-           "'. One stem cannot stand for all three.\n  want: ", want_pub,
-           "\n  got:  ", got_pub)
-    }
-    want_sme <- sme_q(vars[i])
-    got_sme <- sub(words[1], words[i], sme_q(vars[1]), fixed = TRUE)
-    if (!identical(got_sme, want_sme)) {
-      stop("The expert stem for ", vars[i], " does not follow the same ",
-           "pattern; one stem cannot stand for all three.")
+    want <- q(vars[i])
+    got <- sub(phrases[1], phrases[i], template, fixed = TRUE)
+    ok <- identical(got, want) ||
+          (allow_trailing && identical(got, strip_trailing(want)))
+    if (!ok) {
+      stop("The stem for ", vars[i], " is not the ", vars[1], " stem with '",
+           phrases[1], "' swapped for '", phrases[i], "'. One stem cannot ",
+           "stand for the set.\n  want: ", want, "\n  got:  ", got)
     }
   }
-  sub(words[1], paste(words, collapse = " / "), template, fixed = TRUE)
+  sub(phrases[1], paste(phrases, collapse = " / "), template, fixed = TRUE)
 }
 
 qq <- function(who, text, highlight = NULL) {
@@ -874,6 +876,9 @@ LV <- list(c("Risk", "fusion_risk"), c("Cost", "fusion_cost"),
 lv <- map_dfr(LV, function(b) tibble(
   label = b[1], variable = b[2],
   experts = sme_pct(b[2], c("4", "5")), publics = pub_pct(b[2], c("4", "5"))))
+invisible(combined_stem(c("fusion_risk", "fusion_cost", "fusion_ben"),
+                        c("risk", "cost", "benefit"), sme_q))
+
 add_finding("views_level", 1L, "Risk, cost and benefit",
   paste0("Experts and the public agree about the risks, but differ on the ",
          "costs and benefits."),
@@ -899,8 +904,8 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
   # them stops the build instead of quietly making this line a lie.
   questions = asked(
     qq("Both groups were asked",
-       three_way_stem(c("risk", "cost", "benefit"),
-                      c("fusion_risk", "fusion_cost", "fusion_ben")),
+       combined_stem(c("fusion_risk", "fusion_cost", "fusion_ben"),
+                     c("risk", "cost", "benefit"), pub_q),
        highlight = "risk / cost / benefit"),
     lead = "The questions"),
   lede_html = paste0(
@@ -981,14 +986,7 @@ sup$guess <- c(round(mean(as.numeric(d$fusion_pub_opp), na.rm = TRUE)),
                round(mean(as.numeric(d$fusion_pub_sup), na.rm = TRUE)))
 add_finding("guess_support", 2L, "Support",
   "Experts underestimate public support for fusion energy.",
-  paste0("Asked to split a hundred people into opposed, neither and ",
-         "supportive, experts put ", sup$guess[3],
-         " in the supportive column. The real figure is ", sup$publics[3],
-         ". They read opposition almost exactly right - ", sup$guess[1],
-         " against ", sup$publics[1],
-         " - so the error is not that they think the public is hostile. It ",
-         "is that they expect it to be undecided. The people experts placed ",
-         "on the fence are, in fact, already in favour."),
+  NA_character_,
   list(stat(paste0(sup$guess[3], "%"), "experts\u2019 estimate of public support"),
        stat(paste0(sup$publics[3], "%"), "the public who actually support it")),
   compare_block(c("Experts' guess", "Actually"),
@@ -1001,11 +999,32 @@ add_finding("guess_support", 2L, "Support",
        link("See the expert guesses", "sme-survey", "fusion_pub_sup")),
   # Two rows here, unlike part one: these genuinely are two different
   # questions, one answered and one estimated.
+  # Two rows here, unlike part one: these genuinely are two different
+  # questions, one answered and one estimated. The expert side is three
+  # questions rather than one - opposed, neither, supported, asked to add to
+  # 100 - so its stem carries all three bands with the varying phrase marked.
+  # The midpoint item also carries a bracketed gloss the other two do not,
+  # which is what allow_trailing permits and nothing else.
   questions = asked(
     qq("The public was asked", pub_q("new_fusion")),
-    qq("Experts were asked", sme_q("fusion_pub_sup"),
-       highlight = "What percentage of respondents do you think"),
-    lead = "The questions"))
+    qq("Experts were asked",
+       combined_stem(c("fusion_pub_sup", "fusion_pub_mid", "fusion_pub_opp"),
+                     c("supported", "neither supported nor opposed",
+                       "opposed"),
+                     sme_q, allow_trailing = TRUE),
+       highlight = paste0("supported / neither supported nor opposed / ",
+                          "opposed")),
+    lead = "The questions"),
+  lede_html = paste0(
+    "Experts underestimated public support for fusion energy by ",
+    b(sup$publics[3] - sup$guess[3]), " percentage points. On average, they ",
+    "estimated that ", b(paste0(sup$guess[3], "%")), " of the public ",
+    "supported the construction and use of fusion power plants, compared ",
+    "with the observed level of ", b(paste0(sup$publics[3], "%")),
+    ". Experts also slightly overestimated opposition (",
+    b(paste0(sup$guess[1], "%")), " versus ", b(paste0(sup$publics[1], "%")),
+    "), but the largest difference was their estimate of the number of ",
+    "people who were undecided."))
 
 # 5. Awareness --------------------------------------------------------------------
 heard <- pub_pct("fusion_know", "1")
