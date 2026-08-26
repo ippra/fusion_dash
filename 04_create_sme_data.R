@@ -1374,9 +1374,10 @@ add_finding("guess_drivers", 2L, "What drives support",
   # here, and nor are the caveats about the nuclear item resting on one wave
   # and trust being partly downstream of fusion attitudes. All four are in
   # CLAUDE.md. Removed 2026-08-26 with the rest of the deck's caveats.
-  paste0("Strength represents the share of variation in public support ",
-         "associated with each factor after adjusting for the number of ",
-         "categories."),
+  paste0("Expert rankings reflect what experts believed were the strongest ",
+         "correlates of public support for fusion energy. Public rankings ",
+         "reflect the observed strength of those relationships after ",
+         "adjusting for differences in the number of response categories."),
   list(link("See what experts picked", "sme-survey", "fusion_sup_cor")),
   # The expert stem opens with a sentence of framing - "There are many factors
   # that may be associated with public views on fusion energy" - before the
