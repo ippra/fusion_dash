@@ -930,7 +930,8 @@ rb <- map_dfr(RB, function(b) tibble(
 far_e <- sme_pct("fusion_risk_ben", "7")
 far_p <- pub_pct("fusion_risk_ben", "7")
 add_finding("views_balance", 1L, "The overall balance",
-  "Experts come down firmly on the benefits. The public sits on the fence.",
+  paste0("Experts are more likely than the public to conclude that the ",
+         "benefits outweigh the risks and costs."),
   paste0(rb$experts[3], "% of experts say the benefits outweigh the risks and ",
          "costs, against ", rb$publics[3], "% of the public - and ", far_e,
          "% of experts pick the far end of the scale, where only ", far_p,
@@ -938,19 +939,25 @@ add_finding("views_balance", 1L, "The overall balance",
          "two are about equal. Read with the card before it, the pattern is ",
          "consistent: the public is not more frightened of fusion than ",
          "experts are, it is less convinced that it will pay off."),
-  list(stat(paste0(rb$experts[3], "%"), "of experts say benefits win"),
-       stat(paste0(rb$publics[3], "%"), "of the public say the same"),
-       stat(paste0(rb$publics[2], "%"), "of the public say it is a wash",
-            paste0("against ", rb$experts[2], "% of experts"))),
+  # The second pair reads public-first, because it is the public's figure
+  # that is the larger one and the point of the stat.
+  list(stat(paste0(rb$experts[3], "% vs. ", rb$publics[3], "%"),
+            "say the benefits outweigh the risks and costs", "Largest group",
+            who = "Experts vs. public"),
+       stat(paste0(rb$publics[2], "% vs. ", rb$experts[2], "%"),
+            "say the risks, costs, and benefits are about equally balanced",
+            "Largest difference in the middle of the scale",
+            who = "Public vs. experts")),
   compare_block(c("Experts", "The public"),
                 pmap(list(rb$label, rb$experts, rb$publics), crow)),
   "A seven-point balance scale, collapsed to three.",
   list(link("See the public answers", "explore", "fusion_risk_ben"),
        link("See the expert answers", "sme-survey", "fusion_risk_ben")),
+  # One stem, like the two cards before it: the two instruments differ only
+  # in "U.S." against "United States".
   questions = asked(
-    qq("The public was asked", pub_q("fusion_risk_ben")),
-    qq("Experts were asked", sme_q("fusion_risk_ben")),
-    lead = "The same question, put to both groups"))
+    qq("Both groups were asked", pub_q("fusion_risk_ben")),
+    lead = "The question"))
 
 # ==============================================================================
 # PART TWO. Experts asked to predict what the public said.
