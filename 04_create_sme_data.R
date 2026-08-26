@@ -868,8 +868,8 @@ add_finding("views_time", 1L, "Timelines",
            "Largest difference at the other extreme",
            who = "Public vs. experts"))
   }),
-  compare_block(c("Experts", "The public"),
-                pmap(list(tl$label, tl$experts, tl$publics), crow)),
+  compare_block(c("The public", "Experts"),
+                pmap(list(tl$label, tl$publics, tl$experts), crow)),
   # Two of the six categories collapse at each end, and the note names both:
   # the ranges come off the sheet rather than being retyped, since 51 to 100
   # is easy to write as 50 to 100 and the note would then describe a scale
@@ -934,16 +934,16 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
   paste0("Experts and the public agree about the risks, but differ on the ",
          "costs and benefits."),
   NA_character_,
-  list(stat(paste0(lv$experts[lv$label == "Risk"], "% vs. ",
-                   lv$publics[lv$label == "Risk"], "%"),
+  list(stat(paste0(lv$publics[lv$label == "Risk"], "% vs. ",
+                   lv$experts[lv$label == "Risk"], "%"),
             "rate the risks as high or very high", "Smallest difference",
-            who = "Experts vs. public"),
-       stat(paste0(lv$experts[lv$label == "Benefit"], "% vs. ",
-                   lv$publics[lv$label == "Benefit"], "%"),
+            who = "Public vs. experts"),
+       stat(paste0(lv$publics[lv$label == "Benefit"], "% vs. ",
+                   lv$experts[lv$label == "Benefit"], "%"),
             "rate the benefits as high or very high", "Largest difference",
-            who = "Experts vs. public")),
-  compare_block(c("Experts", "The public"),
-                pmap(list(lv$label, lv$experts, lv$publics), crow)),
+            who = "Public vs. experts")),
+  compare_block(c("The public", "Experts"),
+                pmap(list(lv$label, lv$publics, lv$experts), crow)),
   # "Five-point" and "High or Very high" are claims about the instrument, so
   # both are read off the sheet: the scale's length, and that the two codes
   # LV counts are the ones labelled that way.
@@ -1005,15 +1005,15 @@ add_finding("views_balance", 1L, "The overall balance",
   NA_character_,
   # The second pair reads public-first, because it is the public's figure
   # that is the larger one and the point of the stat.
-  list(stat(paste0(rb$experts[3], "% vs. ", rb$publics[3], "%"),
+  list(stat(paste0(rb$publics[3], "% vs. ", rb$experts[3], "%"),
             "say the benefits outweigh the risks and costs", "Largest group",
-            who = "Experts vs. public"),
+            who = "Public vs. experts"),
        stat(paste0(rb$publics[2], "% vs. ", rb$experts[2], "%"),
             "say the risks, costs, and benefits are about equally balanced",
             "Largest difference in the middle of the scale",
             who = "Public vs. experts")),
-  compare_block(c("Experts", "The public"),
-                pmap(list(rb$label, rb$experts, rb$publics), crow)),
+  compare_block(c("The public", "Experts"),
+                pmap(list(rb$label, rb$publics, rb$experts), crow)),
   # The collapse. Which points make each band comes off RB, and the claim that
   # the three are the scale's labelled categories is checked against the
   # sheet: 1, 4 and 7 carry labels and the points between them do not, which
@@ -1095,14 +1095,14 @@ add_finding("guess_support", 2L, "Support",
   # The pair every other card carries: the estimate against what was said,
   # with the sides named underneath. Which band is the widest miss and which
   # the next is checked above rather than assumed here.
-  list(stat(paste0(sup$guess[3], "% vs. ", sup$publics[3], "%"),
+  list(stat(paste0(sup$publics[3], "% vs. ", sup$guess[3], "%"),
             "support fusion power plants", "Largest difference",
-            who = "Experts\u2019 estimate vs. the public"),
-       stat(paste0(sup$guess[1], "% vs. ", sup$publics[1], "%"),
+            who = "The public vs. experts\u2019 estimate"),
+       stat(paste0(sup$publics[1], "% vs. ", sup$guess[1], "%"),
             "oppose fusion power plants", "Overestimated by half as much",
-            who = "Experts\u2019 estimate vs. the public")),
-  compare_block(c("Experts\u2019 estimate", "The public"),
-                pmap(list(sup$label, sup$guess, sup$publics), crow)),
+            who = "The public vs. experts\u2019 estimate")),
+  compare_block(c("The public", "Experts\u2019 estimate"),
+                pmap(list(sup$label, sup$publics, sup$guess), crow)),
   # The ends are quoted off the sheet. Unlike the balance scale, this one
   # labels nothing but its two ends - point 4 carries no wording of its own -
   # so the three categories below are a reading of the scale rather than the
@@ -1246,16 +1246,16 @@ add_finding("guess_balance", 2L, "The overall balance",
       stop("The balance card calls the benefits row its widest miss and the ",
            "middle row exact; the table no longer says so.")
     }
-    list(stat(paste0(rbg$guess[3], "% vs. ", rbg$publics[3], "%"),
+    list(stat(paste0(rbg$publics[3], "% vs. ", rbg$guess[3], "%"),
               "say the benefits outweigh the risks and costs",
               "Largest difference of the three",
-              who = "Experts\u2019 estimate vs. the public"),
-         stat(paste0(rbg$guess[2], "% vs. ", rbg$publics[2], "%"),
+              who = "The public vs. experts\u2019 estimate"),
+         stat(paste0(rbg$publics[2], "% vs. ", rbg$guess[2], "%"),
               "say the two are about equal", "Estimated exactly",
-              who = "Experts\u2019 estimate vs. the public"))
+              who = "The public vs. experts\u2019 estimate"))
   }),
-  compare_block(c("Experts\u2019 estimate", "The public"),
-                pmap(list(rbg$label, rbg$guess, rbg$publics), crow)),
+  compare_block(c("The public", "Experts\u2019 estimate"),
+                pmap(list(rbg$label, rbg$publics, rbg$guess), crow)),
   paste0("Experts were asked to distribute 100 percentage points across the ",
          "three response categories. The public answered the same seven-point ",
          "balance scale shown in Part One, collapsed here into the same ",
@@ -1414,20 +1414,21 @@ add_finding("guess_drivers", 2L, "What drives support",
   # strongest correlate there is - which the guard above checks - and the
   # paragraph says the same. `over` below IS the computed maximum in its
   # direction, so "largest overestimate" is exact.
-  list(stat(paste0(scales::ordinal(calibration$expert_rank[1]), " vs. ",
-                   scales::ordinal(calibration$actual_rank[1])),
+  list(stat(paste0(scales::ordinal(calibration$actual_rank[1]), " vs. ",
+                   scales::ordinal(calibration$expert_rank[1])),
             calibration$label[1], "Most consequential underestimate",
-            who = "Experts\u2019 ranking vs. actual ranking"),
-       stat(paste0(scales::ordinal(over$expert_rank), " vs. ",
-                   scales::ordinal(over$actual_rank)),
+            who = "Actual ranking vs. experts\u2019 ranking"),
+       stat(paste0(scales::ordinal(over$actual_rank), " vs. ",
+                   scales::ordinal(over$expert_rank)),
             "Concern about climate change", "Largest overestimate",
-            who = "Experts\u2019 ranking vs. actual ranking")),
-  compare_block(c("Experts\u2019 estimate", "The public"),
+            who = "Actual ranking vs. experts\u2019 ranking")),
+  compare_block(c("The public", "Experts\u2019 estimate"),
                 pmap(list(calibration$label, calibration$expert_rank,
                           calibration$actual_rank),
+                     # The lower rank leads, and it is now the first column.
                      function(l, e, a) list(label = l,
-                       values = as.list(c(scales::ordinal(e), scales::ordinal(a))),
-                       lead = if (a < e) 1L else if (e < a) 0L else -1L))),
+                       values = as.list(c(scales::ordinal(a), scales::ordinal(e))),
+                       lead = if (a < e) 0L else if (e < a) 1L else -1L))),
   # The two alternative measures are still computed - partisanship scores
   # higher on ideology than on party, environmental concern higher on
   # perceived climate risk than on worry - but they are no longer printed
@@ -1537,9 +1538,9 @@ top_picks <- function(t, noun = "") {
   e <- pool[which.max(pool$experts), ]
   p <- pool[which.max(pool$publics), ]
   list(
-    stat(paste0(e$experts, "% vs. ", e$publics, "%"),
+    stat(paste0(e$publics, "% vs. ", e$experts, "%"),
          paste0("selected ", str_to_lower(e$label), noun_suffix(noun)),
-         "Largest expert priority", who = "Experts vs. public"),
+         "Largest expert priority", who = "Public vs. experts"),
     stat(paste0(p$publics, "% vs. ", p$experts, "%"),
          paste0("selected ", str_to_lower(p$label), noun_suffix(noun)),
          "Largest public priority", who = "Public vs. experts"))
@@ -1574,8 +1575,8 @@ agenda_card <- function(battery_id, kicker, headline, lede,
     paste0("agenda_", battery_id), 3L, kicker, headline(tab),
     if (is.null(lede)) NA_character_ else lede(tab),
     stats_fn(tab),
-    compare_block(c("Experts", "The public"),
-                  pmap(list(tab$label, tab$experts, tab$publics, tab$differs),
+    compare_block(c("The public", "Experts"),
+                  pmap(list(tab$label, tab$publics, tab$experts, tab$differs),
                        function(l, a, b, m) crow(l, a, b, mark = m))),
     # The two denominators are on the explore pages this card links to, and
     # the options whose wording differs are in the disclosure below the
@@ -1703,12 +1704,12 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
            " above it.")
     }
     list(
-      stat(paste0(both$experts, "% vs. ", both$publics, "%"),
+      stat(paste0(both$publics, "% vs. ", both$experts, "%"),
            paste0("selected ", str_to_lower(both$label)),
-           "Top priority for both groups", who = "Experts vs. public"),
-      stat(paste0(gap$experts, "% vs. ", gap$publics, "%"),
+           "Top priority for both groups", who = "Public vs. experts"),
+      stat(paste0(gap$publics, "% vs. ", gap$experts, "%"),
            paste0("selected ", str_to_lower(gap$label)),
-           "Largest difference", who = "Experts vs. public"))
+           "Largest difference", who = "Public vs. experts"))
   },
   lede_html = function(t) {
     v <- function(l, who) t[[who]][t$label == l]
@@ -1756,6 +1757,23 @@ for (v in c("new_fusion", "fusion_time", "fusion_risk_ben", "fusion_know",
   check_against_02(v)
 }
 message("Public sides checked against 02: 7 questions")
+
+# The public comes first everywhere: the left column of every two-column
+# table, and the left half of every paired figure. A reader comparing two
+# cards should not have to check which way round each one runs.
+for (f in findings) {
+  cols <- unlist(f$compare$columns)
+  if (length(cols) == 2 && !str_detect(str_to_lower(cols[1]), "public")) {
+    stop("Card ", f$id, " puts ", cols[1], " in the first column; the ",
+         "public's figures belong there.")
+  }
+  for (st in f$stats) {
+    if (str_detect(st$value, " vs. ") && str_starts(st$who, "Expert")) {
+      stop("Card ", f$id, " reads '", st$who, "' under a paired figure; the ",
+           "public's side comes first.")
+    }
+  }
+}
 
 # Every card offers the same two ways back to the data, in the same words and
 # the same order. A card that named its own - "See public awareness", "See
