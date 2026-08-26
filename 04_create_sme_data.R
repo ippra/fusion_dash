@@ -1334,6 +1334,11 @@ add_finding("guess_drivers", 2L, "What drives support",
     ", while overestimating concern about climate change, which they placed ",
     b(scales::ordinal(over$expert_rank)), " and which ranks last of the ten. ",
     close_note),
+  implication = paste0(
+    "When developing communication strategies, understand what shapes public ",
+    "opinion rather than relying on expert intuition. Tailor communication ",
+    "to the concerns and perspectives of the audience rather than assuming ",
+    "the same messages will resonate with everyone."),
   factor_links = list(
     label = "Every one of these is now a split on the public page. Cut support by:",
     items = pmap(list(calibration$label, calibration$explore_split),
