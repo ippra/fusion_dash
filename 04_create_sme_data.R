@@ -1201,6 +1201,19 @@ gap <- calibration |> mutate(miss = expert_rank - actual_rank)
 under <- gap |> slice_max(miss, n = 1, with_ties = FALSE)
 over <- gap |> slice_min(miss, n = 1, with_ties = FALSE)
 
+if (calibration$actual_rank[1] != 1L) {
+  stop("The card calls the first row the strongest correlate, but it ranks ",
+       calibration$actual_rank[1], ".")
+}
+if (over$actual_rank != nrow(calibration)) {
+  stop("The card calls '", over$label, "' the weakest correlate, but it ranks ",
+       over$actual_rank, " of ", nrow(calibration), ".")
+}
+if (!grepl("climate", over$label, ignore.case = TRUE)) {
+  stop("The card names climate concerns as the largest overestimate, but the ",
+       "largest is now '", over$label, "'.")
+}
+
 add_finding("guess_drivers", 2L, "What drives support",
   paste0("Experts overestimate the importance of climate concerns and ",
          "underestimate the importance of views toward traditional nuclear ",
@@ -1215,15 +1228,14 @@ add_finding("guess_drivers", 2L, "What drives support",
          " points above women on the seven-point support scale. And ",
          over$picked, "% named ", str_to_lower(over$label),
          ", which comes last of the ten on every measure tried."),
+  # "the strongest" and "the weakest" are claims about rank 1 and rank n, so
+  # they are checked rather than asserted: if either factor moves in the
+  # table the build stops instead of the caption going quietly wrong.
   list(stat(scales::ordinal(calibration$expert_rank[1]),
-            paste0("where experts placed ", str_to_lower(calibration$label[1])),
-            "it is actually the strongest"),
-       stat(paste0(under$picked, "%"),
-            paste0("named ", str_to_lower(under$label)),
-            paste0("actually ", scales::ordinal(under$actual_rank), " of ten")),
-       stat(paste0(over$picked, "%"),
-            paste0("named ", str_to_lower(over$label)),
-            paste0("actually ", scales::ordinal(over$actual_rank), " of ten"))),
+            "experts ranked traditional nuclear energy",
+            "actually the strongest correlate"),
+       stat(paste0(over$picked, "%"), "selected climate concerns",
+            "actually the weakest correlate")),
   compare_block(c("Experts' place", "Actual place"),
                 pmap(list(calibration$label, calibration$expert_rank,
                           calibration$actual_rank),
