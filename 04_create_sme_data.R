@@ -1498,13 +1498,19 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
            dec$experts, "% of experts, and ", ops$publics,
            "% pick the cost of running it against ", ops$experts, "%.")
   },
+  # "Largest public priority" on operations is Joe's wording and is not the
+  # arithmetic answer: the public's top pick is infrastructure (44% against
+  # 22%) and its widest gap over experts is decommissioning (36 against 9).
+  # Operations sits third on both counts. Raised and left as written.
   function(t) list(
-    stat(paste0(t$experts[t$label == "Research and development"], "% v ",
+    stat(paste0(t$experts[t$label == "Research and development"], "% vs. ",
                 t$publics[t$label == "Research and development"], "%"),
-         "research and development", "experts against the public"),
-    stat(paste0(t$publics[t$label == "Decommissioning and cleanup"], "% v ",
-                t$experts[t$label == "Decommissioning and cleanup"], "%"),
-         "decommissioning and cleanup", "the public against experts")),
+         "selected research and development costs", "Largest expert priority",
+         who = "Experts vs. public"),
+    stat(paste0(t$publics[t$label == "Operations and maintenance"], "% vs. ",
+                t$experts[t$label == "Operations and maintenance"], "%"),
+         "selected operations and maintenance costs", "Largest public priority",
+         who = "Public vs. experts")),
   note_extra = "")
 
 ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
