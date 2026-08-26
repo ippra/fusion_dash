@@ -779,6 +779,31 @@ sme_q <- function(v, full = FALSE) {
   str_squish(if (full) paste(na.omit(c(r$question_intro, r$question_text)),
                              collapse = " ") else r$question_text)
 }
+# One stem standing for a set that differs in a single word. Built from the
+# first item and verified against the rest: substituting each word back in has
+# to reproduce that item's own stem, in both surveys, or the build stops.
+three_way_stem <- function(words, vars) {
+  stopifnot(length(words) == length(vars), length(words) > 1)
+  template <- pub_q(vars[1])
+  for (i in seq_along(vars)) {
+    want_pub <- pub_q(vars[i])
+    got_pub <- sub(words[1], words[i], template, fixed = TRUE)
+    if (!identical(got_pub, want_pub)) {
+      stop("The public stem for ", vars[i], " is not the ", vars[1],
+           " stem with '", words[1], "' swapped for '", words[i],
+           "'. One stem cannot stand for all three.\n  want: ", want_pub,
+           "\n  got:  ", got_pub)
+    }
+    want_sme <- sme_q(vars[i])
+    got_sme <- sub(words[1], words[i], sme_q(vars[1]), fixed = TRUE)
+    if (!identical(got_sme, want_sme)) {
+      stop("The expert stem for ", vars[i], " does not follow the same ",
+           "pattern; one stem cannot stand for all three.")
+    }
+  }
+  sub(words[1], paste(words, collapse = " / "), template, fixed = TRUE)
+}
+
 qq <- function(who, text, highlight = NULL) {
   list(who = who, text = text,
        highlight = if (is.null(highlight)) NA else highlight)
@@ -802,7 +827,7 @@ tl <- map_dfr(TL, function(b) tibble(
   label = b[1], experts = sme_pct("fusion_time", b[-1]),
   publics = pub_pct("fusion_time", b[-1])))
 add_finding("views_time", 1L, "Timelines",
-  "The public expects shorter fusion development timelines than experts",
+  "The public expects shorter fusion development timelines than experts.",
   NA_character_,
   list(stat(paste0(tl$publics[tl$label == "Within 10 years"], "%"),
             "of the public think fusion will be ready within 10 years"),
@@ -847,7 +872,8 @@ lv <- map_dfr(LV, function(b) tibble(
   label = b[1], variable = b[2],
   experts = sme_pct(b[2], c("4", "5")), publics = pub_pct(b[2], c("4", "5"))))
 add_finding("views_level", 1L, "Risk, cost and benefit",
-  "The two groups agree about the risk. They disagree about what it buys.",
+  paste0("Experts and the public agree about the risks, but differ on the ",
+         "costs and benefits."),
   paste0("Almost exactly the same share of each group calls the risk high: ",
          lv$experts[lv$label == "Risk"], "% of experts and ",
          lv$publics[lv$label == "Risk"],
@@ -865,16 +891,21 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
             "call the benefit high", "the largest gap of the three")),
   compare_block(c("Experts", "The public"),
                 pmap(list(lv$label, lv$experts, lv$publics), crow)),
-  paste0("The share choosing High or Very high on each five-point scale. The ",
-         "risk question is quoted above; the cost and benefit questions are ",
-         "identical but for that one word, in both surveys."),
+  paste0("The share choosing High or Very high on each five-point scale. ",
+         "Three separate questions, identical but for the word marked above."),
   list(link("See the public on risk", "explore", "fusion_risk"),
        link("See the public on benefit", "explore", "fusion_ben"),
        link("See the expert answers", "sme-survey", "fusion_ben")),
+  # One stem standing for three. The risk, cost and benefit items differ only
+  # in that one word, so the slash is built by substitution and then checked
+  # against the other two rather than asserted - a wording change to any of
+  # them stops the build instead of quietly making this line a lie.
   questions = asked(
-    qq("The public was asked", pub_q("fusion_risk")),
-    qq("Experts were asked", sme_q("fusion_risk")),
-    lead = "The same question, put to both groups"))
+    qq("Both groups were asked",
+       three_way_stem(c("risk", "cost", "benefit"),
+                      c("fusion_risk", "fusion_cost", "fusion_ben")),
+       highlight = "risk / cost / benefit"),
+    lead = "The questions"))
 
 # 3. The balance ----------------------------------------------------------------
 RB <- list(c("Risks and costs outweigh benefits", "1", "2", "3"),
