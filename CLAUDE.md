@@ -568,7 +568,12 @@ whatever was missed.
 ## The theme distribution
 
 The qualitative page draws a ranked bar per theme above the verbatims it
-summarises, with a **Split by** control and click-to-filter. Four things in it
+summarises, with click-to-filter. **There is no Split by control** — removed
+2026-08-26. `03` and `05` still compute the other splits into `theme_dist`,
+so restoring the menu is restoring the block in `themeBars` rather than
+rebuilding any data. `small_group_caution` went with it: it warned that a
+split leaves a group out, which points at something a reader can no longer
+see. Four things in it
 are easy to undo:
 
 - **`03` computes it, on the rows that are actually published** — after the

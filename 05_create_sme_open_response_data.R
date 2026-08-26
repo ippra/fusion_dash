@@ -299,8 +299,9 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, theme_noun) 
     # checks behind them are not.
     theme_note = if (!has_themes) NA else
       theme_note(answered, nrow(rows), theme_noun, EXCLUDED_NOUN, "expert"),
-    cautions = as.list(c(small_group_caution(dropped_groups))) |>
-      discard(is.na),
+    # No cautions on this survey's items: the split-group one was the last,
+    # and it pointed at a split menu the page no longer offers.
+    cautions = list(),
     n = nrow(rows),
     answered = answered,
     # case_id identifies a person and has no business in a published file.

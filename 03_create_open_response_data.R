@@ -496,8 +496,7 @@ verbatims_cfg <- pmap(verbatim_items, function(id, variable, label, gated,
     theme_note = if (!has_themes) NA else
       theme_note(answered, nrow(rows), theme_noun, excluded_noun,
                  "respondent"),
-    cautions = as.list(c(caution, routing_caution(withheld),
-                         small_group_caution(dropped_groups))) |>
+    cautions = as.list(c(caution, routing_caution(withheld))) |>
       discard(is.na),
     n = nrow(rows),
     answered = answered,

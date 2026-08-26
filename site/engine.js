@@ -1549,22 +1549,12 @@ components.open_responses = async function (page, container) {
     let split = dist.splits[0];
     let selected = "";
 
-    const tools = el("div", { class: "fu-theme-tools" });
-    if (dist.splits.length > 1) {
-      const sel = el("select", { class: "grouping", id: "op-split",
-        onchange: () => {
-          split = dist.splits.find(s => s.id === sel.value) || dist.splits[0];
-          draw();
-        } });
-      for (const s of dist.splits)
-        sel.append(el("option", { value: s.id }, s.label));
-      tools.append(el("label", { class: "field-label", for: "op-split" },
-                     "Split by"), sel);
-    }
-    // The caption above already says a click filters the responses.
+    // No split control: the chart always draws the first split, which is
+    // Everyone. 03 and 05 still compute the others, so restoring the menu is
+    // restoring this block rather than rebuilding any data.
     const legend = el("div", { class: "fu-theme-legend" });
     const list = el("div", { class: "fu-theme-rows" });
-    wrap.append(tools, legend, list);
+    wrap.append(legend, list);
 
     function draw() {
       const rows = dist.values[split.id] || [];
