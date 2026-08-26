@@ -1261,16 +1261,15 @@ add_finding("guess_drivers", 2L, "What drives support",
   # Both pairs read expert rank against actual rank, computed from the table
   # below so the two cannot disagree.
   #
-  # "Largest underestimate" on the nuclear stat is a judgement, not the
-  # computed maximum: by rank difference gender is further out (9th against
-  # 3rd, six places) than nuclear (5th against 1st, four). Nuclear is the more
-  # consequential miss because it is the strongest correlate there is, which
-  # is the sense the caption is using. Left as Joe wrote it, recorded here so
-  # nobody later reads it as the arithmetic answer. `over` below IS the
-  # computed maximum in its direction.
+  # The nuclear stat says "most consequential", not "largest": by rank
+  # difference gender is further out (9th against 3rd, six places) than
+  # nuclear (5th against 1st, four). Nuclear matters more because it is the
+  # strongest correlate there is - which the guard above checks - and the
+  # paragraph says the same. `over` below IS the computed maximum in its
+  # direction, so "largest overestimate" is exact.
   list(stat(paste0(scales::ordinal(calibration$expert_rank[1]), " vs. ",
                    scales::ordinal(calibration$actual_rank[1])),
-            calibration$label[1], "Largest underestimate",
+            calibration$label[1], "Most consequential underestimate",
             who = "Experts\u2019 ranking vs. actual ranking"),
        stat(paste0(scales::ordinal(over$expert_rank), " vs. ",
                    scales::ordinal(over$actual_rank)),
