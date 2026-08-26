@@ -1389,16 +1389,18 @@ question_only <- function(text) {
 # The two stats every part three card carries: the option each side picked
 # most, with the other side's share of it beside it. Computed rather than
 # named, so "largest priority" is the arithmetic answer and stays that way.
-top_picks <- function(t, noun) {
+noun_suffix <- function(noun) if (nzchar(noun)) paste0(" ", noun) else ""
+
+top_picks <- function(t, noun = "") {
   pool <- t[t$label != "Other", ]
   e <- pool[which.max(pool$experts), ]
   p <- pool[which.max(pool$publics), ]
   list(
     stat(paste0(e$experts, "% vs. ", e$publics, "%"),
-         paste0("selected ", str_to_lower(e$label), " ", noun),
+         paste0("selected ", str_to_lower(e$label), noun_suffix(noun)),
          "Largest expert priority", who = "Experts vs. public"),
     stat(paste0(p$publics, "% vs. ", p$experts, "%"),
-         paste0("selected ", str_to_lower(p$label), " ", noun),
+         paste0("selected ", str_to_lower(p$label), noun_suffix(noun)),
          "Largest public priority", who = "Public vs. experts"))
 }
 
@@ -1464,15 +1466,9 @@ risk_tab <- agenda_card("fusion_risk_topics", "Risks",
                      "risks. Experts think non-experts most need to ",
                      "understand technological reliability."),
   NULL,
-  function(t) list(
-    stat(paste0(t$experts[t$label == "Technological reliability"], "% vs. ",
-                t$publics[t$label == "Technological reliability"], "%"),
-         "selected technological reliability", "Largest expert priority",
-         who = "Experts vs. public"),
-    stat(paste0(t$publics[t$label == "Public health and safety"], "% vs. ",
-                t$experts[t$label == "Public health and safety"], "%"),
-         "selected public health and safety", "Largest public priority",
-         who = "Public vs. experts")),
+  # Technological reliability and public health and safety, but taken from the
+  # table rather than named, so "largest priority" stays the arithmetic answer.
+  function(t) top_picks(t),
   note_extra = paste0("Two options are worded slightly differently between ",
                       "the surveys; the labels here are short forms that fit ",
                       "both."),
@@ -1493,7 +1489,11 @@ risk_tab <- agenda_card("fusion_risk_topics", "Risks",
       "). The largest differences concern which questions each group ",
       "believes communication should address, rather than how risky fusion ",
       "energy is overall.")
-  })
+  },
+  implication = function(t) paste0(
+    "Communication about fusion energy should address the questions the ",
+    "public most wants answered, including health, safety, and environmental ",
+    "impacts, alongside technological reliability."))
 
 cost_tab <- agenda_card("fusion_cost_topics", "Costs",
   function(t) paste0("The public wants to understand costs across the full ",
@@ -1541,7 +1541,11 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
       "roughly one-third to one-half of respondents, and the public placed ",
       "substantially more emphasis than experts on the costs of operating, ",
       "maintaining, and eventually decommissioning fusion facilities.")
-  })
+  },
+  implication = function(t) paste0(
+    "Communication about fusion energy should address costs across the full ",
+    "lifecycle of the technology, not only the costs of developing and ",
+    "building it."))
 
 ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
   function(t) "On the benefits, the two sides broadly agree.",
