@@ -1092,8 +1092,15 @@ local({
 add_finding("guess_support", 2L, "Support",
   "Experts underestimate public support for fusion energy.",
   NA_character_,
-  list(stat(paste0(sup$guess[3], "%"), "experts\u2019 estimate of public support"),
-       stat(paste0(sup$publics[3], "%"), "the public who actually support it")),
+  # The pair every other card carries: the estimate against what was said,
+  # with the sides named underneath. Which band is the widest miss and which
+  # the next is checked above rather than assumed here.
+  list(stat(paste0(sup$guess[3], "% vs. ", sup$publics[3], "%"),
+            "support fusion power plants", "Largest difference",
+            who = "Experts\u2019 estimate vs. the public"),
+       stat(paste0(sup$guess[1], "% vs. ", sup$publics[1], "%"),
+            "oppose fusion power plants", "Overestimated by half as much",
+            who = "Experts\u2019 estimate vs. the public")),
   compare_block(c("Experts\u2019 estimate", "The public"),
                 pmap(list(sup$label, sup$guess, sup$publics), crow)),
   # The ends are quoted off the sheet. Unlike the balance scale, this one
@@ -1169,9 +1176,13 @@ add_finding("guess_aware", 2L, "Awareness",
   paste0("Public awareness of fusion energy is modest, but higher than ",
          "experts expect."),
   NA_character_,
-  list(stat(paste0(heard, "%"), "of the public had heard of fusion energy"),
-       stat(paste0(low, "%"),
-            "of experts thought awareness was 40% or lower")),
+  # No "vs." here: this card has one series and one benchmark, not two
+  # estimates of the same quantity. The who line still names whose figure it
+  # is, so the block reads like the others.
+  list(stat(paste0(heard, "%"), "had heard of fusion energy",
+            "The actual level", who = "The public"),
+       stat(paste0(low, "%"), "estimated awareness of 40% or lower",
+            "Underestimated it", who = "Experts")),
   compare_block(c("Experts\u2019 estimate of public awareness"),
                 pmap(list(know_rows$label, know_rows$guess,
                           rep(NA_integer_, nrow(know_rows))),
@@ -1224,12 +1235,25 @@ add_finding("guess_balance", 2L, "The overall balance",
   paste0("Experts recognize that the public is less convinced that the ",
          "benefits outweigh the risks and costs."),
   NA_character_,
-  list(stat(paste0(rbg$guess[3], "%"),
-            paste0("estimated the public would say the benefits outweigh the ",
-                   "risks and costs")),
-       stat(paste0(rbg$publics[3], "%"),
-            paste0("the public actually said the benefits outweigh the risks ",
-                   "and costs"))),
+  # The widest miss of the three and the one they called exactly, both taken
+  # from the table. On a card whose finding is that experts got this close,
+  # the second figure is the point rather than a detail.
+  local({
+    miss <- abs(rbg$guess - rbg$publics)
+    if (which.max(miss) != 3 || min(miss) != 0 || which.min(miss) != 2) {
+      print(tibble(band = rbg$label, expert = rbg$guess, public = rbg$publics,
+                   miss = miss))
+      stop("The balance card calls the benefits row its widest miss and the ",
+           "middle row exact; the table no longer says so.")
+    }
+    list(stat(paste0(rbg$guess[3], "% vs. ", rbg$publics[3], "%"),
+              "say the benefits outweigh the risks and costs",
+              "Largest difference of the three",
+              who = "Experts\u2019 estimate vs. the public"),
+         stat(paste0(rbg$guess[2], "% vs. ", rbg$publics[2], "%"),
+              "say the two are about equal", "Estimated exactly",
+              who = "Experts\u2019 estimate vs. the public"))
+  }),
   compare_block(c("Experts\u2019 estimate", "The public"),
                 pmap(list(rbg$label, rbg$guess, rbg$publics), crow)),
   paste0("Experts were asked to distribute 100 percentage points across the ",
