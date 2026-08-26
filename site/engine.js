@@ -1831,16 +1831,6 @@ components.comparison = async function (page, container) {
       card.append(box);
     }
 
-    if (f.factor_links && Array.isArray(f.factor_links.items)) {
-      const box = el("div", { class: "fu-factor-links" });
-      box.append(el("span", { class: "fu-factor-lead" }, f.factor_links.label || ""));
-      const list = el("div", { class: "fu-factor-list" });
-      for (const l of f.factor_links.items)
-        list.append(el("a", { class: "fu-card-link", href: l.href }, l.label));
-      box.append(list);
-      card.append(box);
-    }
-
     if (Array.isArray(f.links) && f.links.length) {
       const links = el("div", { class: "fu-card-links" });
       for (const l of f.links)
@@ -1879,6 +1869,14 @@ components.comparison = async function (page, container) {
     c.getBoundingClientRect().left - strip.getBoundingClientRect().left
       + strip.scrollLeft;
   const nearestIndex = () => {
+    // The first and last cards can never be the one nearest the middle: goTo()
+    // clamps the scroll at both ends, so the strip stops with the card the
+    // reader is looking at against an edge and something else in the centre.
+    // Without these two lines the deck opens on its Part One divider and the
+    // counter reads "2 of 13" while the reader has not moved.
+    if (strip.scrollLeft <= 1) return 0;
+    if (strip.scrollLeft >= strip.scrollWidth - strip.clientWidth - 1)
+      return cards.length - 1;
     const mid = strip.scrollLeft + strip.clientWidth / 2;
     let best = 0, bestDist = Infinity;
     cards.forEach((c, i) => {

@@ -720,7 +720,7 @@ spell_out <- function(n) {
 }
 
 add_finding <- function(id, part, kicker, headline, lede, stats, compare,
-                        note, links, factor_links = NULL, questions = NULL,
+                        note, links, questions = NULL,
                         wording = NULL, lede_html = NULL,
                         implication = NULL) {
   findings[[length(findings) + 1]] <<- list(
@@ -738,8 +738,7 @@ add_finding <- function(id, part, kicker, headline, lede, stats, compare,
     # The options whose wording differs between the surveys, shown in full
     # behind a disclosure so the card stays readable and the detail is still
     # there rather than summarised away.
-    wording = if (is.null(wording)) NA else wording,
-    factor_links = if (is.null(factor_links)) NA else factor_links)
+    wording = if (is.null(wording)) NA else wording)
 }
 # `who` names the two sides of a paired figure - "Experts vs. public" under
 # "31% vs. 33%" - on its own line, so the number stays the number and the
@@ -1261,6 +1260,9 @@ correlates <- read_csv(sme_correlates, show_col_types = FALSE)
 splits_available <- read_json(file.path(outputs, "02_question_data",
                                         "splits.json"),
                               simplifyVector = TRUE)$id
+# Nothing renders these now - the card's roster of ten links into the public
+# splits came off on 2026-08-26 - but the sheet still declares one per factor,
+# and a declaration nothing checks is a declaration that rots.
 bad_split <- setdiff(correlates$explore_split, splits_available)
 if (length(bad_split) > 0) {
   print(bad_split)
@@ -1442,13 +1444,7 @@ add_finding("guess_drivers", 2L, "What drives support",
     "When developing communication strategies, understand what shapes public ",
     "opinion rather than relying on expert intuition. Tailor communication ",
     "to the concerns and perspectives of the audience rather than assuming ",
-    "the same messages will resonate with everyone."),
-  factor_links = list(
-    label = "Every one of these is now a split on the public page. Cut support by:",
-    items = pmap(list(calibration$label, calibration$explore_split),
-      function(label, split_id)
-        list(label = label,
-             href = paste0("?q=new_fusion&grouping=", split_id, "#explore")))))
+    "the same messages will resonate with everyone."))
 
 # ==============================================================================
 # PART THREE. A parallel question, asked of each side from its own position.
