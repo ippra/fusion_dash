@@ -923,8 +923,23 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
             who = "Experts vs. public")),
   compare_block(c("Experts", "The public"),
                 pmap(list(lv$label, lv$experts, lv$publics), crow)),
-  paste0("The share choosing High or Very high on each five-point scale. ",
-         "Three separate questions, identical but for the word marked above."),
+  # "Five-point" and "High or Very high" are claims about the instrument, so
+  # both are read off the sheet: the scale's length, and that the two codes
+  # LV counts are the ones labelled that way.
+  local({
+    opts <- parse_options(public_reference$response_options[
+      public_reference$variable == "fusion_risk"])
+    top <- opts$label[opts$value %in% c("4", "5")]
+    if (nrow(opts) != 5 || !identical(top, c("High", "Very high"))) {
+      print(opts)
+      stop("The risk, cost and benefit note calls this a five-point scale ",
+           "whose top two points are High and Very high; it is no longer one.")
+    }
+    paste0("Each question used the same five-point scale. The results shown ",
+           "here represent the share selecting High or Very high. The ",
+           "questions differed only in whether they referred to risks, ",
+           "costs, or benefits.")
+  }),
   list(link("See the public on risk", "explore", "fusion_risk"),
        link("See the public on benefit", "explore", "fusion_ben"),
        link("See the expert answers", "sme-survey", "fusion_ben")),
@@ -977,32 +992,30 @@ add_finding("views_balance", 1L, "The overall balance",
             who = "Public vs. experts")),
   compare_block(c("Experts", "The public"),
                 pmap(list(rb$label, rb$experts, rb$publics), crow)),
-  # The collapse, spelled out. The labels come off the sheet and the bands off
-  # RB, so the note cannot describe a cut the card does not make. The cut
-  # points are the instrument's own - 1, 4 and 7 are the only points it
-  # labels - which is the same rule the qualitative pages band on.
+  # The collapse. Which points make each band comes off RB, and the claim that
+  # the three are the scale's labelled categories is checked against the
+  # sheet: 1, 4 and 7 carry labels and the points between them do not, which
+  # is why the collapse cuts where it does.
   local({
     opts <- parse_options(public_reference$response_options[
       public_reference$variable == "fusion_risk_ben"])
-    lab <- function(v) {
-      out <- opts$label[opts$value == v]
-      if (length(out) != 1 || is.na(out)) {
-        stop("The balance note quotes the label on point ", v,
-             " of fusion_risk_ben; the sheet no longer carries one.")
-      }
-      out
+    labelled <- opts$value[!is.na(opts$label) & opts$label != opts$value]
+    if (!identical(labelled, c("1", "4", "7"))) {
+      print(opts)
+      stop("The balance note calls 1, 4 and 7 the labelled categories of ",
+           "fusion_risk_ben; the sheet now labels ",
+           paste(labelled, collapse = ", "), ".")
     }
     span <- function(b) {
       pts <- b[-1]
-      if (length(pts) == 1) pts else paste0(pts[1], " to ", pts[length(pts)])
+      if (length(pts) == 1) pts else
+        paste0(pts[1], "\u2013", pts[length(pts)])
     }
-    paste0("Both groups answered on a seven-point scale, labelled only at ",
-           "its ends and its midpoint: 1, \u201c", lab("1"), "\u201d; 4, \u201c",
-           lab("4"), "\u201d; and 7, \u201c", lab("7"),
-           "\u201d. The three rows above collapse the scale at those labels - ",
-           "points ", span(RB[[1]]), ", point ", span(RB[[2]]), ", and points ",
-           span(RB[[3]]), " - because they are the only cut points the ",
-           "instrument itself asserts.")
+    paste0("Both groups answered on a seven-point scale. The results shown ",
+           "here collapse responses into the three labeled categories: risks ",
+           "and costs outweigh benefits (", span(RB[[1]]),
+           "), equally balanced (", span(RB[[2]]),
+           "), and benefits outweigh risks and costs (", span(RB[[3]]), ").")
   }),
   list(link("See the public answers", "explore", "fusion_risk_ben"),
        link("See the expert answers", "sme-survey", "fusion_risk_ben")),
