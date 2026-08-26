@@ -1548,7 +1548,8 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
     "building it."))
 
 ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
-  function(t) "On the benefits, the two sides broadly agree.",
+  function(t) paste0("The public and experts largely agree on which benefits ",
+                     "should be emphasized in communication."),
   function(t) {
     clean <- t[t$label == "Clean energy", ]
     sec <- t[t$label == "Energy security", ]
@@ -1562,13 +1563,27 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
            "on what fusion is for. They disagree about what has to be settled ",
            "before it is built.")
   },
-  function(t) list(
-    stat(paste0(t$publics[t$label == "Clean energy"], "% v ",
-                t$experts[t$label == "Clean energy"], "%"),
-         "clean energy", "the public against experts - the first pick for both"),
-    stat(paste0(t$experts[t$label == "Energy security"], "% v ",
-                t$publics[t$label == "Energy security"], "%"),
-         "energy security", "the only sizeable gap of the six")),
+  # Not top_picks(): this card's pair is the option both sides put first and
+  # the option they differ on most, which is a different question from each
+  # side's own leader. Both are still read off the table rather than named.
+  function(t) {
+    pool <- t[t$label != "Other", ]
+    both <- pool[which.max(pool$publics), ]
+    gap <- pool[which.max(abs(pool$experts - pool$publics)), ]
+    if (both$experts < max(pool$experts)) {
+      stop("The benefits card calls ", both$label, " the top priority for ",
+           "both; experts now put ", pool$label[which.max(pool$experts)],
+           " above it.")
+    }
+    list(
+      stat(paste0(both$experts, "% vs. ", both$publics, "%"),
+           paste0("selected ", str_to_lower(both$label)),
+           "Top priority for both", who = "Experts vs. public"),
+      stat(paste0(gap$experts, "% vs. ", gap$publics, "%"),
+           paste0("selected ", str_to_lower(gap$label)),
+           "Largest difference (though still pretty small)",
+           who = "Experts vs. public"))
+  },
   note_extra = paste0("Three options are worded slightly differently between ",
                       "the surveys; the labels here are short forms that fit ",
                       "both."))
