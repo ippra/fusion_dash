@@ -1674,9 +1674,13 @@ components.comparison = async function (page, container) {
                             role: "region", "aria-label": "Findings" });
   const dots = el("div", { class: "fu-deck-dots" });
   const counter = el("span", { class: "fu-deck-count" });
-  const prev = el("button", { class: "fu-deck-nav", "aria-label": "Previous finding",
+  // The two buttons flank the card rather than sitting under it: one card
+  // fills the frame, so forward and back are where the card's edges are.
+  const prev = el("button", { class: "fu-deck-nav fu-deck-prev",
+                              "aria-label": "Previous finding",
                               onclick: () => step(-1) }, "‹");
-  const next = el("button", { class: "fu-deck-nav", "aria-label": "Next finding",
+  const next = el("button", { class: "fu-deck-nav fu-deck-next",
+                              "aria-label": "Next finding",
                               onclick: () => step(1) }, "›");
   const cards = [];
 
@@ -1847,7 +1851,8 @@ components.comparison = async function (page, container) {
                                onclick: () => goTo(i) }));
 
   const deck = el("div", { class: "fu-deck" },
-                  strip, el("div", { class: "fu-deck-bar" }, prev, dots, counter, next));
+                  el("div", { class: "fu-deck-frame" }, prev, strip, next),
+                  el("div", { class: "fu-deck-bar" }, dots, counter));
   content.append(deck);
   container.append(el("div", { class: "page" }, content));
 

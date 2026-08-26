@@ -1242,6 +1242,10 @@ table.data th select {
    so a swipe, a trackpad, the arrow keys and the buttons are one behaviour
    instead of four. */
 .fu-deck { margin-top: 6px; }
+/* One card fills the frame and the next one snaps into its place, so the two
+   buttons sit where the card's edges are rather than in a bar underneath.
+   The padding is what keeps them off the card instead of over it. */
+.fu-deck-frame { position: relative; padding: 0 46px; }
 .fu-deck-strip {
   display: flex; gap: 18px; overflow-x: auto; overflow-y: hidden;
   /* Natural heights, not stretched: a flex row makes every child as tall as
@@ -1253,7 +1257,7 @@ table.data th select {
 }
 .fu-deck-strip:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .fu-card {
-  scroll-snap-align: center; flex: 0 0 min(880px, 92%);
+  scroll-snap-align: center; flex: 0 0 100%;
   background: var(--card-bg, #fff); border: 1px solid var(--border);
   border-radius: 10px; padding: 22px 24px 20px;
   display: flex; flex-direction: column;
@@ -1302,12 +1306,15 @@ table.data th select {
   margin-top: 4px;
 }
 .fu-deck-nav {
-  width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
   border: 1px solid var(--control-border); background: var(--control-bg);
   color: var(--text); font-size: 19px; line-height: 1;
 }
 .fu-deck-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .fu-deck-nav:disabled { opacity: 0.35; cursor: default; }
+.fu-deck-prev { left: 0; }
+.fu-deck-next { right: 0; }
 .fu-deck-dots { display: flex; gap: 7px; }
 .fu-deck-dot {
   width: 9px; height: 9px; border-radius: 50%; padding: 0; cursor: pointer;
@@ -1316,7 +1323,9 @@ table.data th select {
 .fu-deck-dot.on { background: var(--accent); border-color: var(--accent); }
 .fu-deck-count { font-size: 12px; color: var(--text-muted); min-width: 6ch; }
 @media (max-width: 700px) {
-  .fu-card { flex: 0 0 94%; padding: 18px 16px 16px; }
+  .fu-deck-frame { padding: 0 34px; }
+  .fu-deck-nav { width: 30px; height: 30px; font-size: 17px; }
+  .fu-card { padding: 18px 16px 16px; }
   .fu-card-headline { font-size: 18px; }
   .fu-stat-value { font-size: 25px; }
 }
