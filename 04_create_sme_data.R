@@ -1024,7 +1024,11 @@ add_finding("guess_support", 2L, "Support",
     ". Experts also slightly overestimated opposition (",
     b(paste0(sup$guess[1], "%")), " versus ", b(paste0(sup$publics[1], "%")),
     "), but the largest difference was their estimate of the number of ",
-    "people who were undecided."))
+    "people who were undecided."),
+  implication = paste0(
+    "Do not assume that public support for fusion energy is lower than it ",
+    "is. Although many people remain uncertain, support is higher and ",
+    "opposition is lower than many experts expect."))
 
 # 5. Awareness --------------------------------------------------------------------
 heard <- pub_pct("fusion_know", "1")
