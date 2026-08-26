@@ -916,7 +916,10 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
     b(paste0(lv$publics[lv$label == "Cost"], "%")), ") and the benefits (",
     b(paste0(lv$experts[lv$label == "Benefit"], "%")), " versus ",
     b(paste0(lv$publics[lv$label == "Benefit"], "%")),
-    ") of fusion energy as high or very high."))
+    ") of fusion energy as high or very high."),
+  implication = paste0(
+    "When communicating about fusion energy, devote as much attention to its ",
+    "expected costs and benefits as you do to safety and risk."))
 
 # 3. The balance ----------------------------------------------------------------
 RB <- list(c("Risks and costs outweigh benefits", "1", "2", "3"),
