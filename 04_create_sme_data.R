@@ -1484,20 +1484,7 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
                      "lifecycle of fusion energy. Experts think non-experts ",
                      "most need to understand the costs of developing and ",
                      "constructing fusion energy technologies."),
-  function(t) {
-    rd <- t[t$label == "Research and development", ]
-    dec <- t[t$label == "Decommissioning and cleanup", ]
-    ops <- t[t$label == "Operations and maintenance", ]
-    paste0("Expert attention concentrates: ", rd$experts,
-           "% pick research and development and ",
-           t$experts[t$label == "Construction and capital"],
-           "% construction, leaving little for anything else. The public ",
-           "spreads its two picks almost evenly across all five, and cares ",
-           "about the end of a plant's life in a way experts do not - ",
-           dec$publics, "% pick decommissioning and cleanup against ",
-           dec$experts, "% of experts, and ", ops$publics,
-           "% pick the cost of running it against ", ops$experts, "%.")
-  },
+  NULL,
   # "Largest public priority" on operations is Joe's wording and is not the
   # arithmetic answer: the public's top pick is infrastructure (44% against
   # 22%) and its widest gap over experts is decommissioning (36 against 9).
@@ -1511,7 +1498,42 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
                 t$experts[t$label == "Operations and maintenance"], "%"),
          "selected operations and maintenance costs", "Largest public priority",
          who = "Public vs. experts")),
-  note_extra = "")
+  note_extra = "",
+  lede_html = function(t) {
+    v <- function(l, who) t[[who]][t$label == l]
+    # "More than three-quarters", "two-thirds" and "roughly one-third to one-
+    # half" are claims about the figures, so they are checked against them.
+    spread <- c(v("Research and development", "publics"),
+                v("Infrastructure", "publics"),
+                v("Operations and maintenance", "publics"),
+                v("Construction and capital", "publics"))
+    if (v("Research and development", "experts") <= 75) {
+      stop("The costs paragraph says more than three-quarters of experts ",
+           "picked research and development; it is now ",
+           v("Research and development", "experts"), "%.")
+    }
+    if (abs(v("Construction and capital", "experts") - 67) > 3) {
+      stop("The costs paragraph calls construction two-thirds of experts; it ",
+           "is now ", v("Construction and capital", "experts"), "%.")
+    }
+    if (min(spread) < 30 || max(spread) > 52) {
+      print(spread)
+      stop("The costs paragraph says the public's four picks run roughly one ",
+           "third to one half; they no longer do.")
+    }
+    paste0(
+      "Experts concentrated on the costs of developing fusion energy. More ",
+      "than three-quarters (", b(paste0(v("Research and development", "experts"), "%")),
+      ") selected research and development costs, and two-thirds (",
+      b(paste0(v("Construction and capital", "experts"), "%")),
+      ") selected construction and capital costs as the two costs ",
+      "non-experts most need to understand. Public responses were much more ",
+      "evenly distributed. Research and development, infrastructure, ",
+      "operations and maintenance, and construction were all selected by ",
+      "roughly one-third to one-half of respondents, and the public placed ",
+      "substantially more emphasis than experts on the costs of operating, ",
+      "maintaining, and eventually decommissioning fusion facilities.")
+  })
 
 ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
   function(t) "On the benefits, the two sides broadly agree.",
