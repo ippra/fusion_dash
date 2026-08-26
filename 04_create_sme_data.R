@@ -1383,8 +1383,11 @@ question_only <- function(text) {
   str_sub(text, at)
 }
 
+# `lede`, `lede_html` and `implication` are functions of the table, so a card
+# can compute its own figures from the shares it is about to draw. Any of them
+# may be NULL.
 agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
-                        stats_fn) {
+                        stats_fn, lede_html = NULL, implication = NULL) {
   items <- agenda |> filter(battery == battery_id)
   base_pub <- public |>
     filter(survey_year == "2026",
@@ -1409,10 +1412,11 @@ agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
 
   differing <- tab |> filter(differs)
   add_finding(
-    paste0("agenda_", battery_id), 3L, kicker, headline(tab), lede(tab),
+    paste0("agenda_", battery_id), 3L, kicker, headline(tab),
+    if (is.null(lede)) NA_character_ else lede(tab),
     stats_fn(tab),
-    compare_block(c("The public", "Experts"),
-                  pmap(list(tab$label, tab$publics, tab$experts, tab$differs),
+    compare_block(c("Experts", "The public"),
+                  pmap(list(tab$label, tab$experts, tab$publics, tab$differs),
                        function(l, a, b, m) crow(l, a, b, mark = m))),
     paste0("Both groups picked two of the same six options, so the shares sum ",
            "to about 200 rather than 100. ",
@@ -1420,12 +1424,17 @@ agenda_card <- function(battery_id, kicker, headline, lede, note_extra,
            "answered in 2026 and ", nrow(base_sme), " experts. ", note_extra),
     list(link("See the public answers", "explore", battery_id),
          link("See the expert answers", "sme-survey", battery_id)),
+    # The two marked phrases stay: they are what makes these two different
+    # questions rather than one, which is the whole point of part three.
     questions = asked(
       qq("The public was asked", str_squish(unique(pub_ref$question_intro)[1]),
          highlight = "would you most want to understand"),
       qq("Experts were asked",
          question_only(str_squish(unique(sme_ref$question_intro)[1])),
-         highlight = "non-experts most need to understand")),
+         highlight = "non-experts most need to understand"),
+      lead = "The questions"),
+    lede_html = if (is.null(lede_html)) NULL else lede_html(tab),
+    implication = if (is.null(implication)) NULL else implication(tab),
     wording = if (nrow(differing) == 0) NULL else list(
       summary = paste0(nrow(differing), " of the six options are worded ",
                        "differently in the two surveys - show them"),
@@ -1438,31 +1447,37 @@ risk_tab <- agenda_card("fusion_risk_topics", "Risks",
   function(t) paste0("The public wants to understand health and environmental ",
                      "risks. Experts think non-experts most need to ",
                      "understand technological reliability."),
-  function(t) {
+  NULL,
+  function(t) list(
+    stat(paste0(t$experts[t$label == "Technological reliability"], "% vs. ",
+                t$publics[t$label == "Technological reliability"], "%"),
+         "selected technological reliability", "Largest expert priority",
+         who = "Experts vs. public"),
+    stat(paste0(t$publics[t$label == "Public health and safety"], "% vs. ",
+                t$experts[t$label == "Public health and safety"], "%"),
+         "selected public health and safety", "Largest public priority",
+         who = "Public vs. experts")),
+  note_extra = paste0("Two options are worded slightly differently between ",
+                      "the surveys; the labels here are short forms that fit ",
+                      "both."),
+  lede_html = function(t) {
     tech <- t[t$label == "Technological reliability", ]
     health <- t[t$label == "Public health and safety", ]
     env <- t[t$label == "Environmental impacts", ]
-    paste0(tech$experts, "% of experts put technological reliability among ",
-           "the two risks non-experts most need to understand. It is the ",
-           "public's last choice, picked by ", tech$publics, "%. The public's ",
-           "own two are health and safety (", health$publics,
-           "%) and environmental impacts (", env$publics,
-           "%), and experts name the second of those a third as often (",
-           env$experts, "%). This is the widest gap on the page, and it is a ",
-           "gap about subject rather than degree: one side is answering ",
-           "whether the machine will perform, the other whether it will hurt ",
-           "them or the land around them.")
-  },
-  function(t) list(
-    stat(paste0(t$experts[t$label == "Technological reliability"], "% v ",
-                t$publics[t$label == "Technological reliability"], "%"),
-         "technological reliability", "experts against the public"),
-    stat(paste0(t$publics[t$label == "Environmental impacts"], "% v ",
-                t$experts[t$label == "Environmental impacts"], "%"),
-         "environmental impacts", "the public against experts")),
-  note_extra = paste0("Two options are worded slightly differently between ",
-                      "the surveys; the labels here are short forms that fit ",
-                      "both."))
+    paste0(
+      "Experts and the public prioritize different types of risk. Nearly ",
+      "two-thirds of experts (", b(paste0(tech$experts, "%")),
+      ") selected technological reliability as one of the two risks ",
+      "non-experts most need to understand, compared with just ",
+      b(paste0(tech$publics, "%")), " of the public. The public instead ",
+      "prioritized public health and safety (",
+      b(paste0(health$publics, "%")), ") and environmental impacts (",
+      b(paste0(env$publics, "%")), "), while experts selected environmental ",
+      "impacts less than half as often (", b(paste0(env$experts, "%")),
+      "). The largest differences concern which questions each group ",
+      "believes communication should address, rather than how risky fusion ",
+      "energy is overall.")
+  })
 
 cost_tab <- agenda_card("fusion_cost_topics", "Costs",
   function(t) paste0("Experts think about building it. The public thinks ",
