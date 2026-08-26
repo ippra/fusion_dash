@@ -1757,6 +1757,10 @@ components.comparison = async function (page, container) {
         row.append(quote);
         box.append(row);
       }
+      // A closing line for a block whose two rows are not a pair of questions
+      // put to the two groups.
+      if (asked.foot)
+        box.append(el("p", { class: "fu-asked-foot" }, asked.foot));
       card.append(box);
     }
 

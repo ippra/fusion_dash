@@ -1454,6 +1454,11 @@ table.data th select {
   color: var(--text);
 }
 .fu-asked-text strong { font-style: normal; }
+/* A closing line under the quoted stems, where the block needs one. */
+.fu-asked-foot {
+  margin: 12px 0 0; padding-top: 10px; font-size: 13px; line-height: 1.5;
+  color: var(--text-muted); border-top: 1px solid var(--border);
+}
 @media (max-width: 640px) {
   .fu-asked-row { grid-template-columns: 1fr; gap: 2px; }
 }

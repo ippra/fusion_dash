@@ -827,8 +827,9 @@ qq <- function(who, text, highlight = NULL) {
   list(who = who, text = text,
        highlight = if (is.null(highlight)) NA else highlight)
 }
-asked <- function(..., lead = "What each side was asked") {
-  list(lead = lead, items = list(...))
+asked <- function(..., lead = "What each side was asked", foot = NULL) {
+  list(lead = lead, items = list(...),
+       foot = if (is.null(foot)) NA else foot)
 }
 
 P1 <- "Part one - what each group thinks"
@@ -1244,11 +1245,24 @@ add_finding("guess_drivers", 2L, "What drives support",
   # "the strongest" and "the weakest" are claims about rank 1 and rank n, so
   # they are checked rather than asserted: if either factor moves in the
   # table the build stops instead of the caption going quietly wrong.
-  list(stat(scales::ordinal(calibration$expert_rank[1]),
-            "experts ranked traditional nuclear energy",
-            "actually the strongest correlate"),
-       stat(paste0(over$picked, "%"), "selected climate concerns",
-            "actually the weakest correlate")),
+  # Both pairs read expert rank against actual rank, computed from the table
+  # below so the two cannot disagree.
+  #
+  # "Largest underestimate" on the nuclear stat is a judgement, not the
+  # computed maximum: by rank difference gender is further out (9th against
+  # 3rd, six places) than nuclear (5th against 1st, four). Nuclear is the more
+  # consequential miss because it is the strongest correlate there is, which
+  # is the sense the caption is using. Left as Joe wrote it, recorded here so
+  # nobody later reads it as the arithmetic answer. `over` below IS the
+  # computed maximum in its direction.
+  list(stat(paste0(scales::ordinal(calibration$expert_rank[1]), " vs. ",
+                   scales::ordinal(calibration$actual_rank[1])),
+            calibration$label[1], "Largest underestimate",
+            who = "Experts\u2019 ranking vs. actual ranking"),
+       stat(paste0(scales::ordinal(over$expert_rank), " vs. ",
+                   scales::ordinal(over$actual_rank)),
+            "Concern about climate change", "Largest overestimate",
+            who = "Experts\u2019 ranking vs. actual ranking")),
   compare_block(c("Experts' place", "Actual place"),
                 pmap(list(calibration$label, calibration$expert_rank,
                           calibration$actual_rank),
@@ -1276,12 +1290,18 @@ add_finding("guess_drivers", 2L, "What drives support",
   # The second row is not a question anyone answered: the ranking is scored
   # against the public's own support item, which is quoted rather than named.
   questions = asked(
+    # "United States" where the public instrument says "U.S.", at Joe's
+    # request; the expert survey's own description of this item words it that
+    # way too. Everywhere else on the deck a quoted stem is the instrument's
+    # own wording, so this is the exception rather than the rule.
+    qq("The public was asked",
+       str_replace(pub_q("new_fusion"), fixed("the U.S.?"),
+                   "the United States?")),
     qq("Experts were asked", from_marker(sme_q("fusion_sup_cor"),
                                         "which of the following")),
-    qq("Compared with",
-       paste0("Actual correlates of responses to the question: \u201c",
-              pub_q("new_fusion"), "\u201d")),
-    lead = "The questions"),
+    lead = "The questions",
+    foot = paste0("Experts\u2019 responses were compared with the observed ",
+                  "correlates of public support.")),
   factor_links = list(
     label = "Every one of these is now a split on the public page. Cut support by:",
     items = pmap(list(calibration$label, calibration$explore_split),
