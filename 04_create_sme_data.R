@@ -1550,19 +1550,7 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
 ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
   function(t) paste0("The public and experts largely agree on which benefits ",
                      "should be emphasized in communication."),
-  function(t) {
-    clean <- t[t$label == "Clean energy", ]
-    sec <- t[t$label == "Energy security", ]
-    paste0("Clean energy is the first pick on both sides - ", clean$publics,
-           "% of the public and ", clean$experts,
-           "% of experts - and the rest of the list runs in much the same ",
-           "order. The one real difference is energy security, which ",
-           sec$experts, "% of experts pick against ", sec$publics,
-           "% of the public. Set beside the risk card, the shape of the ",
-           "communication problem is specific: the two sides already agree ",
-           "on what fusion is for. They disagree about what has to be settled ",
-           "before it is built.")
-  },
+  NULL,
   # Not top_picks(): this card's pair is the option both sides put first and
   # the option they differ on most, which is a different question from each
   # side's own leader. Both are still read off the table rather than named.
@@ -1586,7 +1574,36 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
   },
   note_extra = paste0("Three options are worded slightly differently between ",
                       "the surveys; the labels here are short forms that fit ",
-                      "both."))
+                      "both."),
+  lede_html = function(t) {
+    sec <- t[t$label == "Energy security", ]
+    # "Similar rankings for safety, economic and grid" is a claim about the
+    # order of three rows, so it is checked against the order rather than
+    # taken on trust. Energy security is the row the sentence excepts.
+    rank <- function(who) {
+      pool <- t[!t$label %in% c("Other", "Energy security"), ]
+      pool$label[order(-pool[[who]])]
+    }
+    wanted <- c("Clean energy", "Safety advantages", "Economic",
+                "Grid reliability")
+    if (!identical(rank("experts"), wanted) ||
+        !identical(rank("publics"), wanted)) {
+      print(rank("experts")); print(rank("publics"))
+      stop("The benefits paragraph says the two sides rank clean energy, ",
+           "safety, economic benefits and grid reliability alike; they no ",
+           "longer do.")
+    }
+    paste0(
+      "Experts and the public prioritize many of the same benefits of fusion ",
+      "energy. Clean energy is the most frequently selected benefit for both ",
+      "groups, followed by similar rankings for safety advantages, economic ",
+      "benefits, and grid reliability. The largest difference concerns energy ",
+      "security, which experts selected more often than the public (",
+      b(paste0(sec$experts, "%")), " versus ", b(paste0(sec$publics, "%")),
+      "). Compared with the previous two cards, communication priorities are ",
+      "much more closely aligned when discussing the potential benefits of ",
+      "fusion energy.")
+  })
 
 # Every public number on this page traces back to a question 02 published.
 for (v in c("new_fusion", "fusion_time", "fusion_risk_ben", "fusion_know",
