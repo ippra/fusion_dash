@@ -1088,7 +1088,8 @@ rbg <- tibble(
             round(mean(as.numeric(d$fusion_pub_rb_ben), na.rm = TRUE))),
   publics = rb$publics)
 add_finding("guess_balance", 2L, "The overall balance",
-  "This one they read right.",
+  paste0("Experts recognize that the public is less convinced that the ",
+         "benefits outweigh the risks and costs."),
   paste0("On how the public weighs risks against benefits the experts were ",
          "within a few points on all three answers - ", rbg$guess[3],
          "% guessed against ", rbg$publics[3],
