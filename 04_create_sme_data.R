@@ -865,9 +865,8 @@ add_finding("views_time", 1L, "Timelines",
     "and more likely to doubt that fusion will ever become commercially ",
     "viable."),
   implication = paste0(
-    "Expectations about the pace of fusion development differ substantially ",
-    "between experts and the public, making timelines an important topic for ",
-    "engagement and communication."))
+    "Set realistic expectations about when fusion energy is likely to reach ",
+    "widespread use, and explain why timelines remain uncertain."))
 
 # 2. Risk, cost and benefit ----------------------------------------------------
 LV <- list(c("Risk", "fusion_risk"), c("Cost", "fusion_cost"),
