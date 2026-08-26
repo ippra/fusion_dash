@@ -1152,11 +1152,9 @@ add_finding("guess_aware", 2L, "Awareness",
   local({
     bands <- parse_options(reference$response_options[
       reference$variable == "fusion_pub_know"])
-    paste0("The public answered Yes or No. Experts estimated what percentage ",
-           "of the public answered Yes by selecting one of ",
-           spell_out(nrow(bands)) |> str_to_lower(), " percentage ranges. ",
-           "The results shown here are based on the responses of ",
-           sme_n("fusion_pub_know"), " experts.")
+    paste0("The public answered Yes or No. Experts estimated the percentage ",
+           "of the public who answered Yes by selecting one of ",
+           spell_out(nrow(bands)) |> str_to_lower(), " percentage ranges.")
   }),
   list(link("See public awareness", "explore", "fusion_know"),
        link("See the expert guesses", "sme-survey", "fusion_pub_know")),
