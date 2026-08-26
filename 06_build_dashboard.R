@@ -483,7 +483,7 @@ config <- list(
          # page copy; these three were the last prose left in the engine.
          parts = list(
            list(part = 1L, label = "Part one",
-                title = "What each group thinks",
+                title = "What Each Group Thinks",
                 blurb = paste0("Both experts and the public were asked the ",
                                "same questions. Differences reflect genuine ",
                                "differences in perspective. Neither group is ",
@@ -496,7 +496,7 @@ config <- list(
                                "rather than differences in opinion. The ",
                                "public results are the observed answers.")),
            list(part = 3L, label = "Part three",
-                title = "What each side thinks needs explaining",
+                title = "What Each Side Thinks Needs Explaining",
                 blurb = paste0("These three cards compare two questions that ",
                                "are not the same. Both offered the same six ",
                                "options and both asked for two picks - but ",
