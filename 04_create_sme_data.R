@@ -741,8 +741,12 @@ add_finding <- function(id, part, kicker, headline, lede, stats, compare,
     wording = if (is.null(wording)) NA else wording,
     factor_links = if (is.null(factor_links)) NA else factor_links)
 }
-stat <- function(value, label, caption = NULL) {
+# `who` names the two sides of a paired figure - "Experts vs. public" under
+# "31% vs. 33%" - on its own line, so the number stays the number and the
+# label underneath stays a sentence about it.
+stat <- function(value, label, caption = NULL, who = NULL) {
   list(value = value, label = label,
+       who = if (is.null(who)) NA else who,
        caption = if (is.null(caption)) NA else caption)
 }
 # The aligned number block that replaces each chart. Two columns of figures
@@ -883,12 +887,14 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
          "against ", lv$publics[lv$label == "Benefit"],
          "% of the public - and experts also expect it to cost more. The gap ",
          "between the two groups is not about danger. It is about worth."),
-  list(stat(paste0(lv$experts[lv$label == "Risk"], "% v ",
+  list(stat(paste0(lv$experts[lv$label == "Risk"], "% vs. ",
                    lv$publics[lv$label == "Risk"], "%"),
-            "call the risk high", "experts against the public"),
-       stat(paste0(lv$experts[lv$label == "Benefit"], "% v ",
+            "rate the risks as high or very high", "Smallest difference",
+            who = "Experts vs. public"),
+       stat(paste0(lv$experts[lv$label == "Benefit"], "% vs. ",
                    lv$publics[lv$label == "Benefit"], "%"),
-            "call the benefit high", "the largest gap of the three")),
+            "rate the benefits as high or very high", "Largest difference",
+            who = "Experts vs. public")),
   compare_block(c("Experts", "The public"),
                 pmap(list(lv$label, lv$experts, lv$publics), crow)),
   paste0("The share choosing High or Very high on each five-point scale. ",

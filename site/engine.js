@@ -1718,6 +1718,9 @@ components.comparison = async function (page, container) {
       for (const st of f.stats) {
         const box = el("div", { class: "fu-stat" });
         box.append(el("div", { class: "fu-stat-value" }, String(st.value)));
+        // Who the two sides of a paired figure are, on its own line under the
+        // number rather than woven into it.
+        if (st.who) box.append(el("div", { class: "fu-stat-who" }, st.who));
         box.append(el("div", { class: "fu-stat-label" }, st.label));
         if (typeof st.caption === "string" && st.caption)
           box.append(el("div", { class: "fu-stat-caption" }, st.caption));
