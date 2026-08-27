@@ -1038,18 +1038,21 @@ components.explore = async function (page, container) {
   tableCard.append(el("h3", {}, "Questions (click on a question)"));
   const qTable = dataTable({
     columns: [
-      { id: "topic", label: "Topic", width: "18%",
+      { id: "topic", label: "Topic", width: "20%",
         filter: "select", filterAll: "All topics" },
       // The stem above the item, where there is one. Without it a row of the
       // select-all batteries reads "Don't know", which is not a question.
-      { id: "question", label: "Question Text", width: "52%",
+      { id: "question", label: "Question Text", width: "66%",
         render: (r) => {
           const cell = el("div");
           if (r.intro) cell.append(el("div", { class: "fu-row-intro" }, r.intro));
           cell.append(el("div", {}, r.question));
           return cell;
         } },
-      { id: "kind", label: "Type", width: "18%" },
+      // No Type column. Scale against Categorical is a property of the
+      // response options, which the chart shows, and it filtered nothing a
+      // reader was looking for. The catalog still carries `kind`, so putting
+      // the column back is this line.
       { id: "waves", label: "Asked" }
     ],
     rows: questions, pageSize: 10, clickable: true,
