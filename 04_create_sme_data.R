@@ -1164,67 +1164,7 @@ add_finding("guess_support", 2L, "Support",
     "is. Although many people remain uncertain, support is higher and ",
     "opposition is lower than many experts expect."))
 
-# 5. Awareness --------------------------------------------------------------------
-heard <- pub_pct("fusion_know", "1")
-know_opts <- parse_options(reference$response_options[reference$variable == "fusion_pub_know"])
-know_rows <- map_dfr(seq_len(nrow(know_opts)), function(i) tibble(
-  label = know_opts$label[i],
-  guess = sme_pct("fusion_pub_know", know_opts$value[i])))
-low <- sme_pct("fusion_pub_know", c("1", "2"))
-right_band <- know_opts$label[findInterval(heard, c(0, 20.5, 40.5, 60.5, 80.5))]
-add_finding("guess_aware", 2L, "Awareness",
-  paste0("Public awareness of fusion energy is modest, but higher than ",
-         "experts expect."),
-  NA_character_,
-  # No "vs." here: this card has one series and one benchmark, not two
-  # estimates of the same quantity. The who line still names whose figure it
-  # is, so the block reads like the others.
-  list(stat(paste0(heard, "%"), "had heard of fusion energy",
-            "The actual level", who = "The public"),
-       stat(paste0(low, "%"), "estimated awareness of 40% or lower",
-            "Underestimated it", who = "Experts")),
-  compare_block(c("Experts\u2019 estimate of public awareness"),
-                pmap(list(know_rows$label, know_rows$guess,
-                          rep(NA_integer_, nrow(know_rows))),
-                     function(l, g, x) list(
-                       label = if (identical(l, right_band))
-                                 paste0(l, " (actual)") else l,
-                       values = list(paste0(g, "%")),
-                       # The band the public's figure actually falls in, marked
-                       # the same way the paired tables mark the larger of a
-                       # pair - accent and weight on the figure itself.
-                       lead = if (identical(l, right_band)) 0L else -1L))),
-  # "Five percentage ranges" is a claim about the expert instrument, so it is
-  # counted off the sheet rather than typed, and so is the number who answered.
-  local({
-    bands <- parse_options(reference$response_options[
-      reference$variable == "fusion_pub_know"])
-    paste0("The public answered Yes or No. Experts estimated the percentage ",
-           "of the public who answered Yes by selecting one of ",
-           spell_out(nrow(bands)) |> str_to_lower(), " percentage ranges.")
-  }),
-  list(link("See the public answers", "explore", "fusion_know"),
-       link("See the expert answers", "sme-survey", "fusion_pub_know")),
-  questions = asked(
-    qq("The public was asked", pub_q("fusion_know")),
-    qq("Experts were asked", sme_q("fusion_pub_know", full = TRUE)),
-    lead = "The questions"),
-  lede_html = paste0(
-    b(paste0(spell_out(heard), " percent")), " of the public reported having ",
-    "heard of fusion energy before reading the survey description. Most ",
-    "experts underestimated that level of awareness. ",
-    b(paste0(spell_out(low), " percent")), " estimated that no more than ",
-    b("40%"), " of the public had previously heard of fusion energy, while ",
-    "only ", b(paste0(know_rows$guess[know_rows$label == right_band], "%")),
-    " correctly identified the ", b(right_band), " range. The results ",
-    "suggest that many experts underestimate how familiar the public already ",
-    "is with fusion energy."),
-  implication = paste0(
-    "Although public awareness remains modest, a substantial share of the ",
-    "public has already heard of fusion energy. Communication should build ",
-    "on that awareness rather than simply introduce the technology."))
-
-# 6. The balance, predicted --------------------------------------------------------
+# 5. The balance, predicted --------------------------------------------------------
 rbg <- tibble(
   label = c("Risks outweigh benefits", "About equal", "Benefits outweigh risks"),
   guess = c(round(mean(as.numeric(d$fusion_pub_rb_risk), na.rm = TRUE)),
@@ -1288,7 +1228,7 @@ add_finding("guess_balance", 2L, "The overall balance",
     "costs. Build on that understanding by communicating more clearly about ",
     "the expected costs and benefits of fusion energy."))
 
-# 7. What actually drives support --------------------------------------------------
+# 6. What actually drives support --------------------------------------------------
 # Experts named up to three factors they thought were the strongest correlates
 # of public support, and the correlates can be computed. Strength is eta,
 # bias-corrected: the share of the variation in support that lies between a
@@ -1752,11 +1692,10 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
     "substantial agreement between experts and the public."))
 
 # Every public number on this page traces back to a question 02 published.
-for (v in c("new_fusion", "fusion_time", "fusion_risk_ben", "fusion_know",
-            "fusion_risk", "fusion_cost", "fusion_ben")) {
-  check_against_02(v)
-}
-message("Public sides checked against 02: 7 questions")
+pub_checked <- c("new_fusion", "fusion_time", "fusion_risk_ben",
+                 "fusion_risk", "fusion_cost", "fusion_ben")
+for (v in pub_checked) check_against_02(v)
+message("Public sides checked against 02: ", length(pub_checked), " questions")
 
 # The public comes first everywhere: the left column of every two-column
 # table, and the left half of every paired figure. A reader comparing two
