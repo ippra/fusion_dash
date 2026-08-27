@@ -1225,11 +1225,23 @@ add_finding("guess_balance", 2L, "The overall balance",
     "This finding provides an important contrast with the other comparisons ",
     "in Part Two. Experts do not consistently misjudge public opinion. Their ",
     "estimates are much more accurate for some topics than for others."),
-  implication = paste0(
-    "Build on the understanding that the public is less convinced than ",
-    "experts that the benefits outweigh the risks and costs, because experts ",
-    "already recognize this difference more accurately than many other ",
-    "aspects of public opinion."))
+  # The insight rests on this card and no other. Its earlier wording opened
+  # with the public being less convinced than experts, which is card 3's
+  # finding: there is no column here for what experts themselves think, only
+  # for what they expected the public to say.
+  implication = local({
+    miss <- max(abs(rbg$guess - rbg$publics))
+    if (miss >= max(abs(sup$guess - sup$publics))) {
+      stop("The balance insight calls this the closer of the two ",
+           "predictions; it misses by ", miss, " against support's ",
+           max(abs(sup$guess - sup$publics)), ".")
+    }
+    paste0("Draw on expert judgement when communicating about how the public ",
+           "weighs the risks, costs, and benefits of fusion energy, because ",
+           "experts' estimates came within ", str_to_lower(spell_out(miss)),
+           " percentage points in every category - closer than on the other ",
+           "questions they were asked to predict.")
+  }))
 
 # 6. What actually drives support --------------------------------------------------
 # Experts named up to three factors they thought were the strongest correlates
