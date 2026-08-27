@@ -931,7 +931,7 @@ invisible(combined_stem(c("fusion_risk", "fusion_cost", "fusion_ben"),
                         c("risk", "cost", "benefit"), sme_q))
 
 add_finding("views_level", 1L, "Risk, cost and benefit",
-  paste0("Experts and the public agree about the risks, but differ on the ",
+  paste0("The public and experts agree on the risks, but differ on the ",
          "costs and benefits."),
   NA_character_,
   list(stat(paste0(lv$publics[lv$label == "Risk"], "% vs. ",
@@ -976,7 +976,7 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
        highlight = "risk / cost / benefit"),
     lead = "The questions"),
   lede_html = paste0(
-    "Experts and the public report similar perceptions of the risks ",
+    "The public and experts report similar perceptions of the risks ",
     "associated with fusion energy. ",
     b(paste0(spell_out(lv$publics[lv$label == "Risk"]), " percent")),
     " of the public and ", b(paste0(lv$experts[lv$label == "Risk"], "%")),
@@ -1000,7 +1000,7 @@ rb <- map_dfr(RB, function(b) tibble(
   label = b[1], experts = sme_pct("fusion_risk_ben", b[-1]),
   publics = pub_pct("fusion_risk_ben", b[-1])))
 add_finding("views_balance", 1L, "The overall balance",
-  paste0("Experts are more likely than the public to conclude that the ",
+  paste0("The public is less likely than experts to conclude that the ",
          "benefits outweigh the risks and costs."),
   NA_character_,
   # The second pair reads public-first, because it is the public's figure
@@ -1047,11 +1047,11 @@ add_finding("views_balance", 1L, "The overall balance",
     qq("Both groups were asked", pub_q("fusion_risk_ben")),
     lead = "The question"),
   lede_html = paste0(
-    "Experts are much more likely than the public to conclude that the ",
+    "The public is much less likely than experts to conclude that the ",
     "benefits of fusion energy outweigh its risks and costs. ",
-    b(paste0(spell_out(rb$experts[3]), " percent")),
-    " of experts select that side of the scale, compared with ",
-    b(paste0(rb$publics[3], "%")), " of the public. The public is much more ",
+    b(paste0(spell_out(rb$publics[3]), " percent")),
+    " of the public select that side of the scale, compared with ",
+    b(paste0(rb$experts[3], "%")), " of experts. The public is much more ",
     "likely to view the overall balance as neutral, with ",
     b(paste0(rb$publics[2], "%")), " selecting the midpoint compared with ",
     "just ", b(paste0(rb$experts[2], "%")), " of experts. Consistent with the ",
@@ -1172,8 +1172,8 @@ rbg <- tibble(
             round(mean(as.numeric(d$fusion_pub_rb_ben), na.rm = TRUE))),
   publics = rb$publics)
 add_finding("guess_balance", 2L, "The overall balance",
-  paste0("Experts recognize that the public is less convinced that the ",
-         "benefits outweigh the risks and costs."),
+  paste0("Experts accurately estimate how the public weighs the risks, ",
+         "costs, and benefits of fusion energy."),
   NA_character_,
   # The widest miss of the three and the one they called exactly, both taken
   # from the table. On a card whose finding is that experts got this close,
@@ -1580,7 +1580,7 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
   function(t) paste0("The public wants to understand costs across the full ",
                      "lifecycle of fusion energy. Experts think non-experts ",
                      "most need to understand the costs of developing and ",
-                     "constructing fusion energy technologies."),
+                     "building fusion technologies."),
   NULL,
   # Each side's largest priority, taken from the table rather than named. The
   # public's is infrastructure, not operations: operations is third on the
@@ -1629,7 +1629,7 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
 
 ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
   function(t) paste0("The public and experts largely agree on which benefits ",
-                     "should be emphasized in communication."),
+                     "matter most."),
   NULL,
   # Not top_picks(): this card's pair is the option both sides put first and
   # the option they differ on most, which is a different question from each
