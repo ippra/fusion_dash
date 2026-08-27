@@ -561,17 +561,16 @@ config <- list(
          label = "Comparisons",
          title = "How experts and the public compare",
          source = "data/sme/comparisons.json",
-         intro_html = paste0(
-           "<strong>Slide through the comparisons below.</strong> They are ",
-           "organized into three types of expert\u2013public comparisons. The ",
-           "first compares questions answered by both groups, so differences ",
-           "reflect differences in opinion. The second compares public ",
-           "responses with experts\u2019 estimates of those responses, so ",
-           "differences reflect gaps in experts\u2019 understanding of public ",
-           "opinion. The third compares parallel questions asked from each ",
-           "group\u2019s perspective, so differences reflect gaps in ",
-           "communication priorities. Every card links to the underlying ",
-           "survey data."),
+         # Plain text now rather than intro_html: the sentence carries no
+         # emphasis, and pageHead() takes either.
+         intro = paste0(
+           "Comparisons between the nationally representative 2025 and 2026 ",
+           "public surveys and the 2026 Fusion Energy Expert Survey. ",
+           "Findings are organized into three groups: where experts and the ",
+           "public answered the same questions, where experts estimated ",
+           "public opinion, and where the two identified different ",
+           "communication priorities. Click through the cards below to ",
+           "explore each finding and the underlying survey data."),
          # The card that opens each part. Authored here with the rest of the
          # page copy; these three were the last prose left in the engine.
          parts = list(
