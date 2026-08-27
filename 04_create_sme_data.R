@@ -865,7 +865,7 @@ add_finding("views_time", 1L, "Timelines",
            who = "Public vs. experts"),
       stat(paste0(row("Never")$publics, "% vs. ", row("Never")$experts, "%"),
            "believe fusion will never be ready for widespread use",
-           "Largest difference at the other extreme",
+           "The other end of the scale",
            who = "Public vs. experts"))
   }),
   compare_block(c("The public", "Experts"),
@@ -905,18 +905,17 @@ add_finding("views_time", 1L, "Timelines",
     qq("Both groups were asked", pub_q("fusion_time")),
     lead = "The question"),
   lede_html = paste0(
-    "More than half of experts (", b(paste0(tl$experts[tl$label == "11 to 25 years"], "%")),
-    ") believe fusion energy will be ready for widespread use in 11 to 25 ",
-    "years, and only ", b(paste0(tl$experts[tl$label == "Within 10 years"], "%")),
-    " expect it within the next decade. Public expectations are much more ",
-    "dispersed. ", b(paste0(spell_out(tl$publics[tl$label == "Within 10 years"]),
-                            " percent")),
-    " expect fusion within 10 years, while ",
-    b(paste0(tl$publics[tl$label == "Never"], "%")),
-    " believe it will never be ready for widespread use. Compared with ",
-    "experts, the public is both more optimistic about near-term deployment ",
-    "and more likely to doubt that fusion will ever become commercially ",
-    "viable."),
+    b(paste0(spell_out(tl$publics[tl$label == "Within 10 years"]), " percent")),
+    " of the public expect fusion energy to be ready for widespread use ",
+    "within 10 years, and ", b(paste0(tl$publics[tl$label == "Never"], "%")),
+    " believe it never will be. Expert expectations are far more ",
+    "concentrated: more than half (",
+    b(paste0(tl$experts[tl$label == "11 to 25 years"], "%")),
+    ") put it at 11 to 25 years, and only ",
+    b(paste0(tl$experts[tl$label == "Within 10 years"], "%")),
+    " expect it within the next decade. Compared with experts, the public is ",
+    "both more optimistic about near-term deployment and more likely to ",
+    "doubt that fusion will ever become commercially viable."),
   implication = paste0(
     "Set realistic expectations about when fusion energy is likely to reach ",
     "widespread use, because many members of the public already expect ",
@@ -1013,7 +1012,7 @@ add_finding("views_balance", 1L, "The overall balance",
             who = "Public vs. experts"),
        stat(paste0(rb$publics[2], "% vs. ", rb$experts[2], "%"),
             "say the risks, costs, and benefits are about equally balanced",
-            "Largest difference in the middle of the scale",
+            "The midpoint of the scale",
             who = "Public vs. experts")),
   compare_block(c("The public", "Experts"),
                 pmap(list(rb$label, rb$publics, rb$experts), crow)),
@@ -1416,14 +1415,15 @@ add_finding("guess_drivers", 2L, "What drives support",
     "strongest correlates of public support for fusion energy, but several ",
     "other rankings differed substantially from the data. The most ",
     "consequential underestimate was views toward traditional nuclear ",
-    "(fission) energy, which experts ranked ",
-    b(scales::ordinal(calibration$expert_rank[1])), " but which is in fact ",
-    "the strongest correlate of support. They underestimated gender by an ",
-    "even wider margin, ",
-    b(paste0(scales::ordinal(gender$expert_rank), " against ",
-             scales::ordinal(gender$actual_rank))),
-    ", while overestimating concern about climate change, which they placed ",
-    b(scales::ordinal(over$expert_rank)), " and which ranks last of the ten. ",
+    "(fission) energy, the strongest correlate of support, which experts ",
+    "ranked ", b(scales::ordinal(calibration$expert_rank[1])),
+    ". Gender is a wider miss still, ",
+    b(paste0(scales::ordinal(gender$actual_rank), " against ",
+             scales::ordinal(gender$expert_rank))),
+    ". Concern about climate change runs the other way, ",
+    b(paste0(scales::ordinal(over$actual_rank), " against ",
+             scales::ordinal(over$expert_rank))),
+    " - last of the ten, and the third factor experts named. ",
     close_note),
   implication = paste0(
     "Develop communication strategies using evidence about what shapes ",
@@ -1562,18 +1562,17 @@ risk_tab <- agenda_card("fusion_risk_topics", "Risks",
     health <- t[t$label == "Public health and safety", ]
     env <- t[t$label == "Environmental impacts", ]
     paste0(
-      "Experts and the public prioritize different types of risk. Nearly ",
-      "two-thirds of experts (", b(paste0(tech$experts, "%")),
-      ") selected technological reliability as one of the two risks ",
-      "non-experts most need to understand, compared with just ",
-      b(paste0(tech$publics, "%")), " of the public. The public instead ",
-      "prioritized public health and safety (",
+      "Experts and the public prioritize different types of risk. The public ",
+      "most wants to understand public health and safety (",
       b(paste0(health$publics, "%")), ") and environmental impacts (",
-      b(paste0(env$publics, "%")), "), while experts selected environmental ",
-      "impacts less than half as often (", b(paste0(env$experts, "%")),
-      "). The largest differences concern which questions each group ",
-      "believes communication should address, rather than how risky fusion ",
-      "energy is overall.")
+      b(paste0(env$publics, "%")), "), the second of which experts selected ",
+      "less than half as often (", b(paste0(env$experts, "%")),
+      "). Technological reliability runs the other way, ",
+      b(paste0(tech$publics, "% against ", tech$experts, "%")),
+      ": nearly two-thirds of experts named it as one of the two risks ",
+      "non-experts most need to understand. The largest differences concern ",
+      "which questions each group believes communication should address, ",
+      "rather than how risky fusion energy is overall.")
   },
   implication = function(t) paste0(
     "Address health, safety, and environmental impacts alongside ",
@@ -1614,17 +1613,18 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
            "third to one half; they no longer do.")
     }
     paste0(
-      "Experts concentrated on the costs of developing fusion energy. More ",
-      "than three-quarters (", b(paste0(v("Research and development", "experts"), "%")),
+      "Public responses were spread across the lifecycle. Research and ",
+      "development, infrastructure, operations and maintenance, and ",
+      "construction were all selected by roughly one-third to one-half of ",
+      "respondents, and the public placed substantially more emphasis than ",
+      "experts on the costs of operating, maintaining, and eventually ",
+      "decommissioning fusion facilities. Experts concentrated instead on ",
+      "the costs of developing fusion energy: more than three-quarters (",
+      b(paste0(v("Research and development", "experts"), "%")),
       ") selected research and development costs, and two-thirds (",
       b(paste0(v("Construction and capital", "experts"), "%")),
       ") selected construction and capital costs as the two costs ",
-      "non-experts most need to understand. Public responses were much more ",
-      "evenly distributed. Research and development, infrastructure, ",
-      "operations and maintenance, and construction were all selected by ",
-      "roughly one-third to one-half of respondents, and the public placed ",
-      "substantially more emphasis than experts on the costs of operating, ",
-      "maintaining, and eventually decommissioning fusion facilities.")
+      "non-experts most need to understand.")
   },
   implication = function(t) paste0(
     "Address costs across the full lifecycle of fusion energy, including ",
@@ -1731,9 +1731,14 @@ for (f in findings) {
   # The tags come out first: b() wraps each figure, so the two numbers of a
   # pair are never adjacent in the markup and the pattern would never match.
   plain <- str_remove_all(f$lede_html, "<[^>]+>")
-  pairs <- str_match_all(plain, "(\\d+)% (?:versus|vs\\.) (\\d+)%")[[1]]
+  # Percentages and ordinals both: "9th against 3rd" ran the wrong way round
+  # on the ranking card for as long as the pattern only knew about per cent.
+  pairs <- str_match_all(
+    plain,
+    "(\\d+(?:%|st|nd|rd|th)) (?:versus|against|vs\\.) (\\d+(?:%|st|nd|rd|th))"
+  )[[1]]
   for (i in seq_len(nrow(pairs))) {
-    fwd <- paste0(pairs[i, 2:3], "%")
+    fwd <- pairs[i, 2:3]
     rev <- rev(fwd)
     if (any(map_lgl(rows, ~identical(.x, rev))) &&
         !any(map_lgl(rows, ~identical(.x, fwd)))) {
