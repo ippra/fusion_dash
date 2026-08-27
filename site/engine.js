@@ -1830,7 +1830,8 @@ components.comparison = async function (page, container) {
     // the part's own colour so it stays tied to the card it belongs to.
     if (f.implication) {
       const box = el("div", { class: "fu-implication" });
-      box.append(el("p", { class: "fu-implication-label" }, "Implication"),
+      box.append(el("p", { class: "fu-implication-label" },
+                    "Communication insight"),
                  el("p", { class: "fu-implication-body", html: f.implication }));
       card.append(box);
     }

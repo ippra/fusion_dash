@@ -919,7 +919,8 @@ add_finding("views_time", 1L, "Timelines",
     "viable."),
   implication = paste0(
     "Set realistic expectations about when fusion energy is likely to reach ",
-    "widespread use, and explain why timelines remain uncertain."))
+    "widespread use, because many members of the public already expect ",
+    "shorter timelines than experts do."))
 
 # 2. Risk, cost and benefit ----------------------------------------------------
 LV <- list(c("Risk", "fusion_risk"), c("Cost", "fusion_cost"),
@@ -989,8 +990,10 @@ add_finding("views_level", 1L, "Risk, cost and benefit",
     b(paste0(lv$experts[lv$label == "Benefit"], "%")),
     ") of fusion energy as high or very high."),
   implication = paste0(
-    "When communicating about fusion energy, devote as much attention to its ",
-    "expected costs and benefits as you do to safety and risk."))
+    "Devote as much attention to the expected costs and benefits of fusion ",
+    "energy as you do to safety and risk, because differences between ",
+    "experts and the public are much larger for costs and benefits than for ",
+    "perceived risk."))
 
 # 3. The balance ----------------------------------------------------------------
 RB <- list(c("Risks and costs outweigh benefits", "1", "2", "3"),
@@ -1059,9 +1062,9 @@ add_finding("views_balance", 1L, "The overall balance",
     "public concern the expected benefits of fusion energy rather than its ",
     "risks."),
   implication = paste0(
-    "When communicating about fusion energy, explain why many experts ",
-    "conclude that the expected benefits outweigh the risks and costs rather ",
-    "than assuming those conclusions are self-evident."))
+    "Explain how experts weigh the expected risks, costs, and benefits of ",
+    "fusion energy, because the public is less likely than experts to ",
+    "conclude that the benefits outweigh the risks and costs."))
 
 # ==============================================================================
 # PART TWO. Experts asked to predict what the public said.
@@ -1160,9 +1163,10 @@ add_finding("guess_support", 2L, "Support",
     "), but by around half as much in each case. Support is where their ",
     "estimate is furthest from what the public said."),
   implication = paste0(
-    "Do not assume that public support for fusion energy is lower than it ",
-    "is. Although many people remain uncertain, support is higher and ",
-    "opposition is lower than many experts expect."))
+    "Recognize that public support for fusion energy is higher, and ",
+    "opposition lower, than many experts expect, even though uncertainty ",
+    "remains substantial. Communication can build on that existing support ",
+    "rather than assuming widespread opposition."))
 
 # 5. The balance, predicted --------------------------------------------------------
 rbg <- tibble(
@@ -1223,10 +1227,10 @@ add_finding("guess_balance", 2L, "The overall balance",
     "in Part Two. Experts do not consistently misjudge public opinion. Their ",
     "estimates are much more accurate for some topics than for others."),
   implication = paste0(
-    "Many experts understand that the public is less convinced than ",
-    "they are that the benefits of fusion energy outweigh its risks and ",
-    "costs. Build on that understanding by communicating more clearly about ",
-    "the expected costs and benefits of fusion energy."))
+    "Build on the understanding that the public is less convinced than ",
+    "experts that the benefits outweigh the risks and costs, because experts ",
+    "already recognize this difference more accurately than many other ",
+    "aspects of public opinion."))
 
 # 6. What actually drives support --------------------------------------------------
 # Experts named up to three factors they thought were the strongest correlates
@@ -1422,10 +1426,10 @@ add_finding("guess_drivers", 2L, "What drives support",
     b(scales::ordinal(over$expert_rank)), " and which ranks last of the ten. ",
     close_note),
   implication = paste0(
-    "When developing communication strategies, understand what shapes public ",
-    "opinion rather than relying on expert intuition. Tailor communication ",
-    "to the concerns and perspectives of the audience rather than assuming ",
-    "the same messages will resonate with everyone."))
+    "Develop communication strategies using evidence about what shapes ",
+    "public opinion rather than assumptions about what matters most to the ",
+    "public, because expert intuition does not always identify the strongest ",
+    "correlates of support."))
 
 # ==============================================================================
 # PART THREE. A parallel question, asked of each side from its own position.
@@ -1572,9 +1576,9 @@ risk_tab <- agenda_card("fusion_risk_topics", "Risks",
       "energy is overall.")
   },
   implication = function(t) paste0(
-    "Communication about fusion energy should address the questions the ",
-    "public most wants answered, including health, safety, and environmental ",
-    "impacts, alongside technological reliability."))
+    "Address health, safety, and environmental impacts alongside ",
+    "technological reliability, because these are the questions the public ",
+    "most wants answered before forming an opinion about fusion energy."))
 
 cost_tab <- agenda_card("fusion_cost_topics", "Costs",
   function(t) paste0("The public wants to understand costs across the full ",
@@ -1623,9 +1627,10 @@ cost_tab <- agenda_card("fusion_cost_topics", "Costs",
       "maintaining, and eventually decommissioning fusion facilities.")
   },
   implication = function(t) paste0(
-    "Communication about fusion energy should address costs across the full ",
-    "lifecycle of the technology, not only the costs of developing and ",
-    "building it."))
+    "Address costs across the full lifecycle of fusion energy, including ",
+    "operation, maintenance, and decommissioning, because the public is ",
+    "interested in understanding costs well beyond research, development, ",
+    "and construction."))
 
 ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
   function(t) paste0("The public and experts largely agree on which benefits ",
@@ -1688,8 +1693,10 @@ ben_tab <- agenda_card("fusion_ben_topics", "Benefits",
       "for benefits than they are for risks or costs.")
   },
   implication = function(t) paste0(
-    "Communication about the benefits of fusion energy can build on ",
-    "substantial agreement between experts and the public."))
+    "Build communication about the benefits of fusion energy around the ",
+    "priorities that experts and the public already share, because ",
+    "communication priorities are much more closely aligned for benefits ",
+    "than for risks or costs."))
 
 # Every public number on this page traces back to a question 02 published.
 pub_checked <- c("new_fusion", "fusion_time", "fusion_risk_ben",
