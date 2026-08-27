@@ -437,6 +437,14 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
    Intro line, control bar, question heading, full-width chart,
    response-key caption, question table below. Opt-in via page.layout. */
 .fu-page-head { margin: 0 2px 4px; }
+/* The rule between the About page's sections. Light, because it separates
+   parts of one argument rather than unrelated blocks. */
+.fu-static hr {
+  border: 0; border-top: 1px solid var(--border); margin: 26px 0 22px;
+}
+.fu-static h3 { margin: 0 0 10px; font-size: 17px; font-weight: 650; }
+.fu-static ul { margin: 0 0 14px; padding-left: 20px; }
+.fu-static li { margin-bottom: 6px; }
 /* Sized against the card headlines rather than the hero: this sits inside the
    page, above a paragraph, not on a title screen. */
 .fu-page-title {

@@ -1966,9 +1966,12 @@ components.placeholder = async function (page, container) {
 };
 
 components.static_page = async function (page, container) {
-  container.append(el("div", { class: "page" },
-    el("div", { class: "content" },
-      el("div", { class: "card fu-static", html: page.html || "" }))));
+  const content = el("div", { class: "content" });
+  // The same head every other page carries, so About opens with its title
+  // rather than with a heading buried in the card.
+  if (page.title || page.intro) content.append(pageHead(page));
+  content.append(el("div", { class: "card fu-static", html: page.html || "" }));
+  container.append(el("div", { class: "page" }, content));
 };
 /* ------------------------------------------------------------- routing -- */
 
