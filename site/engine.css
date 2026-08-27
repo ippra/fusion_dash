@@ -7,6 +7,11 @@
   --bg: #faf9f7;                /* warm paper */
   --panel: #ffffff;
   --panel-border: #e7e3dc;
+  /* The hairline between blocks. Every rule on the
+     comparison cards and the About page asks for it by this
+     name; it was never defined, so `1px solid var(--border)`
+     was invalid at computed-value time and painted nothing. */
+  --border: #e7e3dc;
   --text: #26221e;
   --text-muted: #6b645c;
   --accent: #8a1538;            /* fallback only; the fusion theme overrides */
@@ -30,6 +35,7 @@ html[data-theme="greyscale"] {
   --bg: #ffffff;
   --panel: #ffffff;
   --panel-border: #444444;
+  --border: #444444;
   --text: #000000;
   --text-muted: #333333;
   --accent: #000000;
@@ -179,6 +185,7 @@ html[data-theme="fusion"] {
   --bg: #f7f6fb;
   --panel: #ffffff;
   --panel-border: #e2e1ec;
+  --border: #e2e1ec;
   --text: #232130;
   --text-muted: #6a6780;
   --accent: #443A83;
@@ -206,6 +213,7 @@ html[data-theme="dark"] {
   --bg: #0b1220;
   --panel: #0f172a;
   --panel-border: #1e293b;
+  --border: #1e293b;
   --text: #e2e8f0;
   --text-muted: #94a3b8;
   --accent: #22a884;
@@ -442,9 +450,78 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 .fu-static hr {
   border: 0; border-top: 1px solid var(--border); margin: 26px 0 22px;
 }
-.fu-static h3 { margin: 0 0 10px; font-size: 17px; font-weight: 650; }
+/* A section heading, marked with a short accent rule rather than by size
+   alone: the About page is one column of prose and needs somewhere for the
+   eye to stop. */
+.fu-static h3 {
+  margin: 0 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--accent);
+  font-family: var(--mono, monospace);
+}
+.fu-static h3::after {
+  content: ""; display: block; width: 34px; height: 2px; margin-top: 8px;
+  background: var(--accent); opacity: .5;
+}
 .fu-static ul { margin: 0 0 14px; padding-left: 20px; }
 .fu-static li { margin-bottom: 6px; }
+/* The opening paragraph carries the whole programme, so it is set larger than
+   what follows rather than being one paragraph among four. */
+.fu-about-lede {
+  font-size: 16.5px; line-height: 1.6; color: var(--text); margin: 0 0 14px;
+}
+
+/* The three surveys, side by side. Each panel leads with its size, because
+   that is the fact a reader is looking for when they come to this section. */
+.fu-survey-grid {
+  display: grid; gap: 14px; margin: 16px 0 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.fu-survey {
+  border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px 12px;
+  border-top: 3px solid var(--accent); background: var(--bg);
+}
+.fu-survey-kicker {
+  margin: 0; font-family: var(--mono, monospace); font-size: 10.5px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted);
+  font-weight: 600;
+}
+.fu-survey-n {
+  margin: 6px 0 0; font-size: 30px; line-height: 1.05; font-weight: 700;
+  color: var(--accent);
+}
+.fu-survey-who {
+  margin: 1px 0 10px; font-size: 12.5px; color: var(--text-muted);
+}
+.fu-survey-body { margin: 0; font-size: 13.5px; line-height: 1.55; }
+
+/* Each section of the site as a link rather than a bullet: a reader who has
+   just been told what Comparisons holds should be one click from it. */
+.fu-about-links { display: grid; gap: 8px; margin: 14px 0 16px; }
+.fu-about-link {
+  display: block; text-decoration: none; color: inherit;
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 6px; padding: 10px 14px; background: var(--bg);
+}
+.fu-about-link:hover { border-color: var(--accent); }
+.fu-about-link-name {
+  display: block; font-weight: 650; font-size: 14.5px; color: var(--accent);
+}
+.fu-about-link-name::after { content: " \2192"; }
+.fu-about-link-body {
+  display: block; font-size: 13.5px; color: var(--text-muted); margin-top: 2px;
+}
+
+/* The caveat, set off the way a comparison card sets off its insight. */
+.fu-about-note {
+  margin: 22px 0 0; padding: 2px 0 2px 16px;
+  border-left: 3px solid var(--panel-border);
+}
+.fu-about-note-label {
+  margin: 0 0 5px; font-family: var(--mono, monospace); font-size: 10.5px;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted);
+  font-weight: 600;
+}
+.fu-about-note-body { margin: 0; font-size: 14px; line-height: 1.6; }
 /* Sized against the card headlines rather than the hero: this sits inside the
    page, above a paragraph, not on a title screen. */
 .fu-page-title {

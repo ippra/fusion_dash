@@ -165,36 +165,59 @@ n25 <- format(meta$waves$n[meta$waves$year == 2025], big.mark = ",")
 n26 <- format(meta$waves$n[meta$waves$year == 2026], big.mark = ",")
 n_sme <- format(sme_meta$respondents, big.mark = ",")
 
+# One survey's panel: the year and n as a figure a reader can take in at a
+# glance, then what it measured. The counts come from the pipeline's meta, so
+# a panel cannot state a sample size the site disagrees with.
+survey_panel <- function(kicker, n, who, body) {
+  paste0(
+    "<div class=\"fu-survey\">",
+    "<p class=\"fu-survey-kicker\">", kicker, "</p>",
+    "<p class=\"fu-survey-n\">", n, "</p>",
+    "<p class=\"fu-survey-who\">", who, "</p>",
+    "<p class=\"fu-survey-body\">", body, "</p>",
+    "</div>")
+}
+
+# Each section of the site, linked. A reader who has just been told what
+# Comparisons holds should be one click from it rather than back at the nav.
+section_link <- function(href, label, body) {
+  paste0("<a class=\"fu-about-link\" href=\"", href, "\">",
+         "<span class=\"fu-about-link-name\">", label, "</span>",
+         "<span class=\"fu-about-link-body\">", body, "</span></a>")
+}
+
 about_html <- paste0(
-  "<p>The Fusion Energy Socio-Technical Observatory is a long-term research ",
-  "effort led by the ", INSTITUTE_LINK, " (IPPRA) and supported by the U.S. ",
-  "Department of Energy. The Observatory studies how the public and fusion ",
-  "energy experts understand, evaluate, and communicate about fusion energy. ",
-  "Its goal is to provide the evidence needed to improve science ",
-  "communication, public engagement, and decision-making as fusion ",
+  "<p class=\"fu-about-lede\">The Fusion Energy Socio-Technical Observatory ",
+  "is a long-term research effort led by the ", INSTITUTE_LINK, " (IPPRA) and ",
+  "supported by the U.S. Department of Energy. The Observatory studies how ",
+  "the public and fusion energy experts understand, evaluate, and communicate ",
+  "about fusion energy. Its goal is to provide the evidence needed to improve ",
+  "science communication, public engagement, and decision-making as fusion ",
   "technologies continue to develop.</p>",
 
-  "<p>This site provides interactive access to the Observatory’s survey ",
+  "<p>This site provides interactive access to the Observatory\u2019s survey ",
   "data, allowing users to explore public opinion, expert perspectives, and ",
   "the communication gaps between them.</p>",
 
   "<hr>",
   "<h3>The surveys</h3>",
   "<p>The Observatory currently includes three complementary surveys.</p>",
-  "<p><strong>Public Survey (2025).</strong> A nationally representative ",
-  "survey of ", n25, " U.S. adults, conducted in partnership with Verasight, ",
-  "measuring public awareness of fusion energy, perceptions of its risks, ",
-  "costs, and benefits, support for research and deployment, trust in ",
-  "information sources, and related topics.</p>",
-  "<p><strong>Public Survey (2026).</strong> A second nationally ",
-  "representative survey of ", n26, " U.S. adults, also conducted with ",
-  "Verasight, that repeated many of the 2025 questions while expanding ",
-  "coverage of communication priorities and policy issues.</p>",
-  "<p><strong>Expert Survey (2026).</strong> A survey of ", n_sme, " fusion ",
-  "energy experts drawn from academia, national laboratories, government, ",
-  "and private industry. Experts were asked about their own assessments of ",
-  "fusion energy, their expectations for the technology’s future, and ",
-  "their predictions of how the public responded to the public survey.</p>",
+  "<div class=\"fu-survey-grid\">",
+  survey_panel("Public survey \u00b7 2025", n25, "U.S. adults", paste0(
+    "A nationally representative survey conducted in partnership with ",
+    "Verasight, measuring public awareness of fusion energy, perceptions of ",
+    "its risks, costs, and benefits, support for research and deployment, ",
+    "trust in information sources, and related topics.")),
+  survey_panel("Public survey \u00b7 2026", n26, "U.S. adults", paste0(
+    "A second nationally representative survey, also conducted with ",
+    "Verasight, that repeated many of the 2025 questions while expanding ",
+    "coverage of communication priorities and policy issues.")),
+  survey_panel("Expert survey \u00b7 2026", n_sme, "fusion experts", paste0(
+    "Experts drawn from academia, national laboratories, government, and ",
+    "private industry, asked about their own assessments of fusion energy, ",
+    "their expectations for the technology\u2019s future, and their ",
+    "predictions of how the public responded to the public survey.")),
+  "</div>",
   "<p>Together, these surveys make it possible to compare what the public ",
   "believes, what experts believe, and what experts think the public ",
   "believes.</p>",
@@ -202,15 +225,17 @@ about_html <- paste0(
   "<hr>",
   "<h3>Using this site</h3>",
   "<p>The site is organized into three sections.</p>",
-  "<ul>",
-  "<li><strong>Public Perspectives</strong> presents nationally ",
-  "representative results from the 2025 and 2026 public surveys.</li>",
-  "<li><strong>Expert Perspectives</strong> presents results from the 2026 ",
-  "expert survey.</li>",
-  "<li><strong>Comparisons</strong> sets the two side by side, highlighting ",
-  "where opinions differ, where experts accurately understand public ",
-  "opinion, and where communication priorities diverge.</li>",
-  "</ul>",
+  "<div class=\"fu-about-links\">",
+  section_link("#explore", "Public Perspectives", paste0(
+    "Nationally representative results from the 2025 and 2026 public ",
+    "surveys.")),
+  section_link("#sme-survey", "Expert Perspectives",
+               "Results from the 2026 expert survey."),
+  section_link("#sme-compare", "Comparisons", paste0(
+    "The two side by side, highlighting where opinions differ, where experts ",
+    "accurately understand public opinion, and where communication ",
+    "priorities diverge.")),
+  "</div>",
   "<p>Open-ended responses are displayed exactly as respondents submitted ",
   "them. Where thematic coding is available, responses can also be explored ",
   "by theme.</p>",
@@ -230,13 +255,14 @@ about_html <- paste0(
   "rather than estimate characteristics of a larger population of experts. ",
   "Accordingly, expert results are presented without weighting.</p>",
 
-  "<hr>",
-  "<h3>A note on interpretation</h3>",
-  "<p>The public surveys were conducted using nationally recruited online ",
-  "panels rather than probability samples. Weighting improves ",
-  "representativeness across key demographic characteristics, but, as with ",
-  "any survey, results should be interpreted as estimates rather than exact ",
-  "population values.</p>")
+  "<div class=\"fu-about-note\">",
+  "<p class=\"fu-about-note-label\">A note on interpretation</p>",
+  "<p class=\"fu-about-note-body\">The public surveys were conducted using ",
+  "nationally recruited online panels rather than probability samples. ",
+  "Weighting improves representativeness across key demographic ",
+  "characteristics, but, as with any survey, results should be interpreted ",
+  "as estimates rather than exact population values.</p>",
+  "</div>")
 
 # The expert page's splits and caption. Separate from the public roster because
 # the numbers mean something different: a share of 153 experts who answered,
