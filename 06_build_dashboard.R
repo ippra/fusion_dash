@@ -386,14 +386,22 @@ config <- list(
     list(id = "explore", component = "explore",
          nav_group = "Public Perspectives",
          label = "Survey Results",
+         # The title says what the page is; the paragraph under it says how to
+         # use it. Both are authored here, like every other sentence.
+         title = "How the public sees fusion energy",
          questions = "data/questions.json", default_grouping = "All",
          # What the page opens on. Row 1 is whatever the survey asked first -
          # a word association - which is a poor first impression of a survey
          # about what people know and expect.
          default_question = "fusion_know",
-         intro = paste0("Click a question in the table below to view the ",
-                        "weighted distribution of public responses by the ",
-                        "group you select."),
+         intro = paste0("Survey results from the IPPRA Fusion Energy Survey, ",
+                        "fielded with US adults in 2025 and 2026. Percentages ",
+                        "are weighted to represent the country as a whole, ",
+                        "and any question can be cut by demographic, ",
+                        "political or energy-attitude groups. Click a ",
+                        "question in the table below to view the weighted ",
+                        "distribution of public responses by the group you ",
+                        "select."),
          # x_label titles the category axis and y_label the value axis, which
          # the horizontal layout swaps on screen but not in meaning.
          chart = list(x_label = "Response", y_label = "Respondents (%)"),
@@ -401,17 +409,22 @@ config <- list(
     list(id = "public-qual", component = "open_responses",
          nav_group = "Public Perspectives",
          label = "Open Responses",
+         title = "The public in their own words",
          index = "data/open/index.json",
          # Word associations are hidden for now. The file is still
          # built and still shipped - restoring this line brings the
          # view back with it.
          # words = "data/open/words.json",
          verbatims = "data/open/verbatims/{id}.json",
-         intro = paste0("Click an option in the menu below to explore public ",
-                        "responses written in respondents\u2019 own words. ",
-                        "Responses are shown exactly as they were submitted ",
-                        "and can be filtered by theme where thematic coding ",
-                        "is available."),
+         intro = paste0("What survey respondents wrote when the question ",
+                        "left the answer to them: the questions they would ",
+                        "put to a fusion expert, and their reasons for ",
+                        "supporting, opposing or remaining unsure about ",
+                        "fusion energy. Click an option in the menu below to ",
+                        "explore public responses written in respondents\u2019 ",
+                        "own words. Responses are shown exactly as they were ",
+                        "submitted and can be filtered by theme where ",
+                        "thematic coding is available."),
          blurb = "Responses written in participants\u2019 own words."),
     # The expert survey reuses the explore component - the question files have
     # the same shape - but reads its own directory and its own caption
@@ -430,7 +443,15 @@ config <- list(
          # to. What it does not carry - that a purposive sample of experts is
          # not a sample of any population - is in the caption under every
          # chart and in the value tooltip, which is where it belongs anyway.
-         intro = paste0("Click a question in the table below to view the raw ",
+         title = "How fusion experts see their field",
+         intro = paste0("Survey results from 153 people identified as having ",
+                        "relevant fusion expertise, fielded in 2026. This is ",
+                        "a separate survey rather than a third wave of the ",
+                        "public one: the figures are counts of the experts ",
+                        "who answered rather than estimates of any wider ",
+                        "population, and can be cut by years in fusion work, ",
+                        "sector, field and role. Click a question in the ",
+                        "table below to view the raw ",
                         "(unweighted) distribution of expert responses by the ",
                         "group you select."),
          chart = list(x_label = "Response", y_label = "Experts (%)"),
@@ -449,6 +470,7 @@ config <- list(
     list(id = "sme-qual", component = "open_responses",
          nav_group = "Expert Perspectives",
          label = "Open Responses",
+         title = "Experts in their own words",
          index = "data/sme-open/index.json",
          # Word associations are hidden for now. The file is still
          # built and still shipped - restoring this line brings the
@@ -459,14 +481,18 @@ config <- list(
          # before publication, and that nothing here is weighted - are in the
          # caption beside every item, which is where a reader meets them next
          # to the responses they qualify.
-         intro = paste0("Click an option in the menu below to explore expert ",
-                        "responses written in respondents\u2019 own words. ",
-                        "Responses are shown exactly as they were submitted ",
-                        "and can be filtered by theme where thematic coding ",
-                        "is available."),
+         intro = paste0("What experts wrote in their own words: what they ",
+                        "think non-experts most misunderstand about fusion ",
+                        "energy, and what they would change about how it is ",
+                        "discussed. Click an option in the menu below to ",
+                        "explore expert responses written in respondents\u2019 ",
+                        "own words. Responses are shown exactly as they were ",
+                        "submitted and can be filtered by theme where ",
+                        "thematic coding is available."),
          blurb = "Responses written in participants\u2019 own words."),
     list(id = "sme-compare", component = "comparison",
          label = "Comparisons",
+         title = "Where experts and the public diverge",
          source = "data/sme/comparisons.json",
          intro_html = paste0(
            "<strong>Slide through the comparisons below.</strong> They are ",

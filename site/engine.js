@@ -1075,7 +1075,7 @@ components.explore = async function (page, container) {
   else qTable.selectFirst();
   tableCard.append(qTable);
 
-  const intro = el("p", { class: "fu-explore-intro" }, page.intro ||
+  const intro = pageHead(page,
     "Click a survey question in the table below to see the weighted distribution of responses, split by the group you choose.");
   const bar = el("div", { class: "card fu-toolbar" });
   const gWrap = groupingSelect(g => { grouping = g; draw(); }, grouping,
@@ -1321,7 +1321,7 @@ components.open_responses = async function (page, container) {
   let current = getParam("view");
   if (!views.some(v => v.id === current)) current = views[0].id;
 
-  const intro = el("p", { class: "fu-explore-intro" }, page.intro || "");
+  const intro = pageHead(page);
   const bar = el("div", { class: "card fu-toolbar" });
   const sel = el("select", { class: "grouping", id: "op-view", onchange: () => {
     current = sel.value; setParams({ view: current }); render();
@@ -1664,14 +1664,28 @@ components.open_responses = async function (page, container) {
  *
  * Sliding is CSS scroll-snap, not a JS animation loop, so a swipe, a
  * trackpad, the arrow keys and the buttons are one behaviour. */
+/* A page opens with what it is, then how to use it. The title is a phrase
+ * rather than an instruction - the instruction is the paragraph under it -
+ * and both are authored in the builder like every other sentence on the site.
+ * A page with no title renders the paragraph alone, which is what the two
+ * pages that had one before this looked like. */
+function pageHead(page, fallback) {
+  const wrap = el("div", { class: "fu-page-head" });
+  if (page.title) wrap.append(el("h1", { class: "fu-page-title" }, page.title));
+  const text = page.intro || fallback || "";
+  if (page.intro_html)
+    wrap.append(el("p", { class: "fu-explore-intro", html: page.intro_html }));
+  else if (text)
+    wrap.append(el("p", { class: "fu-explore-intro" }, text));
+  return wrap;
+}
+
 components.comparison = async function (page, container) {
   const data = await fetchJSON(page.source);
   const content = el("div", { class: "content" });
   // intro_html where the lede needs emphasis, the same route about_html and
   // the footer's links_html take. Authored in the builder, never from data.
-  content.append(page.intro_html
-    ? el("p", { class: "fu-explore-intro", html: page.intro_html })
-    : el("p", { class: "fu-explore-intro" }, page.intro || ""));
+  content.append(pageHead(page));
 
   const strip = el("div", { class: "fu-deck-strip", tabindex: "0",
                             role: "region", "aria-label": "Findings" });

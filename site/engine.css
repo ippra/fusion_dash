@@ -436,6 +436,14 @@ html[data-theme="dark"] #navbar { position: sticky; border-bottom: none; }
 /* ---------- toolbar explorer layout (Joe's Aug-2026 redesign) ------------
    Intro line, control bar, question heading, full-width chart,
    response-key caption, question table below. Opt-in via page.layout. */
+.fu-page-head { margin: 0 2px 4px; }
+/* Sized against the card headlines rather than the hero: this sits inside the
+   page, above a paragraph, not on a title screen. */
+.fu-page-title {
+  margin: 0 0 6px; font-size: 26px; line-height: 1.25; font-weight: 650;
+  letter-spacing: -0.01em; color: var(--text);
+}
+@media (max-width: 700px) { .fu-page-title { font-size: 21px; } }
 .fu-explore-intro { color: var(--text-muted); font-size: 14px; margin: 0 2px; }
 .fu-toolbar {
   display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap;
