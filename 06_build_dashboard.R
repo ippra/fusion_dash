@@ -510,7 +510,7 @@ config <- list(
          # to. What it does not carry - that a purposive sample of experts is
          # not a sample of any population - is in the caption under every
          # chart and in the value tooltip, which is where it belongs anyway.
-         title = "How fusion experts see their field",
+         title = "How fusion experts see fusion energy",
          intro = paste0("Survey results from 153 people identified as having ",
                         "relevant fusion expertise, fielded in 2026. This is ",
                         "a separate survey rather than a third wave of the ",
@@ -559,7 +559,7 @@ config <- list(
          blurb = "Responses written in participants\u2019 own words."),
     list(id = "sme-compare", component = "comparison",
          label = "Comparisons",
-         title = "Where experts and the public diverge",
+         title = "How experts and the public compare",
          source = "data/sme/comparisons.json",
          intro_html = paste0(
            "<strong>Slide through the comparisons below.</strong> They are ",
