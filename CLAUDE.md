@@ -866,6 +866,19 @@ survives. Charts there are also drawn **after** the page is in the document,
 because Chart.js sizes itself from the canvas's laid-out box and a detached one
 has none.
 
+**The deck announces that it slides.** The two arrow buttons sit at the
+frame's mid-height, which the tall second card puts well below the short
+opening card, and the dots are under the tallest card, off screen - so a
+reader arriving cold saw no control at all. A "Scroll for more" pill with a
+nudging arrow now sits in the empty space under the opening card, measured
+into place rather than styled there (`placeHint()`), and leaves on the first
+move of any kind: `goTo()` drops it for the buttons, dots and arrow keys, the
+strip's scroll event for a swipe or trackpad. It is withheld when the opening
+card is as tall as the strip, since the only space left would be over the
+dots bar. `pointer-events: none`, so it can never take a click meant for the
+card. Shown on every visit: it costs nothing once the reader has moved, and
+the person who needs it is the one who has not.
+
 ## The expert qualitative page
 
 `05_create_sme_open_response_data.R` builds it, and it is the **same

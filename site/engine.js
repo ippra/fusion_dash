@@ -1868,11 +1868,52 @@ components.comparison = async function (page, container) {
     dots.append(el("button", { class: "fu-deck-dot", "aria-label": `Card ${i + 1}`,
                                onclick: () => goTo(i) }));
 
-  const deck = el("div", { class: "fu-deck" },
-                  el("div", { class: "fu-deck-frame" }, prev, strip, next),
+  /* The deck slides sideways and nothing on screen says so: the two buttons
+   * are small and sit at the frame's mid-height, which the tall second card
+   * puts well below the short opening card, and the dots are under the
+   * tallest card, off screen. So the first view carries a pill saying
+   * "Scroll for more" with a nudging arrow. It is placed in the empty space
+   * under the opening card - never over data - and leaves on the first move
+   * of any kind. Shown on every visit: it costs nothing once the reader has
+   * moved, and the person who needs it is the one arriving cold. */
+  const hint = el("div", { class: "fu-deck-hint" }, "Scroll for more ",
+                  el("span", { class: "fu-deck-hint-arrow" }, "\u2192"));
+  const frame = el("div", { class: "fu-deck-frame" }, prev, strip, next, hint);
+  const deck = el("div", { class: "fu-deck" }, frame,
                   el("div", { class: "fu-deck-bar" }, dots, counter));
   content.append(deck);
   container.append(el("div", { class: "page" }, content));
+
+  // Measured, not styled: the pill goes 14px under the first card's bottom
+  // edge, wherever that lands on this screen, and aligned to its left edge.
+  // If the first card is (nearly) as tall as the strip there is no empty
+  // space to stand in and the pill would cover the dots bar, so it is
+  // withheld rather than moved somewhere it might sit on data.
+  let hintDone = cards.length < 2;
+  function placeHint() {
+    // renderPage() blanks #app on every hash change, so a deck the reader
+    // never moved would leave its resize listener behind - one per visit.
+    // The listener notices it is orphaned and unhooks itself.
+    if (!frame.isConnected) { window.removeEventListener("resize", placeHint); return; }
+    if (hintDone) return;
+    const f = frame.getBoundingClientRect(), c = cards[0].getBoundingClientRect();
+    const top = c.bottom - f.top + 14;
+    if (top + hint.offsetHeight > strip.offsetHeight) { hint.hidden = true; return; }
+    hint.hidden = false;
+    hint.style.top = top + "px";
+    hint.style.left = (c.left - f.left) + "px";
+  }
+  function dropHint() {
+    if (hintDone) return;
+    hintDone = true;
+    window.removeEventListener("resize", placeHint);
+    hint.classList.add("gone");
+    hint.addEventListener("transitionend", () => hint.remove(), { once: true });
+    // A browser honouring reduced motion has no transition to end.
+    setTimeout(() => hint.remove(), 600);
+  }
+  placeHint();
+  window.addEventListener("resize", placeHint);
 
   /* Which card is current is tracked, not re-derived on every press.
    *
@@ -1909,6 +1950,7 @@ components.comparison = async function (page, container) {
     return best;
   };
   function goTo(i) {
+    dropHint();
     idx = Math.max(0, Math.min(cards.length - 1, i));
     const c = cards[idx];
     programmatic = Date.now();
@@ -1926,6 +1968,7 @@ components.comparison = async function (page, container) {
     next.disabled = idx === cards.length - 1;
   }
   strip.addEventListener("scroll", () => {
+    dropHint();
     clearTimeout(strip._t);
     strip._t = setTimeout(() => {
       // Ignore the tail of a scroll this component started; a swipe or a

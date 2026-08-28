@@ -1415,6 +1415,33 @@ table.data th select {
 }
 .fu-deck-dot.on { background: var(--accent); border-color: var(--accent); }
 .fu-deck-count { font-size: 12px; color: var(--text-muted); min-width: 6ch; }
+/* The first-visit "Scroll for more" pill. Absolutely placed by the engine
+   under the opening card (see components.comparison), so it never sits on a
+   figure. pointer-events: none keeps it from ever intercepting a click on the
+   card or a swipe on the strip. Accent-on-contrast in every theme, so it is
+   the one loud thing on the page - which is the point of it. */
+.fu-deck-hint {
+  position: absolute; z-index: 2; pointer-events: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; letter-spacing: .02em;
+  background: var(--accent); color: var(--accent-contrast);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+  transition: opacity .35s ease;
+}
+.fu-deck-hint.gone { opacity: 0; }
+.fu-deck-hint-arrow {
+  display: inline-block; font-size: 15px; line-height: 1;
+  animation: fu-deck-hint-nudge 1.1s ease-in-out infinite;
+}
+@keyframes fu-deck-hint-nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fu-deck-hint-arrow { animation: none; }
+  .fu-deck-hint { transition: none; }
+}
 @media (max-width: 700px) {
   .fu-deck-frame { padding: 0 34px; }
   .fu-deck-nav { width: 30px; height: 30px; font-size: 17px; }
