@@ -139,8 +139,12 @@ if (length(mismatch) > 0) {
 # and the popover texts. Everything with a number in it is a {token} the front
 # end fills from the question file, so no sentence here can state a figure the
 # data does not carry.
+# ippra.net, not www.ou.edu/ippra: the institute moved to its own domain on
+# 2026-09-15 and ippra.net is now the canonical site. The old CMS URL still
+# answers, so this is not urgent breakage — but every link we ship should point
+# at the domain the institute actually wants indexed.
 INSTITUTE_LINK <- paste0(
-  "<a href=\"https://www.ou.edu/ippra\">University of Oklahoma\u2019s ",
+  "<a href=\"https://ippra.net\">University of Oklahoma\u2019s ",
   "Institute for Public Policy Research and Analysis</a>")
 
 groupings_cfg <- splits |>
@@ -612,7 +616,7 @@ config <- list(
                      "diverge."),
     links_html = paste0(
       "<a href=\"#about\">About &amp; methods</a>",
-      "<a href=\"https://ou.edu/ippra\">OU IPPRA</a>",
+      "<a href=\"https://ippra.net\">OU IPPRA</a>",
       "<a href=\"mailto:kuhikagupta@ou.edu\">Contact</a>"),
     funding = paste0("A project of the University of Oklahoma\u2019s ",
                      "Institute for Public Policy Research and Analysis, ",
