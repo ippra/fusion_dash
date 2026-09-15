@@ -45,6 +45,70 @@ window.addEventListener("load",function(){setTimeout(function(){
 <script src="./assets/vendor/jspdf.umd.min.js?v=__BUILD__"></script>
 </head>
 <body>
+<!-- ─────────────────────────────────────────────────────────────────────────
+     The IPPRA institutional bar. Shared chrome for EVERY dashboard, not a
+     FESTO-specific thing: it is static markup here (not built from config)
+     so it paints with the page instead of waiting on engine.js, and so it
+     reads the same on every dashboard that reuses this shell.
+
+     It has two jobs, chosen by how the visitor arrived:
+       • direct    — names the institute and links to ippra.net, which is the
+                     whole point: a dashboard on its own gives no clue who
+                     made it.
+       • referred  — someone clicked through from ippra.net. These links open
+                     in a NEW TAB, so that person has no back button at all;
+                     the bar becomes their way back to the page they left.
+
+     Black with white text (21:1). Crimson is the rule beneath, NOT the text:
+     OU crimson on black measures 2.11:1 and fails WCAG AA outright.
+     ───────────────────────────────────────────────────────────────────── -->
+<div id="ippra-bar">
+  <a class="ippra-bar-home" href="https://ippra.net">IPPRA &middot; University of Oklahoma</a>
+  <a class="ippra-bar-back" href="https://ippra.net"><span aria-hidden="true">&larr;</span> Back to IPPRA</a>
+</div>
+<script>
+// Runs immediately after the bar so the mode is settled before paint — doing
+// this from engine.js (loaded at the end of body) would flash the wrong one.
+(function () {
+  var root = document.documentElement;
+  // Only ever return to a path on THIS origin. A caller-supplied destination
+  // that could be absolute would make this an open redirect, which on a
+  // university domain is a phishing gift.
+  function safePath(p) {
+    return (typeof p === "string" && p.charAt(0) === "/" &&
+            p.charAt(1) !== "/" && p.charAt(1) !== "\\") ? p : null;
+  }
+  var back = null;
+  try {
+    // 1. explicit ?from= on the link — deterministic, and survives the
+    //    trailing-slash canonicalizer above because it keeps location.search.
+    var from = new URLSearchParams(location.search).get("from");
+    back = safePath(from);
+    // 2. otherwise trust a same-origin referrer, so links added elsewhere on
+    //    the site work without anyone remembering to add the parameter.
+    if (!back && document.referrer) {
+      var r = new URL(document.referrer);
+      if (r.origin === location.origin &&
+          r.pathname.replace(/\/+$/, "") !== location.pathname.replace(/\/+$/, "")) {
+        back = r.pathname + r.search;
+      }
+    }
+  } catch (e) { /* malformed referrer or no URL support: fall through */ }
+
+  if (back) {
+    root.setAttribute("data-entry", "referred");
+    document.querySelector(".ippra-bar-back").setAttribute("href", back);
+    // Wipe ?from= from the address bar so a copied or shared link is clean
+    // and shows the institutional bar rather than someone else's back button.
+    if (window.history && history.replaceState && /[?&]from=/.test(location.search)) {
+      var q = new URLSearchParams(location.search);
+      q.delete("from");
+      var qs = q.toString();
+      history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+    }
+  }
+})();
+</script>
 <header id="navbar">
   <span id="nav-title"></span>
   <nav id="nav-pages"></nav>

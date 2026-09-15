@@ -64,6 +64,43 @@ body {
 }
 
 /* ---------- navbar ---------- */
+/* ---------- IPPRA institutional bar ---------- */
+/* Shared chrome above the dashboard's own header — index.html explains why it
+   exists and how its two modes are chosen.
+
+   Colour is not a free choice: OU crimson TEXT on black measures 2.11:1 and
+   fails WCAG AA (4.5:1). White on black is 21:1, so crimson is the rule under
+   the bar rather than the lettering.
+
+   Deliberately NOT sticky. #navbar is `position: sticky; top: 0` and the data
+   tables sticky their own headers; adding a second sticky layer above them
+   means retuning all of those offsets for a 26px strip. It sits at the top of
+   the document and scrolls away.
+
+   Fixed black/white in every theme: institutional chrome should read the same
+   on fusion, dark and greyscale. */
+#ippra-bar {
+  background: #000;
+  color: #fff;
+  border-bottom: 3px solid #841617;   /* OU crimson, as a rule not as text */
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 0 20px;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+}
+#ippra-bar a { color: #fff; text-decoration: none; padding: 5px 0; }
+#ippra-bar a:hover { text-decoration: underline; }
+#ippra-bar a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* One mode at a time. Default (no data-entry) is the institutional link, so a
+   visitor still gets it if the script is blocked or throws. */
+.ippra-bar-back { display: none; }
+html[data-entry="referred"] .ippra-bar-home { display: none; }
+html[data-entry="referred"] .ippra-bar-back { display: inline; }
+
 #navbar {
   display: flex; align-items: center; gap: 24px;
   background: var(--nav-bg); color: var(--nav-text);

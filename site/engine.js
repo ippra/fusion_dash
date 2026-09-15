@@ -2105,8 +2105,11 @@ async function boot() {
   const navTitle = document.getElementById("nav-title");
   navTitle.textContent = "";
   navTitle.append(el("span", { class: "brand-name" }, CONFIG.project.nav_title || CONFIG.project.title));
-  if (CONFIG.project.nav_subtitle)
-    navTitle.append(el("span", { class: "brand-sub" }, CONFIG.project.nav_subtitle));
+  // nav_subtitle ("IPPRA - University of Oklahoma") is no longer rendered
+  // here: it moved to the institutional bar at the very top of the page
+  // (see index.html), so the attribution is not printed twice within a
+  // few pixels of itself. The config key stays — the PDF export still
+  // credits the project with it.
   const nav = document.getElementById("nav-pages");
   // Featured pages render as links; pages carrying nav_group fold into a
   // labeled dropdown at the position of the group's first member.
