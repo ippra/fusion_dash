@@ -97,7 +97,40 @@ window.addEventListener("load",function(){setTimeout(function(){
 
   if (back) {
     root.setAttribute("data-entry", "referred");
-    document.querySelector(".ippra-bar-back").setAttribute("href", back);
+    var backLink = document.querySelector(".ippra-bar-back");
+    backLink.setAttribute("href", back);
+
+    // Going "back" from a tab that was opened with target="_blank" is not a
+    // navigation problem, it is a tab problem: the page they came from is
+    // still open in the tab behind this one. Navigating there would just give
+    // them the same page twice, and history.back() does nothing because a
+    // fresh tab has nothing behind it.
+    //
+    // A tab IS closable here: the HTML spec makes a top-level browsing context
+    // script-closable while its session history holds a single Document, which
+    // is exactly the state of an untouched target="_blank" tab. Closing it
+    // drops the reader back on the tab they left — the real "back".
+    //
+    // That stops being true the moment they use the dashboard: it routes on
+    // hashchange, and every page they visit adds a history entry. So check at
+    // click time, not at load, and keep the href as the honest fallback.
+    backLink.addEventListener("click", function (ev) {
+      // Leave modified clicks alone — ctrl/cmd/shift/middle still mean "open
+      // this somewhere else", and hijacking them is always wrong.
+      if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+      ev.preventDefault();
+      var href = backLink.getAttribute("href");
+      // Try to close unconditionally rather than predicting whether we may.
+      // An earlier version gated on history.length === 1, but that is a guess
+      // about session history this code cannot check reliably, and guessing
+      // wrong leaves a link that does nothing. close() is simply refused when
+      // it is not allowed, which the fallback below handles.
+      window.close();
+      // close() fails SILENTLY when refused — no exception, no return value.
+      // So if this timer still runs, we were not allowed to close, and the
+      // honest behaviour is to go to the page rather than appear broken.
+      setTimeout(function () { location.href = href; }, 150);
+    });
     // Wipe ?from= from the address bar so a copied or shared link is clean
     // and shows the institutional bar rather than someone else's back button.
     if (window.history && history.replaceState && /[?&]from=/.test(location.search)) {
