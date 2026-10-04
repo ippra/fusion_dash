@@ -11,6 +11,10 @@ landing page, no quiz — and the pipeline keeps the property that arrangement
 buys: **the builder computes no statistics**, so the published site cannot
 disagree with what was computed upstream.
 
+- **Release:** https://ippra.net/festo
+
+There is no beta on GitHub Pages.
+
 ## The pipeline
 
 Scripts run in number order. Each sources `00_paths.R`, which resolves
@@ -215,19 +219,36 @@ a download cannot say something the screen does not.
 
 ## Deploying
 
-`outputs/06_site/` is the rsync unit — plain static files, no server code, no
-third-party requests, every library vendored.
+One deployment: production. Unlike the institute's other dashboards, this one
+has no beta on GitHub Pages and no Beta label.
 
-```sh
-rsync -av --delete outputs/06_site/ <host>:<docroot>/fusion/
+**Production: ippra.net, by hand. Matt deploys it.** The survey files and
+reference tables are in the repository, so this works from a fresh clone on
+any machine with R; no `~/.Renviron`. From the repository root, run the five
+scripts under Building and previewing in order, then:
+
+```
+rsync -av --delete outputs/06_site/ <ippra.net host>:<docroot>/festo/
 ```
 
-Relative URLs and hash routing mean moving hosts needs no change to the site.
-Every asset URL carries a `?v=<build>` stamp, so long-lived host caches roll
-over on each deploy — but `index.html` itself must be served with
-`Cache-Control: no-cache`. It is the one file that cannot version-stamp itself,
-and a host that caches it hard keeps serving the old `?v=` references, making
-new deploys invisible until a hard refresh.
+The site is plain static files with relative URLs and hash routing, every
+library vendored and no third-party requests, so it runs under any path and
+needs no server-side code. One server setting: serve `index.html` with
+`Cache-Control: no-cache` (as for the dashboards, on the entry URLs `/festo`,
+`/festo/` and `/festo/index.html`), so a new deploy is seen without a hard
+refresh. It is the one file that cannot version-stamp itself; everything else
+carries a `?v=<build>` stamp and can be cached as long as the server likes.
+
+After deploying, open https://ippra.net/festo and check that the dashboard
+loads.
+
+Link to it from ippra.net as `/festo/?from=<path of the linking page>`, for
+example `/festo/?from=/tools`. A visitor who arrives that way gets a "Back to
+IPPRA" link in the black bar that returns them to that page; anyone else sees
+the institute's name there.
+
+To publish a newer version, pull `master`, run the scripts again and rsync
+again.
 
 ## Known cleanup
 
