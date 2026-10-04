@@ -2104,7 +2104,9 @@ async function boot() {
   // Brand lockup: wordmark + optional small institutional subtitle line.
   const navTitle = document.getElementById("nav-title");
   navTitle.textContent = "";
-  navTitle.append(el("span", { class: "brand-name" }, CONFIG.project.nav_title || CONFIG.project.title));
+  const brandName = el("span", { class: "brand-name" }, CONFIG.project.nav_title || CONFIG.project.title);
+  if (CONFIG.project.beta) brandName.append(el("span", { class: "brand-beta" }, "Beta"));
+  navTitle.append(brandName);
   // nav_subtitle ("IPPRA - University of Oklahoma") is no longer rendered
   // here: it moved to the institutional bar at the very top of the page
   // (see index.html), so the attribution is not printed twice within a

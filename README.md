@@ -11,9 +11,8 @@ landing page, no quiz — and the pipeline keeps the property that arrangement
 buys: **the builder computes no statistics**, so the published site cannot
 disagree with what was computed upstream.
 
+- **Beta:** https://ippra.github.io/fusion_dash/
 - **Release:** https://ippra.net/festo
-
-There is no beta on GitHub Pages.
 
 ## The pipeline
 
@@ -219,8 +218,17 @@ a download cannot say something the screen does not.
 
 ## Deploying
 
-One deployment: production. Unlike the institute's other dashboards, this one
-has no beta on GitHub Pages and no Beta label.
+Two deployments of one build.
+
+**Beta: GitHub Pages, automatic.** `.github/workflows/deploy-beta.yml` runs
+the whole pipeline (02-06) on every push to `master` that touches the scripts,
+the reference tables, the survey data or the site, and publishes the result to
+https://ippra.github.io/fusion_dash/. Everything the pipeline needs is
+committed, so a run takes a few minutes from a clean checkout. It sets
+`FUSION_CHANNEL=beta`, which puts a Beta label beside the masthead title, adds
+a `noindex` tag and writes a `robots.txt` that disallows everything, so the
+beta is never found in place of production. The repository's Pages source must
+be set to GitHub Actions (Settings, Pages).
 
 **Production: ippra.net, by hand. Matt deploys it.** The survey files and
 reference tables are in the repository, so this works from a fresh clone on
@@ -231,6 +239,9 @@ scripts under Building and previewing in order, then:
 rsync -av --delete outputs/06_site/ <ippra.net host>:<docroot>/festo/
 ```
 
+Leave `FUSION_CHANNEL` unset: that is what makes it the production build, with
+no Beta label and no `noindex`.
+
 The site is plain static files with relative URLs and hash routing, every
 library vendored and no third-party requests, so it runs under any path and
 needs no server-side code. One server setting: serve `index.html` with
@@ -239,8 +250,9 @@ needs no server-side code. One server setting: serve `index.html` with
 refresh. It is the one file that cannot version-stamp itself; everything else
 carries a `?v=<build>` stamp and can be cached as long as the server likes.
 
-After deploying, open https://ippra.net/festo and check that the dashboard
-loads.
+After deploying, open https://ippra.net/festo and check two things: the
+dashboard loads, and there is no Beta label beside "Fusion Energy
+Socio-Technical Observatory" in the masthead.
 
 Link to it from ippra.net as `/festo/?from=<path of the linking page>`, for
 example `/festo/?from=/tools`. A visitor who arrives that way gets a "Back to

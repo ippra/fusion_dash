@@ -22,6 +22,16 @@ source(here::here("00_paths.R"))
 # Writes outputs/06_site/ — plain static files, fully self-contained. Preview:
 #   python3 preview.py
 
+# Which deployment this build is for. The beta on GitHub Pages is built with
+# FUSION_CHANNEL=beta, which labels the masthead and asks search engines not to
+# index it, so the beta never competes with the production site in search.
+# Unset, the build is production: the same site with neither.
+channel <- Sys.getenv("FUSION_CHANNEL", "production")
+
+if (!channel %in% c("production", "beta")) {
+  stop("FUSION_CHANNEL is `", channel, "`; use `beta` or leave it unset.")
+}
+
 data_in <- file.path(outputs, "02_question_data")
 out <- file.path(outputs, "06_site")
 
@@ -317,7 +327,8 @@ config <- list(
     slug = "fusion",
     title = "Fusion Energy Socio-Technical Observatory",
     nav_title = "Fusion Energy Socio-Technical Observatory",
-    nav_subtitle = "IPPRA - University of Oklahoma"
+    nav_subtitle = "IPPRA - University of Oklahoma",
+    beta = channel == "beta"
   ),
   theme = list(default = "fusion", allow_viewer_switch = TRUE),
   groupings = groupings_cfg,
@@ -672,8 +683,19 @@ wjson(config, "config.json", pretty = TRUE)
 BUILD <- format(Sys.time(), "%Y%m%d%H%M%S")
 invisible(file.copy(list.files(site_src, full.names = TRUE), out,
                     recursive = TRUE, overwrite = TRUE))
-index_html <- readLines(file.path(site_src, "index.html"))
-writeLines(gsub("__BUILD__", BUILD, index_html), file.path(out, "index.html"))
+index_html <- gsub(
+  "__BUILD__", BUILD, readLines(file.path(site_src, "index.html"))
+)
+
+if (channel == "beta") {
+  viewport <- grep("name=\"viewport\"", index_html, fixed = TRUE)
+  if (length(viewport) != 1) stop("index.html has no single viewport line.")
+  noindex <- "<meta name=\"robots\" content=\"noindex, nofollow\">"
+  index_html <- append(index_html, noindex, after = viewport)
+  writeLines(c("User-agent: *", "Disallow: /"), file.path(out, "robots.txt"))
+}
+
+writeLines(index_html, file.path(out, "index.html"))
 
 # list.files() skips dotfiles at the top of site/, but the copy above descends
 # into assets/ as whole directories, so macOS's .DS_Store rides along and is
@@ -704,7 +726,7 @@ if (length(absent) > 0) {
 
 size_mb <- sum(file.size(list.files(out, recursive = TRUE,
                                     full.names = TRUE))) / 1024^2
-message("Site written to ", out)
+message("Site (", channel, ") written to ", out)
 message("  build ", BUILD, ", ", length(q_files), " questions, ",
         round(size_mb, 1), " MB")
 message("  preview: python3 preview.py")
